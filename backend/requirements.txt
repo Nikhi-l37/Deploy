@@ -1,0 +1,10 @@
+# Deploy — Backend Dependencies
+fastapi
+uvicorn[standard]
+python-dotenv
+supabase
+cryptography
+redis
+docker
+httpx
+websockets

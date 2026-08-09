@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0d1117] text-[#c9d1d9] min-h-screen antialiased overflow-x-hidden;
+  }
+}
+
+@layer components {
+  /* Premium Glass Panel */
+  .glass-panel {
+    @apply bg-[#161b22] border border-[#30363d] rounded-2xl p-6 shadow-xl transition-all duration-300;
+  }
+  
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md font-medium transition-colors duration-200 text-sm border border-transparent;
+  }
+  
+  .btn-primary {
+    @apply bg-[#238636] text-white border-[rgba(240,246,252,0.1)] hover:bg-[#2ea043];
+  }
+  
+  .btn-outline {
+    @apply bg-[#21262d] border-[#30363d] text-[#c9d1d9] hover:bg-[#30363d] hover:border-[#8b949e];
+  }
+  
+  /* Inputs */
+  .input-field {
+    @apply w-full bg-[#010409] border border-[#30363d] text-[#c9d1d9] px-4 py-2.5 rounded-md text-sm transition-colors duration-200 focus:outline-none focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff];
+  }
+  
+  /* Status Indicators */
+  .status-dot {
+    @apply w-2.5 h-2.5 rounded-full inline-block;
+  }
+  .status-running { @apply bg-green-500 shadow-[0_0_8px_#22c55e]; }
+  .status-failed { @apply bg-red-500 shadow-[0_0_8px_#ef4444]; }
+  .status-queued { @apply bg-yellow-500 shadow-[0_0_8px_#eab308]; }
+  .status-building { @apply bg-blue-500 shadow-[0_0_8px_#3b82f6] animate-pulse; }
+
+  /* Terminal Window */
+  .terminal-window {
+    @apply bg-[#0d1117] border border-white/10 rounded-xl overflow-hidden font-mono text-sm;
+  }
+  .terminal-header {
+    @apply bg-[#161b22] px-4 py-2 border-b border-white/10 flex gap-2;
+  }
+  .terminal-btn {
+    @apply w-3 h-3 rounded-full;
+  }
+}
