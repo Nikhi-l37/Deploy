@@ -228,7 +228,9 @@ def run_pipeline(project_id: str):
             "container_id": container.id,
             "port": port
         })
-        push_log(project_id, "✅ Deploy successful! App is now live.")
+        # Initialize last_active so the watchdog gives it 60 seconds of grace period
+        redis_client.set(f"last_active:{project_id}", time.time())
+        push_log(project_id, "🚀 Deploy successful! App is now live.")
         
         # 10. Update Nginx Load Balancer
         import nginx_config

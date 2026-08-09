@@ -31,8 +31,424 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import asyncio
+import time
+import docker
+import redis
+from database import supabase
+
 # Register Routers
 app.include_router(webhook.router)
+
+redis_client = redis.Redis.from_url(config.REDIS_URL, decode_responses=True)
+
+# ---------- AUTO-SLEEP WATCHDOG ----------
+
+async def watchdog_task():
+    """Background task to pause idle containers.
+    
+    Uses two signals to detect activity:
+    1. Redis last_active timestamp (set by /gateway endpoint when Nginx is running)
+    2. Docker network rx_bytes (detects real TCP traffic even without Nginx)
+    """
+    # Track previous network bytes to detect new traffic
+    prev_rx_bytes = {}
+    
+    while True:
+        try:
+            # Get all RUNNING projects
+            res = supabase.table("projects").select("*").eq("status", "RUNNING").execute()
+            current_time = time.time()
+            client = docker.from_env()
+            
+            for project in res.data:
+                project_id = project["id"]
+                container_name = f"deploy-{project_id[:8]}"
+                
+                # Check if container has received new network traffic
+                has_traffic = False
+                try:
+                    container = client.containers.get(container_name)
+                    stats = container.stats(stream=False)
+                    networks = stats.get("networks", {})
+                    current_rx = sum(net.get("rx_bytes", 0) for net in networks.values())
+                    
+                    prev = prev_rx_bytes.get(project_id, 0)
+                    if current_rx > prev:
+                        has_traffic = True
+                    prev_rx_bytes[project_id] = current_rx
+                except Exception:
+                    pass
+                
+                if has_traffic:
+                    # Container has real traffic — keep it alive
+                    redis_client.set(f"last_active:{project_id}", current_time)
+                    continue
+                
+                # Check the Redis last_active timestamp
+                last_active_str = redis_client.get(f"last_active:{project_id}")
+                
+                if not last_active_str:
+                    # First time seeing this project, give it a grace period
+                    redis_client.set(f"last_active:{project_id}", current_time)
+                    continue
+                
+                last_active = float(last_active_str)
+                if current_time - last_active > 60:
+                    # No traffic AND idle for 60s — time to sleep!
+                    print(f"[Watchdog] Project {project_id} idle for 60s. Putting to sleep.")
+                    try:
+                        container = client.containers.get(container_name)
+                        container.stop(timeout=5)
+                    except Exception as e:
+                        print(f"[Watchdog] Error stopping container: {e}")
+                    
+                    supabase.table("projects").update({"status": "SLEEPING"}).eq("id", project_id).execute()
+                    redis_client.delete(f"last_active:{project_id}")
+                    prev_rx_bytes.pop(project_id, None)
+        except Exception as e:
+            print(f"[Watchdog] Loop error: {e}")
+            
+        await asyncio.sleep(30)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(watchdog_task())
+
+
+# ---------- WAKE-ON-DEMAND GATEWAY ----------
+
+@app.get("/gateway/{project_id}")
+async def gateway(project_id: str):
+    """
+    Nginx calls this endpoint (auth_request) before proxying traffic.
+    If the app is RUNNING, we update last_active.
+    If the app is SLEEPING, we wake it up and then allow traffic.
+    """
+    res = supabase.table("projects").select("*").eq("id", project_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    project = res.data[0]
+    status = project["status"]
+    
+    if status == "RUNNING":
+        # Just update activity ping
+        redis_client.set(f"last_active:{project_id}", time.time())
+        return {"status": "ok"}
+        
+    elif status == "SLEEPING":
+        # Wake it up!
+        try:
+            client = docker.from_env()
+            container_name = f"deploy-{project_id[:8]}"
+            container = client.containers.get(container_name)
+            container.start()
+            
+            # Wait for the app inside the container to be ready
+            port = project.get("port", 8001)
+            import socket
+            for attempt in range(10):
+                await asyncio.sleep(1)
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(1)
+                    result = sock.connect_ex(('127.0.0.1', port))
+                    sock.close()
+                    if result == 0:
+                        break
+                except:
+                    pass
+            
+            supabase.table("projects").update({"status": "RUNNING"}).eq("id", project_id).execute()
+            redis_client.set(f"last_active:{project_id}", time.time())
+            return {"status": "woken up"}
+        except Exception as e:
+            print(f"Gateway error waking container: {e}")
+            raise HTTPException(status_code=500, detail="Failed to wake container")
+            
+    else:
+        # App is QUEUED, BUILDING, or FAILED. Block traffic.
+        raise HTTPException(status_code=503, detail="App is not ready to serve traffic")
+
+
+# ---------- WAKE-UP PAGE (Render-style loading screen) ----------
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/wake-page/{project_id}", response_class=HTMLResponse)
+async def wake_page(project_id: str):
+    """
+    Serves a beautiful 'Waking up your server...' page.
+    The page auto-calls /gateway/{project_id} to boot the container,
+    polls until it's RUNNING, then redirects to the app URL.
+    """
+    res = supabase.table("projects").select("*").eq("id", project_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    project = res.data[0]
+    port = project.get("port", 8001)
+    app_url = f"http://localhost:{port}"
+    project_name = project.get("github_url", "").split("/")[-1].replace(".git", "") or "Your App"
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Waking up · {project_name} · Deployly</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            
+            body {{
+                font-family: 'Inter', -apple-system, sans-serif;
+                background: #030712;
+                color: #e2e8f0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }}
+            
+            /* Animated background */
+            .bg-glow {{
+                position: fixed;
+                width: 400px;
+                height: 400px;
+                border-radius: 50%;
+                filter: blur(120px);
+                opacity: 0.15;
+                animation: drift 8s ease-in-out infinite;
+            }}
+            .bg-glow.purple {{ background: #8b5cf6; top: -100px; left: -100px; }}
+            .bg-glow.blue {{ background: #3b82f6; bottom: -100px; right: -100px; animation-delay: 4s; }}
+            
+            @keyframes drift {{
+                0%, 100% {{ transform: translate(0, 0); }}
+                50% {{ transform: translate(30px, 20px); }}
+            }}
+            
+            .card {{
+                position: relative;
+                z-index: 10;
+                background: rgba(15, 23, 42, 0.8);
+                backdrop-filter: blur(24px);
+                border: 1px solid rgba(148, 163, 184, 0.1);
+                border-radius: 24px;
+                padding: 48px;
+                max-width: 440px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 0 60px rgba(0,0,0,0.4);
+            }}
+            
+            /* Spinner */
+            .spinner-container {{
+                margin: 0 auto 32px;
+                width: 64px;
+                height: 64px;
+                position: relative;
+            }}
+            .spinner {{
+                width: 64px;
+                height: 64px;
+                border-radius: 50%;
+                border: 3px solid rgba(139, 92, 246, 0.1);
+                border-top-color: #8b5cf6;
+                animation: spin 1s linear infinite;
+            }}
+            .spinner-icon {{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 24px;
+                animation: pulse-icon 2s ease-in-out infinite;
+            }}
+            
+            @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+            @keyframes pulse-icon {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} }}
+            
+            h1 {{
+                font-size: 22px;
+                font-weight: 700;
+                margin-bottom: 8px;
+                background: linear-gradient(to right, #fff, #94a3b8);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }}
+            
+            .subtitle {{
+                color: #64748b;
+                font-size: 14px;
+                margin-bottom: 32px;
+                line-height: 1.5;
+            }}
+            
+            .project-name {{
+                color: #a78bfa;
+                font-weight: 600;
+            }}
+            
+            /* Progress steps */
+            .steps {{
+                text-align: left;
+                margin-bottom: 28px;
+            }}
+            .step {{
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 10px 16px;
+                border-radius: 10px;
+                font-size: 13px;
+                color: #475569;
+                transition: all 0.4s ease;
+                margin-bottom: 4px;
+            }}
+            .step.active {{
+                color: #e2e8f0;
+                background: rgba(139, 92, 246, 0.08);
+            }}
+            .step.done {{
+                color: #22c55e;
+            }}
+            .step-dot {{
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #334155;
+                flex-shrink: 0;
+                transition: all 0.3s ease;
+            }}
+            .step.active .step-dot {{
+                background: #8b5cf6;
+                box-shadow: 0 0 8px #8b5cf6;
+                animation: pulse-dot 1.5s ease-in-out infinite;
+            }}
+            .step.done .step-dot {{
+                background: #22c55e;
+                box-shadow: 0 0 8px #22c55e;
+            }}
+            
+            @keyframes pulse-dot {{
+                0%, 100% {{ transform: scale(1); }}
+                50% {{ transform: scale(1.4); }}
+            }}
+            
+            .status-text {{
+                font-size: 12px;
+                color: #475569;
+                margin-top: 4px;
+            }}
+            
+            .error-msg {{
+                color: #f87171;
+                font-size: 13px;
+                margin-top: 16px;
+                display: none;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="bg-glow purple"></div>
+        <div class="bg-glow blue"></div>
+        
+        <div class="card">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+                <div class="spinner-icon">🚀</div>
+            </div>
+            
+            <h1>Waking up your server</h1>
+            <p class="subtitle">
+                <span class="project-name">{project_name}</span> is sleeping to save resources.<br>
+                We're spinning it back up for you.
+            </p>
+            
+            <div class="steps">
+                <div class="step active" id="step1">
+                    <div class="step-dot"></div>
+                    <span>Starting Docker container...</span>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-dot"></div>
+                    <span>Waiting for application to boot...</span>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-dot"></div>
+                    <span>Redirecting you to your app...</span>
+                </div>
+            </div>
+            
+            <p class="status-text" id="statusText">This usually takes 5-10 seconds</p>
+            <p class="error-msg" id="errorMsg">Something went wrong. Please try refreshing.</p>
+        </div>
+        
+        <script>
+            const GATEWAY_URL = "http://localhost:8000/gateway/{project_id}";
+            const APP_URL = "{app_url}";
+            
+            const step1 = document.getElementById("step1");
+            const step2 = document.getElementById("step2");
+            const step3 = document.getElementById("step3");
+            const statusText = document.getElementById("statusText");
+            const errorMsg = document.getElementById("errorMsg");
+            
+            function setStep(stepNum) {{
+                if (stepNum >= 2) {{
+                    step1.className = "step done";
+                    step2.className = "step active";
+                }}
+                if (stepNum >= 3) {{
+                    step2.className = "step done";
+                    step3.className = "step active";
+                }}
+            }}
+            
+            async function wakeUp() {{
+                try {{
+                    // Step 1: Call the gateway to start the container
+                    const res = await fetch(GATEWAY_URL);
+                    const data = await res.json();
+                    
+                    if (res.ok) {{
+                        // Step 2: Container started, wait for app to boot
+                        setStep(2);
+                        statusText.textContent = "Container started! Waiting for app...";
+                        
+                        // Give the app a moment to fully initialize
+                        await new Promise(r => setTimeout(r, 2000));
+                        
+                        // Step 3: Redirect
+                        setStep(3);
+                        statusText.textContent = "Ready! Redirecting now...";
+                        
+                        await new Promise(r => setTimeout(r, 800));
+                        window.location.href = APP_URL;
+                    }} else {{
+                        throw new Error(data.detail || "Failed to wake container");
+                    }}
+                }} catch (err) {{
+                    console.error("Wake error:", err);
+                    statusText.textContent = "Retrying...";
+                    
+                    // Retry after 3 seconds
+                    setTimeout(wakeUp, 3000);
+                }}
+            }}
+            
+            // Start the wake-up process immediately
+            wakeUp();
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html)
 
 
 # ---------- HEALTH CHECK (Public — no auth needed) ----------
@@ -186,14 +602,17 @@ async def get_project_logs(project_id: str, request: Request):
             
             container_logs = container.logs(tail=100).decode("utf-8")
             if container_logs:
+                import uuid
                 logs.append({
-                    "message": "--- LIVE CONTAINER RUNTIME LOGS ---",
+                    "id": str(uuid.uuid4()),
+                    "log_text": "--- LIVE CONTAINER RUNTIME LOGS ---",
                     "created_at": "9999-12-31T23:59:58"
                 })
                 for line in container_logs.splitlines():
                     if line.strip():
                         logs.append({
-                            "message": f"[APP] {line}",
+                            "id": str(uuid.uuid4()),
+                            "log_text": f"[APP] {line}",
                             "created_at": "9999-12-31T23:59:59"
                         })
         except Exception:

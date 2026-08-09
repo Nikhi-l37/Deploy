@@ -15,8 +15,8 @@ DOMAIN_NAME = "deploy.local" # Change to your actual domain in production (e.g. 
 def generate_nginx_config():
     """Fetches all running apps and generates a new Nginx config file."""
     
-    print("Fetching active projects from database...")
-    res = supabase.table("projects").select("*").eq("status", "RUNNING").execute()
+    print("Fetching active/sleeping projects from database...")
+    res = supabase.table("projects").select("*").in_("status", ["RUNNING", "SLEEPING"]).execute()
     projects = res.data
     
     # Start the config with a default catch-all block that returns 404
@@ -44,6 +44,9 @@ server {{
     server_name {subdomain};
 
     location / {{
+        # Wake-on-Demand: Ask FastAPI if the container is sleeping
+        auth_request /wake;
+        
         proxy_pass http://127.0.0.1:{port};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -54,6 +57,14 @@ server {{
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+    }}
+    
+    location = /wake {{
+        internal;
+        proxy_pass http://127.0.0.1:8000/gateway/{project_id};
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
     }}
 }}
 """

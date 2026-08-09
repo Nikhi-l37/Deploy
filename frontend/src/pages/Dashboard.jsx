@@ -149,6 +149,15 @@ export default function Dashboard({ session }) {
     }
   };
 
+  const handleWakeUp = async (projectId) => {
+    try {
+      await api.get(`/gateway/${projectId}`);
+      fetchProjects();
+    } catch (err) {
+      alert('Failed to wake up: ' + err.message);
+    }
+  };
+
   const handleDelete = async (projectId) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
     try {
@@ -204,6 +213,7 @@ export default function Dashboard({ session }) {
       case 'FAILED': return 'bg-red-500/10 text-red-400 border-red-500/20';
       case 'BUILDING': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
       case 'QUEUED': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'SLEEPING': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
       default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
     }
   };
@@ -263,9 +273,9 @@ export default function Dashboard({ session }) {
                     </td>
                   </tr>
                 ) : (
-                  projects.map(project => (
-                    <tr 
-                      key={project.id} 
+                  projects.map((project) => (
+                    <tr
+                      key={project.id}
                       onClick={() => handleSelectProject(project.id)}
                       className={`cursor-pointer transition-colors ${selectedProjectId === project.id ? 'bg-[#1f6feb]/10' : 'hover:bg-[#161b22]'}`}
                     >
@@ -294,6 +304,16 @@ export default function Dashboard({ session }) {
                           >
                             localhost:{project.port}
                           </a>
+                        ) : project.status === 'SLEEPING' && project.port ? (
+                          <a 
+                            href={`http://localhost:8000/wake-page/${project.id}`} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="text-sm text-purple-400 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            💤 localhost:{project.port}
+                          </a>
                         ) : (
                           <span className="text-gray-600 text-sm">-</span>
                         )}
@@ -303,19 +323,32 @@ export default function Dashboard({ session }) {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button 
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              if (project.status !== 'BUILDING' && project.status !== 'QUEUED') {
-                                handleManualDeploy(project.id); 
-                              }
-                            }} 
-                            disabled={project.status === 'BUILDING' || project.status === 'QUEUED'}
-                            className="p-1.5 bg-white/5 border border-white/10 rounded text-gray-300 hover:text-white disabled:opacity-50 transition-colors"
-                            title="Redeploy"
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                          </button>
+                          {project.status === 'SLEEPING' ? (
+                            <button 
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                window.open(`http://localhost:8000/wake-page/${project.id}`, '_blank');
+                              }} 
+                              className="p-1.5 px-3 bg-purple-500/10 border border-purple-500/30 rounded text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 transition-colors flex items-center gap-1.5 text-xs font-medium"
+                              title="Wake Up"
+                            >
+                              <Play className="w-3 h-3" /> Wake
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (project.status !== 'BUILDING' && project.status !== 'QUEUED') {
+                                  handleManualDeploy(project.id); 
+                                }
+                              }} 
+                              disabled={project.status === 'BUILDING' || project.status === 'QUEUED'}
+                              className="p-1.5 bg-white/5 border border-white/10 rounded text-gray-300 hover:text-white disabled:opacity-50 transition-colors"
+                              title="Redeploy"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

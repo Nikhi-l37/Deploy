@@ -40,6 +40,7 @@
   .status-failed { @apply bg-red-500 shadow-[0_0_8px_#ef4444]; }
   .status-queued { @apply bg-yellow-500 shadow-[0_0_8px_#eab308]; }
   .status-building { @apply bg-blue-500 shadow-[0_0_8px_#3b82f6] animate-pulse; }
+  .status-sleeping { @apply bg-purple-500 shadow-[0_0_8px_#a855f7] animate-pulse; }
 
   /* Terminal Window */
   .terminal-window {
