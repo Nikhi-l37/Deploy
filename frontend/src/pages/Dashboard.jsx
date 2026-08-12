@@ -22,7 +22,8 @@ export default function Dashboard({ session }) {
   // Tab States
   const [logs, setLogs] = useState([]);
   const logsContainerRef = useRef(null);
-  const userIsAtBottom = useRef(true);
+  const userHasScrolledUp = useRef(false);
+  const isProgrammaticScroll = useRef(false);
   
   const [envVars, setEnvVars] = useState([{ key: '', value: '' }]);
   const [rootDir, setRootDir] = useState('/');
@@ -87,7 +88,7 @@ export default function Dashboard({ session }) {
     
     const interval = setInterval(() => {
       fetchProjects();
-      if (selectedProjectId && activeTab === 'logs' && userIsAtBottom.current) {
+      if (selectedProjectId && activeTab === 'logs') {
         fetchLogs(selectedProjectId);
       }
     }, 3000);
@@ -96,22 +97,32 @@ export default function Dashboard({ session }) {
   }, [selectedProjectId, activeTab]);
 
   useEffect(() => {
-    if (logsContainerRef.current && userIsAtBottom.current) {
+    if (logsContainerRef.current && !userHasScrolledUp.current) {
       const el = logsContainerRef.current;
+      isProgrammaticScroll.current = true;
       el.scrollTop = el.scrollHeight;
+      // Reset the flag after the browser processes the scroll
+      requestAnimationFrame(() => {
+        isProgrammaticScroll.current = false;
+      });
     }
   }, [logs]);
 
   const handleLogsScroll = () => {
+    // Ignore scroll events caused by our own programmatic scrolling
+    if (isProgrammaticScroll.current) return;
     if (logsContainerRef.current) {
       const el = logsContainerRef.current;
-      userIsAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+      const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+      // Only the user's manual scroll decides this flag
+      userHasScrolledUp.current = !isAtBottom;
     }
   };
 
   // Handle Project Selection
   const handleSelectProject = (projectId) => {
     setSelectedProjectId(projectId);
+    userHasScrolledUp.current = false; // Reset scroll state for new project
     fetchLogs(projectId);
     fetchEnvVars(projectId);
     
