@@ -61,7 +61,14 @@ export default function Dashboard({ session }) {
     try {
       const res = await api.get(`/projects/${projectId}/logs`);
       if (res.data.status === 'success') {
-        setLogs(res.data.data);
+        const newLogs = res.data.data;
+        // Only update state if logs actually changed (prevents unnecessary re-render)
+        setLogs(prev => {
+          if (prev.length === newLogs.length && JSON.stringify(prev) === JSON.stringify(newLogs)) {
+            return prev; // Same reference = no re-render
+          }
+          return newLogs;
+        });
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err);
