@@ -22,6 +22,7 @@ export default function Dashboard({ session }) {
   // Tab States
   const [logs, setLogs] = useState([]);
   const logsContainerRef = useRef(null);
+  const userIsAtBottom = useRef(true);
   
   const [envVars, setEnvVars] = useState([{ key: '', value: '' }]);
   const [rootDir, setRootDir] = useState('/');
@@ -95,14 +96,18 @@ export default function Dashboard({ session }) {
   }, [selectedProjectId, activeTab]);
 
   useEffect(() => {
-    if (logsContainerRef.current) {
+    if (logsContainerRef.current && userIsAtBottom.current) {
       const el = logsContainerRef.current;
-      const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-      if (isNearBottom) {
-        el.scrollTo({ top: el.scrollHeight - el.clientHeight, behavior: 'smooth' });
-      }
+      el.scrollTop = el.scrollHeight;
     }
   }, [logs]);
+
+  const handleLogsScroll = () => {
+    if (logsContainerRef.current) {
+      const el = logsContainerRef.current;
+      userIsAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+    }
+  };
 
   // Handle Project Selection
   const handleSelectProject = (projectId) => {
@@ -435,7 +440,7 @@ export default function Dashboard({ session }) {
                       <div className="w-3 h-3 rounded-full bg-green-500"></div>
                       <span className="ml-2 text-xs text-gray-400 font-sans">tty1 - {selectedProject.id.substring(0,8)}</span>
                     </div>
-                    <div ref={logsContainerRef} className="flex-1 p-4 overflow-y-auto space-y-1">
+                    <div ref={logsContainerRef} onScroll={handleLogsScroll} className="flex-1 p-4 overflow-y-auto space-y-1">
                       {logs.length === 0 ? (
                         <p className="text-gray-500 italic">No logs available for this project yet.</p>
                       ) : (
