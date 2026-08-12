@@ -87,7 +87,7 @@ export default function Dashboard({ session }) {
     
     const interval = setInterval(() => {
       fetchProjects();
-      if (selectedProjectId && activeTab === 'logs') {
+      if (selectedProjectId && activeTab === 'logs' && userIsAtBottom.current) {
         fetchLogs(selectedProjectId);
       }
     }, 3000);
