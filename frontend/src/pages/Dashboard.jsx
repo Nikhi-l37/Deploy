@@ -96,8 +96,11 @@ export default function Dashboard({ session }) {
 
   useEffect(() => {
     if (logsContainerRef.current) {
-      const { scrollHeight, clientHeight } = logsContainerRef.current;
-      logsContainerRef.current.scrollTo({ top: scrollHeight - clientHeight, behavior: 'smooth' });
+      const el = logsContainerRef.current;
+      const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+      if (isNearBottom) {
+        el.scrollTo({ top: el.scrollHeight - el.clientHeight, behavior: 'smooth' });
+      }
     }
   }, [logs]);
 
