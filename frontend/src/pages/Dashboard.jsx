@@ -10,6 +10,10 @@ export default function Dashboard({ session }) {
   const [showModal, setShowModal] = useState(false);
   const [githubUrl, setGithubUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deployStep, setDeployStep] = useState(1);
+  const [newEnvVars, setNewEnvVars] = useState([{ key: '', value: '' }]);
+  const [newRootDir, setNewRootDir] = useState('');
+  const [newStartCmd, setNewStartCmd] = useState('');
   
   // Selected Project State
   const [selectedProjectId, setSelectedProjectId] = useState(null);
@@ -124,10 +128,19 @@ export default function Dashboard({ session }) {
     
     setIsSubmitting(true);
     try {
-      await api.post('/webhook/manual', {
-        github_url: githubUrl
-      });
+      const payload = { github_url: githubUrl };
+      if (newRootDir.trim()) payload.root_directory = newRootDir.trim();
+      if (newStartCmd.trim()) payload.start_command = newStartCmd.trim();
+      
+      const validEnvVars = newEnvVars.filter(ev => ev.key.trim() && ev.value.trim());
+      if (validEnvVars.length > 0) payload.env_vars = validEnvVars;
+      
+      await api.post('/webhook/manual', payload);
       setGithubUrl('');
+      setNewRootDir('');
+      setNewStartCmd('');
+      setNewEnvVars([{ key: '', value: '' }]);
+      setDeployStep(1);
       setShowModal(false);
       fetchProjects();
     } catch (err) {
@@ -581,53 +594,132 @@ export default function Dashboard({ session }) {
       {/* New Project Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-          <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
-              <h3 className="text-xl font-bold">Deploy New Project</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              <h3 className="text-xl font-bold">{deployStep === 1 ? 'Deploy New Project' : 'Configure Project'}</h3>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400">Step {deployStep}/2</span>
+                <button onClick={() => { setShowModal(false); setDeployStep(1); }} className="text-gray-400 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
             
-            <form onSubmit={handleCreateProject} className="p-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                    <Code className="w-4 h-4 text-blue-400" /> GitHub Repository URL
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://github.com/username/repo"
-                    value={githubUrl}
-                    onChange={(e) => setGithubUrl(e.target.value)}
-                    className="input-field"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Must be a public repository containing a Node.js or Python app.</p>
+            {deployStep === 1 ? (
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Code className="w-4 h-4 text-blue-400" /> GitHub Repository URL
+                    </label>
+                    <input
+                      type="url"
+                      required
+                      placeholder="https://github.com/username/repo"
+                      value={githubUrl}
+                      onChange={(e) => setGithubUrl(e.target.value)}
+                      className="input-field"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Must be a public repository containing a Node.js or Python app.</p>
+                  </div>
+                </div>
+                <div className="mt-8 flex gap-3">
+                  <button type="button" onClick={() => { setShowModal(false); setDeployStep(1); }} className="btn btn-outline flex-1">Cancel</button>
+                  <button type="button" disabled={!githubUrl} onClick={() => setDeployStep(2)} className="btn btn-primary flex-1">
+                    Next →
+                  </button>
                 </div>
               </div>
+            ) : (
+              <form onSubmit={handleCreateProject} className="p-6">
+                <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-2">
+                  {/* Root Directory */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Folder className="w-4 h-4 text-yellow-400" /> Root Directory
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. backend (leave empty for root)"
+                      value={newRootDir}
+                      onChange={(e) => setNewRootDir(e.target.value)}
+                      className="input-field"
+                    />
+                    <p className="text-xs text-gray-500">Subfolder containing your app code. Leave empty if app is in root.</p>
+                  </div>
 
-              <div className="mt-8 flex gap-3">
-                <button 
-                  type="button" 
-                  onClick={() => setShowModal(false)}
-                  className="btn btn-outline flex-1"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting || !githubUrl}
-                  className="btn btn-primary flex-1"
-                >
-                  {isSubmitting ? (
-                    <><RefreshCw className="w-4 h-4 animate-spin" /> Deploying...</>
-                  ) : (
-                    <><Activity className="w-4 h-4" /> Deploy App</>
-                  )}
-                </button>
-              </div>
-            </form>
+                  {/* Start Command */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Play className="w-4 h-4 text-green-400" /> Start Command
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. npm start (auto-detected if empty)"
+                      value={newStartCmd}
+                      onChange={(e) => setNewStartCmd(e.target.value)}
+                      className="input-field"
+                    />
+                    <p className="text-xs text-gray-500">Override the default start command. Leave empty for auto-detect.</p>
+                  </div>
+
+                  {/* Environment Variables */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Database className="w-4 h-4 text-purple-400" /> Environment Variables
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">Add database URLs, API keys, secrets, etc.</p>
+                    {newEnvVars.map((env, i) => (
+                      <div key={i} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="KEY"
+                          value={env.key}
+                          onChange={(e) => {
+                            const updated = [...newEnvVars];
+                            updated[i].key = e.target.value;
+                            setNewEnvVars(updated);
+                          }}
+                          className="input-field flex-1 font-mono text-sm"
+                        />
+                        <input
+                          type="text"
+                          placeholder="value"
+                          value={env.value}
+                          onChange={(e) => {
+                            const updated = [...newEnvVars];
+                            updated[i].value = e.target.value;
+                            setNewEnvVars(updated);
+                          }}
+                          className="input-field flex-1 font-mono text-sm"
+                        />
+                        <button type="button" onClick={() => {
+                          const updated = newEnvVars.filter((_, idx) => idx !== i);
+                          setNewEnvVars(updated.length ? updated : [{ key: '', value: '' }]);
+                        }} className="text-red-400 hover:text-red-300 px-2">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setNewEnvVars([...newEnvVars, { key: '', value: '' }])}
+                      className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1">
+                      <Plus className="w-3 h-3" /> Add Variable
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex gap-3">
+                  <button type="button" onClick={() => setDeployStep(1)} className="btn btn-outline flex-1">← Back</button>
+                  <button type="submit" disabled={isSubmitting} className="btn btn-primary flex-1">
+                    {isSubmitting ? (
+                      <><RefreshCw className="w-4 h-4 animate-spin" /> Deploying...</>
+                    ) : (
+                      <><Activity className="w-4 h-4" /> Deploy App</>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

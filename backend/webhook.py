@@ -10,6 +10,7 @@ import json
 import redis
 import config
 from database import supabase
+from cryptography.fernet import Fernet
 from auth import get_current_user, get_user_id_from_supabase
 
 router = APIRouter(prefix="/webhook", tags=["Deploy Pipeline"])
@@ -111,13 +112,36 @@ async def manual_deploy(request: Request):
                     detail=f"Free plan limited to {config.MAX_APPS_PER_USER} active project(s). Delete an existing project first."
                 )
             
+            # Extract optional fields
+            root_directory = data.get("root_directory")
+            start_command = data.get("start_command")
+            env_vars = data.get("env_vars")
+            
             # Create new project linked to this user
-            res = supabase.table("projects").insert({
+            project_data = {
                 "github_url": github_url,
                 "user_id": user_id,
                 "status": "QUEUED"
-            }).execute()
+            }
+            if root_directory:
+                project_data["root_directory"] = root_directory
+            if start_command:
+                project_data["start_command"] = start_command
+            
+            res = supabase.table("projects").insert(project_data).execute()
             project_id = res.data[0]["id"]
+            
+            # Encrypt and save environment variables if provided
+            if env_vars:
+                f = Fernet(config.FERNET_KEY)
+                for ev in env_vars:
+                    if ev.get('key') and ev.get('value'):
+                        encrypted = f.encrypt(ev['value'].encode()).decode()
+                        supabase.table('env_vars').insert({
+                            'project_id': project_id,
+                            'key_name': ev['key'],
+                            'value_enc': encrypted
+                        }).execute()
         
         elif project_id:
             # Verify project exists AND belongs to this user
