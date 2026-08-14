@@ -94,9 +94,9 @@ async def watchdog_task():
                     continue
                 
                 last_active = float(last_active_str)
-                if current_time - last_active > 60:
-                    # No traffic AND idle for 60s — time to sleep!
-                    print(f"[Watchdog] Project {project_id} idle for 60s. Putting to sleep.")
+                if current_time - last_active > config.WATCHDOG_IDLE_TIMEOUT:
+                    # No traffic AND idle for timeout — time to sleep!
+                    print(f"[Watchdog] Project {project_id} idle for {config.WATCHDOG_IDLE_TIMEOUT}s. Putting to sleep.")
                     try:
                         container = client.containers.get(container_name)
                         container.stop(timeout=5)
@@ -109,7 +109,7 @@ async def watchdog_task():
         except Exception as e:
             print(f"[Watchdog] Loop error: {e}")
             
-        await asyncio.sleep(30)
+        await asyncio.sleep(config.WATCHDOG_POLL_INTERVAL)
 
 @app.on_event("startup")
 async def startup_event():
@@ -189,7 +189,7 @@ async def wake_page(project_id: str):
     
     project = res.data[0]
     port = project.get("port", 8001)
-    app_url = f"http://localhost:{port}"
+    app_url = f"{config.HOST_URL}:{port}"
     project_name = project.get("github_url", "").split("/")[-1].replace(".git", "") or "Your App"
     
     html = f"""
@@ -390,7 +390,7 @@ async def wake_page(project_id: str):
         </div>
         
         <script>
-            const GATEWAY_URL = "http://localhost:8000/gateway/{project_id}";
+            const GATEWAY_URL = "{config.API_BASE_URL}/gateway/{project_id}";
             const APP_URL = "{app_url}";
             
             const step1 = document.getElementById("step1");

@@ -13,6 +13,14 @@ from database import supabase
 from cryptography.fernet import Fernet
 from auth import get_current_user, get_user_id_from_supabase
 
+def normalize_github_url(url):
+    """Strip .git suffix and trailing slashes for consistent comparison."""
+    if url:
+        url = url.rstrip('/')
+        if url.endswith('.git'):
+            url = url[:-4]
+    return url
+
 router = APIRouter(prefix="/webhook", tags=["Deploy Pipeline"])
 
 # Initialize Redis client for the build queue
@@ -62,7 +70,7 @@ async def github_webhook(
     github_url = data["repository"]["html_url"]
     
     # 4. Find the project in Supabase by github_url
-    projects_query = supabase.table("projects").select("*").eq("github_url", github_url).execute()
+    projects_query = supabase.table("projects").select("*").eq("github_url", normalize_github_url(github_url)).execute()
     
     if len(projects_query.data) == 0:
         return {"status": "ignored", "message": "Project not registered in Deploy"}
@@ -104,7 +112,7 @@ async def manual_deploy(request: Request):
             # Check 1-app-per-user limit
             existing = supabase.table("projects").select("id", count="exact").eq(
                 "user_id", user_id
-            ).neq("status", "STOPPED").execute()
+            ).neq("status", "STOPPED").neq("status", "FAILED").execute()
             
             if existing.count >= config.MAX_APPS_PER_USER:
                 raise HTTPException(

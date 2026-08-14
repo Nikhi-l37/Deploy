@@ -9,6 +9,7 @@ import shutil
 import redis
 import docker
 import requests
+import subprocess
 from cryptography.fernet import Fernet
 import config
 from database import supabase
@@ -64,6 +65,91 @@ def decrypt_env_vars(project_id: str) -> dict:
         env_dict[ev["key_name"]] = decrypted
     return env_dict
 
+def detect_framework(root_path):
+    """Detect if a Node.js project is a frontend framework or backend server.
+    Returns: 'vite', 'cra', 'nextjs', 'static-spa', or None (for backend/unknown)"""
+    import json
+    
+    # Check for framework config files
+    for f in os.listdir(root_path):
+        if f.startswith('vite.config'):
+            return 'vite'
+        if f.startswith('next.config'):
+            return 'nextjs'
+    
+    # Check package.json dependencies
+    pkg_path = os.path.join(root_path, 'package.json')
+    if os.path.exists(pkg_path):
+        try:
+            with open(pkg_path) as f:
+                pkg = json.load(f)
+            deps = {**pkg.get('dependencies', {}), **pkg.get('devDependencies', {})}
+            
+            # Check for specific frameworks
+            if 'vite' in deps:
+                return 'vite'
+            if 'next' in deps:
+                return 'nextjs'
+            if 'react-scripts' in deps:
+                return 'cra'
+            
+            # Check if it's a backend (has server frameworks)
+            backend_indicators = ['express', 'fastify', 'koa', 'hapi', '@nestjs/core', 'mongoose', 'pg', 'sequelize', 'prisma']
+            if any(ind in deps for ind in backend_indicators):
+                return None  # It's a backend
+            
+            # Has a build script but no backend indicators = likely frontend
+            scripts = pkg.get('scripts', {})
+            if 'build' in scripts and not any(ind in deps for ind in backend_indicators):
+                return 'static-spa'
+        except (json.JSONDecodeError, IOError):
+            pass
+    
+    return None  # Unknown or backend
+
+def generate_frontend_dockerfile(framework, root_path):
+    """Generate a multi-stage Dockerfile for frontend apps."""
+    import json
+    
+    # Determine output directory
+    output_dir = 'dist'  # Default for Vite
+    if framework == 'cra':
+        output_dir = 'build'
+    elif framework == 'nextjs':
+        # Next.js standalone mode
+        return """FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+EXPOSE 8080
+ENV PORT=8080
+CMD ["node", "server.js"]
+"""
+    
+    # Static SPA: Vite, CRA, generic
+    return f"""FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /app/{output_dir} /usr/share/nginx/html
+RUN echo 'server {{ listen 8080; root /usr/share/nginx/html; location / {{ try_files $uri $uri/ /index.html; }} }}' > /etc/nginx/conf.d/default.conf
+RUN rm /etc/nginx/conf.d/default.conf.bak 2>/dev/null; true
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
+"""
+
 def detect_language(repo_path: str) -> str:
     """Detects the language of the cloned repo."""
     if os.path.exists(os.path.join(repo_path, "Dockerfile")):
@@ -75,7 +161,7 @@ def detect_language(repo_path: str) -> str:
     else:
         raise Exception("Unsupported project: Missing Dockerfile, requirements.txt, or package.json")
 
-def generate_dockerfile(project_id: str, repo_path: str, language: str):
+def generate_dockerfile(project_id: str, repo_path: str, language: str, env_vars: dict = None, build_args: dict = None):
     """Generates a Dockerfile if the project doesn't have one."""
     df_path = os.path.join(repo_path, "Dockerfile")
     
@@ -90,7 +176,25 @@ COPY . .
 CMD ["sh", "-c", "if [ -f main.py ]; then python main.py; elif [ -f app.py ]; then python app.py; else echo 'No main.py or app.py found' && exit 1; fi"]
 """
     elif language == "node":
-        content = """
+        framework = detect_framework(repo_path)
+        if framework:
+            push_log(project_id, f"Detected frontend framework: {framework}")
+            content = generate_frontend_dockerfile(framework, repo_path)
+            if env_vars and build_args is not None:
+                arg_lines = []
+                for k, v in env_vars.items():
+                    if k.startswith(('VITE_', 'REACT_APP_', 'NEXT_PUBLIC_')):
+                        arg_lines.append(f"ARG {k}")
+                        build_args[k] = v
+                if arg_lines:
+                    lines = content.splitlines()
+                    for i, line in enumerate(lines):
+                        if line.startswith("FROM "):
+                            lines = lines[:i+1] + arg_lines + lines[i+1:]
+                            break
+                    content = "\n".join(lines)
+        else:
+            content = """
 FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
@@ -140,7 +244,9 @@ def run_pipeline(project_id: str):
             shutil.rmtree(repo_path, onerror=force_remove_readonly)
             
         push_log(project_id, "Cloning repository...")
-        os.system(f"git clone {github_url} {repo_path}")
+        result = subprocess.run(["git", "clone", github_url, repo_path], capture_output=True, text=True, timeout=120)
+        if result.returncode != 0:
+            raise Exception(f"Git clone failed: {result.stderr}")
         
         if not os.path.exists(repo_path):
             raise Exception("Failed to clone repository. Is it private or invalid?")
@@ -156,15 +262,18 @@ def run_pipeline(project_id: str):
         lang = detect_language(build_path)
         push_log(project_id, f"Detected: {lang}")
         
+        env_vars = decrypt_env_vars(project_id)
+        build_args = {}
+        
         if lang != "dockerfile":
-            generate_dockerfile(project_id, build_path, lang)
+            generate_dockerfile(project_id, build_path, lang, env_vars, build_args)
 
         # 4. Build Docker Image
         push_log(project_id, "Building Docker image. This may take a minute...")
         image_name = f"{safe_name}:latest"
         
         # We use the low-level API to stream logs
-        build_logs = docker_client.api.build(path=build_path, tag=image_name, decode=True)
+        build_logs = docker_client.api.build(path=build_path, tag=image_name, decode=True, buildargs=build_args)
         for chunk in build_logs:
             if 'stream' in chunk:
                 line = chunk['stream'].strip()
@@ -185,7 +294,7 @@ def run_pipeline(project_id: str):
 
         # 6. Prepare Runtime (Ports & Env Vars)
         port = project.get("port") or get_free_port(project_id)
-        env_vars = decrypt_env_vars(project_id)
+        # env_vars already decrypted earlier
         
         # Default PORT env var for the app inside the container
         if "PORT" not in env_vars:

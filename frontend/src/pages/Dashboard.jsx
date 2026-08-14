@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { LogOut, Plus, Activity, Code, Globe, RefreshCw, Trash2, X, Terminal, Settings, Database, Folder, Play, Save } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 export default function Dashboard({ session }) {
   const [projects, setProjects] = useState([]);
@@ -335,7 +335,7 @@ export default function Dashboard({ session }) {
                       <td className="p-4">
                         {project.status === 'RUNNING' && project.port ? (
                           <a 
-                            href={`http://localhost:${project.port}`} 
+                            href={`http://${window.location.hostname}:${project.port}`} 
                             target="_blank" 
                             rel="noreferrer" 
                             className="text-sm text-blue-400 hover:underline"
@@ -345,7 +345,7 @@ export default function Dashboard({ session }) {
                           </a>
                         ) : project.status === 'SLEEPING' && project.port ? (
                           <a 
-                            href={`http://localhost:8000/wake-page/${project.id}`} 
+                            href={`${BACKEND_URL}/wake-page/${project.id}`} 
                             target="_blank" 
                             rel="noreferrer" 
                             className="text-sm text-purple-400 hover:underline"
@@ -366,7 +366,7 @@ export default function Dashboard({ session }) {
                             <button 
                               onClick={(e) => { 
                                 e.stopPropagation(); 
-                                window.open(`http://localhost:8000/wake-page/${project.id}`, '_blank');
+                                window.open(`${BACKEND_URL}/wake-page/${project.id}`, '_blank');
                               }} 
                               className="p-1.5 px-3 bg-purple-500/10 border border-purple-500/30 rounded text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 transition-colors flex items-center gap-1.5 text-xs font-medium"
                               title="Wake Up"
