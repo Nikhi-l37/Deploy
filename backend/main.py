@@ -74,7 +74,8 @@ async def watchdog_task():
                     current_rx = sum(net.get("rx_bytes", 0) for net in networks.values())
                     
                     prev = prev_rx_bytes.get(project_id, 0)
-                    if current_rx > prev:
+                    new_bytes = current_rx - prev if current_rx > prev else 0
+                    if new_bytes > 1024:  # Ignore tiny keepalive packets (< 1KB)
                         has_traffic = True
                     prev_rx_bytes[project_id] = current_rx
                 except Exception:
