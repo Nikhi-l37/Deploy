@@ -48,11 +48,8 @@ async def watchdog_task():
     """Background task to pause idle containers.
     
     Uses two signals to detect activity:
-    1. Redis last_active timestamp (set by /gateway endpoint when Nginx is running)
-    2. Docker network rx_bytes (detects real TCP traffic even without Nginx)
+    1. Redis last_active timestamp (set on deployment and gateway access)
     """
-    # Track previous network bytes to detect new traffic
-    prev_rx_bytes = {}
     
     while True:
         try:
@@ -65,25 +62,12 @@ async def watchdog_task():
                 project_id = project["id"]
                 container_name = f"deploy-{project_id[:8]}"
                 
-                # Check if container has received new network traffic
-                has_traffic = False
+                # Verify container is actually running
                 try:
                     container = client.containers.get(container_name)
-                    stats = container.stats(stream=False)
-                    networks = stats.get("networks", {})
-                    current_rx = sum(net.get("rx_bytes", 0) for net in networks.values())
-                    
-                    prev = prev_rx_bytes.get(project_id, 0)
-                    new_bytes = current_rx - prev if current_rx > prev else 0
-                    if new_bytes > 1024:  # Ignore tiny keepalive packets (< 1KB)
-                        has_traffic = True
-                    prev_rx_bytes[project_id] = current_rx
+                    if container.status != "running":
+                        continue
                 except Exception:
-                    pass
-                
-                if has_traffic:
-                    # Container has real traffic — keep it alive
-                    redis_client.set(f"last_active:{project_id}", current_time)
                     continue
                 
                 # Check the Redis last_active timestamp
