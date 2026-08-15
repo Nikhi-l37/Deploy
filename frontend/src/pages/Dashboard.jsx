@@ -656,6 +656,9 @@ export default function Dashboard({ session }) {
                       className="input-field"
                     />
                     <p className="text-xs text-gray-500 mt-1">Must be a public repository containing a Node.js or Python app.</p>
+                    <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <p className="text-xs text-blue-300">💡 <strong>Tip:</strong> Adding a <code className="bg-blue-500/20 px-1 rounded">Dockerfile</code> to your repo gives faster builds and fewer errors! Without one, we auto-detect and generate it for you.</p>
+                    </div>
                   </div>
                 </div>
                 <div className="mt-8 flex gap-3">
