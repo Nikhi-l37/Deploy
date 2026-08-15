@@ -349,6 +349,21 @@ def run_pipeline(project_id: str):
         update_status(project_id, "FAILED")
         push_log(project_id, f"Deploy failed: {str(e)}")
         
+        # Auto-cleanup failed containers and images
+        container_name = f"deploy-{project_id[:8]}"
+        try:
+            container = client.containers.get(container_name)
+            container.remove(force=True)
+            push_log(project_id, "🧹 Cleaned up failed container.")
+        except Exception:
+            pass
+        
+        try:
+            client.images.remove(f"deploy-{project_id[:8]}", force=True)
+            push_log(project_id, "🧹 Cleaned up failed image.")
+        except Exception:
+            pass
+        
     finally:
         # Always clean up the cloned code
         if os.path.exists(repo_path):
