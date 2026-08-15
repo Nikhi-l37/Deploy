@@ -29,9 +29,22 @@ def generate_nginx_config():
         subdomain = f"{subdomain_name}.{DOMAIN_NAME}"
         
         server_block = f"""
+# HTTP -> redirect to HTTPS
 server {{
     listen 80;
     server_name {subdomain};
+    return 301 https://$host$request_uri;
+}}
+
+# HTTPS server block
+server {{
+    listen 443 ssl;
+    server_name {subdomain};
+
+    ssl_certificate /etc/letsencrypt/live/deployat.me-0001/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/deployat.me-0001/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {{
         # Wake-on-Demand: Ask FastAPI if the container is sleeping
