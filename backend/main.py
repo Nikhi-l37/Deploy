@@ -531,10 +531,13 @@ async def delete_project(project_id: str, request: Request):
                 "in_use": False
             }).eq("project_id", project_id).execute()
         
-        # 6. Delete deploy logs for this project
+        # 6. Delete env vars for this project
+        supabase.table("env_vars").delete().eq("project_id", project_id).execute()
+        
+        # 7. Delete deploy logs for this project
         supabase.table("deploy_logs").delete().eq("project_id", project_id).execute()
         
-        # 7. Delete the cloned repository folder from the hard drive
+        # 8. Delete the cloned repository folder from the hard drive
         import shutil
         import tempfile
         import stat
@@ -545,9 +548,26 @@ async def delete_project(project_id: str, request: Request):
                 os.chmod(path, stat.S_IWRITE)
                 func(path)
             shutil.rmtree(repo_path, onerror=force_remove_readonly)
-            
-        # 8. Delete the project itself
+        
+        # 9. Remove Docker image
+        try:
+            client = docker.from_env()
+            client.images.remove(f"deploy-{project_id[:8]}", force=True)
+        except Exception:
+            pass
+        
+        # 10. Delete the project itself
         supabase.table("projects").delete().eq("id", project_id).execute()
+        
+        # 11. Regenerate nginx config (removes the subdomain)
+        try:
+            import nginx_config
+            nginx_config.generate_nginx_config()
+        except Exception:
+            pass
+        
+        # 12. Clean up Redis
+        redis_client.delete(f"last_active:{project_id}")
         
         return {"status": "success", "message": "Project deleted"}
         
