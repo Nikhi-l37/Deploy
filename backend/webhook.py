@@ -125,11 +125,25 @@ async def manual_deploy(request: Request):
             start_command = data.get("start_command")
             env_vars = data.get("env_vars")
             
+            # Auto-generate subdomain from repo name
+            import re
+            repo_name = github_url.rstrip('/').split('/')[-1]
+            if repo_name.endswith('.git'):
+                repo_name = repo_name[:-4]
+            subdomain = re.sub(r'[^a-z0-9-]', '-', repo_name.lower()).strip('-')[:30]
+
+            # Ensure uniqueness
+            existing = supabase.table('projects').select('subdomain').eq('subdomain', subdomain).execute()
+            if existing.data:
+                import uuid
+                subdomain = f"{subdomain}-{str(uuid.uuid4())[:4]}"
+
             # Create new project linked to this user
             project_data = {
                 "github_url": github_url,
                 "user_id": user_id,
-                "status": "QUEUED"
+                "status": "QUEUED",
+                "subdomain": subdomain
             }
             if root_directory:
                 project_data["root_directory"] = root_directory

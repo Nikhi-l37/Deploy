@@ -32,6 +32,15 @@ export default function Dashboard({ session }) {
   const user = session.user;
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
+  const getAppUrl = (project) => {
+    const hostname = window.location.hostname;
+    if (project.subdomain && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      const baseDomain = hostname.replace(/^www\./, '');
+      return `http://${project.subdomain}.${baseDomain}`;
+    }
+    return `http://${hostname}:${project.port}`;
+  };
+
   // Create an authenticated axios instance that sends the Supabase token
   const api = useMemo(() => {
     const instance = axios.create({ baseURL: BACKEND_URL });
@@ -335,23 +344,23 @@ export default function Dashboard({ session }) {
                       <td className="p-4">
                         {project.status === 'RUNNING' && project.port ? (
                           <a 
-                            href={`http://${window.location.hostname}:${project.port}`} 
+                            href={getAppUrl(project)} 
                             target="_blank" 
                             rel="noreferrer" 
                             className="text-sm text-blue-400 hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            localhost:{project.port}
+                            {getAppUrl(project).replace('http://', '')}
                           </a>
                         ) : project.status === 'SLEEPING' && project.port ? (
                           <a 
-                            href={`${BACKEND_URL}/wake-page/${project.id}`} 
+                            href={project.subdomain && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? getAppUrl(project) : `${BACKEND_URL}/wake-page/${project.id}`} 
                             target="_blank" 
                             rel="noreferrer" 
                             className="text-sm text-purple-400 hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            💤 localhost:{project.port}
+                            💤 {project.subdomain && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? getAppUrl(project).replace('http://', '') : `localhost:${project.port}`}
                           </a>
                         ) : (
                           <span className="text-gray-600 text-sm">-</span>
@@ -366,7 +375,7 @@ export default function Dashboard({ session }) {
                             <button 
                               onClick={(e) => { 
                                 e.stopPropagation(); 
-                                window.open(`${BACKEND_URL}/wake-page/${project.id}`, '_blank');
+                                window.open(project.subdomain && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? getAppUrl(project) : `${BACKEND_URL}/wake-page/${project.id}`, '_blank');
                               }} 
                               className="p-1.5 px-3 bg-purple-500/10 border border-purple-500/30 rounded text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 transition-colors flex items-center gap-1.5 text-xs font-medium"
                               title="Wake Up"
