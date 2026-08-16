@@ -524,12 +524,11 @@ async def delete_project(project_id: str, request: Request):
             except Exception:
                 pass  # Container may already be stopped
         
-        # 5. Free the port in port_registry
-        if project.get("port"):
-            supabase.table("port_registry").update({
-                "project_id": None,
-                "in_use": False
-            }).eq("project_id", project_id).execute()
+        # 5. Free the port in port_registry (always try, even for FAILED projects)
+        supabase.table("port_registry").update({
+            "project_id": None,
+            "in_use": False
+        }).eq("project_id", project_id).execute()
         
         # 6. Delete env vars for this project
         supabase.table("env_vars").delete().eq("project_id", project_id).execute()
