@@ -354,7 +354,7 @@ export default function Dashboard({ session }) {
                           </a>
                         ) : project.status === 'SLEEPING' && project.port ? (
                           <a 
-                            href={project.subdomain && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? getAppUrl(project) : `${BACKEND_URL}/wake-page/${project.id}`} 
+                            href={`${BACKEND_URL}/wake-page/${project.id}`} 
                             target="_blank" 
                             rel="noreferrer" 
                             className="text-sm text-purple-400 hover:underline"
