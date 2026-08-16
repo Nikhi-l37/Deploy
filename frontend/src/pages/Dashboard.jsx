@@ -396,6 +396,18 @@ export default function Dashboard({ session }) {
                             >
                               <RefreshCw className="w-4 h-4" />
                             </button>
+                            {project.status === 'FAILED' && (
+                              <button 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  handleDelete(project.id); 
+                                }} 
+                                className="p-1.5 bg-red-500/10 border border-red-500/30 rounded text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           )}
                         </div>
                       </td>
