@@ -383,6 +383,7 @@ export default function Dashboard({ session }) {
                               <Play className="w-3 h-3" /> Wake
                             </button>
                           ) : (
+                            <>
                             <button 
                               onClick={(e) => { 
                                 e.stopPropagation(); 
@@ -408,6 +409,7 @@ export default function Dashboard({ session }) {
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             )}
+                            </>
                           )}
                         </div>
                       </td>
