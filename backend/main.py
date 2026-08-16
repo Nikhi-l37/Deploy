@@ -90,7 +90,6 @@ async def watchdog_task():
                     
                     supabase.table("projects").update({"status": "SLEEPING"}).eq("id", project_id).execute()
                     redis_client.delete(f"last_active:{project_id}")
-                    prev_rx_bytes.pop(project_id, None)
         except Exception as e:
             print(f"[Watchdog] Loop error: {e}")
             
