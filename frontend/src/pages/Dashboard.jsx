@@ -275,7 +275,7 @@ export default function Dashboard({ session }) {
             <Activity className="w-5 h-5 text-[#2ea043]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Deployly</h1>
+            <h1 className="text-xl font-bold text-white">Deployat</h1>
             <p className="text-sm text-[#8b949e]">Welcome back, {user.user_metadata.user_name || 'Developer'}</p>
           </div>
         </div>

@@ -183,7 +183,7 @@ async def wake_page(project_id: str):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Waking up · {project_name} · Deployly</title>
+        <title>Waking up · {project_name} · Deployat</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
             * {{ margin: 0; padding: 0; box-sizing: border-box; }}

@@ -43,7 +43,7 @@ export default function Login() {
         
         {/* Text content */}
         <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 mb-3 tracking-tight">
-          Deployly
+          Deployat
         </h1>
         <p className="text-slate-400 mb-10 text-sm leading-relaxed px-4">
           Push to GitHub. We handle the rest. <br/>
