@@ -173,7 +173,13 @@ async def wake_page(project_id: str):
     
     project = res.data[0]
     port = project.get("port", 8001)
-    app_url = f"{config.HOST_URL}:{port}"
+    
+    # Redirect to subdomain if configured, else fallback to port
+    if project.get("subdomain") and config.DOMAIN_NAME != "deploy.local":
+        app_url = f"https://{project['subdomain']}.{config.DOMAIN_NAME}"
+    else:
+        app_url = f"{config.HOST_URL}:{port}"
+        
     project_name = project.get("github_url", "").split("/")[-1].replace(".git", "") or "Your App"
     
     html = f"""

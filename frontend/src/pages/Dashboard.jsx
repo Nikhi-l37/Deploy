@@ -375,7 +375,7 @@ export default function Dashboard({ session }) {
                             <button 
                               onClick={(e) => { 
                                 e.stopPropagation(); 
-                                window.open(project.subdomain && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? getAppUrl(project) : `${BACKEND_URL}/wake-page/${project.id}`, '_blank');
+                                window.open(`${BACKEND_URL}/wake-page/${project.id}`, '_blank');
                               }} 
                               className="p-1.5 px-3 bg-purple-500/10 border border-purple-500/30 rounded text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 transition-colors flex items-center gap-1.5 text-xs font-medium"
                               title="Wake Up"
