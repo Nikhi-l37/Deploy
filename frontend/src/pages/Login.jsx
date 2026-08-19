@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabase';
 import { 
-  Activity, ShieldCheck, Zap, Globe, ArrowRight, GitBranch, 
-  Terminal, ArrowLeft, Layers, Server, Lock, ExternalLink
+  Activity, ShieldCheck, Zap, Globe, ArrowRight, 
+  ArrowLeft, Layers, Lock
 } from 'lucide-react';
 
 // Terminal deployment simulation lines
 const PIPELINE_LINES = [
-  { text: '$ git push origin main', color: '#f0f6fc', delay: 600, type: 'command' },
-  { text: 'Writing objects: 100% (42/42), 1.2 MiB | done.', color: '#484f58', delay: 350, type: 'dim' },
-  { text: '', color: '', delay: 200, type: 'blank' },
-  { ts: '00:01', text: 'Webhook received', color: '#58a6ff', delay: 400, type: 'info', badge: 'HMAC-SHA256 ✓', badgeColor: '#2ea44f' },
-  { ts: '00:01', text: 'Build queued', color: '#8b949e', delay: 300, type: 'muted', badge: 'redis', badgeColor: '#d29922' },
+  { text: '$ git push origin main', delay: 600, type: 'command' },
+  { text: 'Writing objects: 100% (42/42), 1.2 MiB | done.', delay: 350, type: 'dim' },
+  { text: '', delay: 200, type: 'blank' },
+  { ts: '00:01', text: 'Webhook received', color: '#58a6ff', delay: 400, type: 'info', badge: 'HMAC-SHA256 ✓' },
+  { ts: '00:01', text: 'Build queued', color: '#8b949e', delay: 300, type: 'muted', badge: 'redis' },
   { ts: '00:02', text: 'Cloning repository', color: '#8b949e', delay: 500, type: 'muted' },
-  { ts: '00:03', text: 'Runtime detected', color: '#58a6ff', delay: 400, type: 'info', badge: 'Node.js 20 LTS', badgeColor: '#2ea44f' },
-  { ts: '00:03', text: 'Dockerfile generated', color: '#8b949e', delay: 350, type: 'muted', badge: 'multi-stage', badgeColor: '#58a6ff' },
-  { ts: '00:04', text: 'Building image', color: '#d29922', delay: 900, type: 'warn', badge: 'docker build', badgeColor: '#d29922' },
-  { ts: '00:12', text: 'Secrets injected', color: '#bc8cff', delay: 350, type: 'purple', badge: 'Fernet AES-128', badgeColor: '#bc8cff' },
-  { ts: '00:13', text: 'Container started', color: '#58a6ff', delay: 350, type: 'info', badge: ':49203', badgeColor: '#58a6ff' },
-  { ts: '00:13', text: 'Nginx configured', color: '#2ea44f', delay: 300, type: 'muted', badge: 'reload ✓', badgeColor: '#2ea44f' },
-  { text: '', color: '', delay: 250, type: 'blank' },
+  { ts: '00:03', text: 'Runtime detected', color: '#58a6ff', delay: 400, type: 'info', badge: 'Node.js 20 LTS' },
+  { ts: '00:03', text: 'Dockerfile generated', color: '#8b949e', delay: 350, type: 'muted', badge: 'multi-stage' },
+  { ts: '00:04', text: 'Building image', color: '#d29922', delay: 900, type: 'warn', badge: 'docker build' },
+  { ts: '00:12', text: 'Secrets injected', color: '#bc8cff', delay: 350, type: 'purple', badge: 'Fernet AES-128' },
+  { ts: '00:13', text: 'Container started', color: '#58a6ff', delay: 350, type: 'info', badge: ':49203' },
+  { ts: '00:13', text: 'Nginx configured', color: '#2ea44f', delay: 300, type: 'muted', badge: 'reload ✓' },
+  { text: '', delay: 250, type: 'blank' },
   { ts: '00:14', text: '✓ Live at https://myapp.deployat.me', color: '#2ea44f', delay: 0, type: 'success' },
 ];
 
