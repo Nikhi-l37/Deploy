@@ -86,6 +86,31 @@
   }
 }
 
+@keyframes packet-travel-horizontal {
+  0% {
+    left: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.25s ease-out forwards;
+}
+
+.animate-packet-travel {
+  animation: packet-travel-horizontal 3.5s ease-in-out infinite;
+}
+
+.animate-packet-travel-fast {
+  animation: packet-travel-horizontal 2.2s ease-in-out infinite;
 }

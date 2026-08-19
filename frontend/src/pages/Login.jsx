@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabase';
 import { 
   Activity, ShieldCheck, Zap, Globe, ArrowRight, 
-  ArrowLeft, Layers, Lock
+  ArrowLeft, Layers, Lock, GitBranch, Server, Cpu,
+  Terminal, Network, CheckCircle2
 } from 'lucide-react';
 
 // Terminal deployment simulation lines
@@ -26,6 +27,7 @@ const PIPELINE_LINES = [
 export default function Login() {
   const [showLogin, setShowLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [architectureTab, setArchitectureTab] = useState('developer'); // 'developer' | 'engine'
 
   const handleGithubLogin = async () => {
     try {
@@ -396,6 +398,274 @@ export default function Login() {
                   </div>
                   <span>bash · utf-8</span>
                 </div>
+
+              </div>
+            </div>
+
+            {/* ========================================================== */}
+            {/* HOW IT WORKS: DUAL-VIEW ARCHITECTURE CANVAS               */}
+            {/* ========================================================== */}
+            <div className="max-w-4xl mx-auto pt-8 w-full space-y-5">
+              
+              {/* Header & Segmented Controller */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-left">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
+                    <span className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider font-mono">
+                      System Architecture
+                    </span>
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#f0f6fc] tracking-tight">
+                    How Deployat Works
+                  </h2>
+                </div>
+
+                {/* Segmented Controller Tabs */}
+                <div className="inline-flex items-center p-1 rounded-[8px] bg-[#161b22] border border-[#30363d] shadow-sm select-none">
+                  <button
+                    onClick={() => setArchitectureTab('developer')}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${
+                      architectureTab === 'developer'
+                        ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm'
+                        : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5 text-[#2ea44f]" />
+                    <span>Developer Workflow</span>
+                  </button>
+
+                  <button
+                    onClick={() => setArchitectureTab('engine')}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${
+                      architectureTab === 'engine'
+                        ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm'
+                        : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'
+                    }`}
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-[#58a6ff]" />
+                    <span>Internal Engine Architecture</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Architecture Canvas Viewport */}
+              <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] p-6 sm:p-8 shadow-sm relative overflow-hidden text-left">
+
+                {/* ────────────────────────────────────────────────────────── */}
+                {/* TAB 1: DEVELOPER WORKFLOW CANVAS (Macro View)              */}
+                {/* ────────────────────────────────────────────────────────── */}
+                {architectureTab === 'developer' ? (
+                  <div className="space-y-6 animate-fade-in">
+                    
+                    {/* Top Canvas Bar */}
+                    <div className="flex items-center justify-between text-[11px] font-mono text-[#8b949e] pb-4 border-b border-[#30363d]">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
+                        <span className="text-[#f0f6fc] font-medium">Macro View</span>
+                        <span className="text-[#484f58]">|</span>
+                        <span>Local Commit ➔ Webhook Trigger ➔ Global Edge</span>
+                      </div>
+                      <span className="text-[#484f58] hidden sm:inline">packet.speed: ~3.2s</span>
+                    </div>
+
+                    {/* 3-Node Architecture Flow */}
+                    <div className="relative pt-2 pb-2">
+                      
+                      {/* Horizontal connecting track across nodes (desktop only) */}
+                      <div className="hidden md:block absolute top-[30px] left-[15%] right-[15%] h-[2px] bg-[#30363d]">
+                        {/* Animated traveling green data packet */}
+                        <div className="relative w-full h-full">
+                          <span className="animate-packet-travel absolute top-[-3.5px] w-2.5 h-2.5 rounded-full bg-[#2ea44f] shadow-[0_0_10px_#2ea44f]"></span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 relative z-10">
+                        
+                        {/* Node 1: Push Code */}
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+                          <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#f0f6fc] shadow-sm">
+                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                              <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                            </svg>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center md:justify-start gap-1.5">
+                              <span className="text-[10px] font-mono text-[#484f58]">01</span>
+                              <h3 className="text-sm font-semibold text-[#f0f6fc]">1. Push Code</h3>
+                            </div>
+                            <p className="text-xs text-[#8b949e] leading-relaxed max-w-[220px]">
+                              Developer commits code to repository.
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#0d1117] text-[#8b949e] border border-[#30363d]">
+                            git push origin main
+                          </span>
+                        </div>
+
+                        {/* Mobile Down Arrow indicator */}
+                        <div className="flex justify-center md:hidden text-[#484f58]">
+                          <span className="text-xs">▼</span>
+                        </div>
+
+                        {/* Node 2: Automatic Intake */}
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+                          <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#2ea44f] shadow-sm">
+                            <Activity className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center md:justify-start gap-1.5">
+                              <span className="text-[10px] font-mono text-[#484f58]">02</span>
+                              <h3 className="text-sm font-semibold text-[#f0f6fc]">2. Automatic Intake</h3>
+                            </div>
+                            <p className="text-xs text-[#8b949e] leading-relaxed max-w-[220px]">
+                              Secure webhook instantly captures commit changes.
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#0d1117] text-[#8b949e] border border-[#30363d]">
+                            HMAC-SHA256 Webhook
+                          </span>
+                        </div>
+
+                        {/* Mobile Down Arrow indicator */}
+                        <div className="flex justify-center md:hidden text-[#484f58]">
+                          <span className="text-xs">▼</span>
+                        </div>
+
+                        {/* Node 3: Live on Web */}
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+                          <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#58a6ff] shadow-sm">
+                            <Globe className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center md:justify-start gap-1.5">
+                              <span className="text-[10px] font-mono text-[#484f58]">03</span>
+                              <h3 className="text-sm font-semibold text-[#f0f6fc]">3. Live on Web</h3>
+                            </div>
+                            <p className="text-xs text-[#8b949e] leading-relaxed max-w-[220px]">
+                              Global live URL active in under 3 seconds.
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#0d1117] text-[#8b949e] border border-[#30363d]">
+                            https://*.deployat.me
+                          </span>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  /* ────────────────────────────────────────────────────────── */
+                  /* TAB 2: INTERNAL ENGINE ARCHITECTURE CANVAS (Micro View)    */
+                  /* ────────────────────────────────────────────────────────── */
+                  <div className="space-y-6 animate-fade-in">
+                    
+                    {/* Top Canvas Bar */}
+                    <div className="flex items-center justify-between text-[11px] font-mono text-[#8b949e] pb-4 border-b border-[#30363d]">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#58a6ff]"></span>
+                        <span className="text-[#f0f6fc] font-medium">Micro Engine View</span>
+                        <span className="text-[#484f58]">|</span>
+                        <span>Multi-Stage Sandboxed Isolation Core</span>
+                      </div>
+                      <span className="text-[#484f58] hidden sm:inline">isolation: cgroups v2</span>
+                    </div>
+
+                    {/* 4-Stage Pipeline Architecture Grid */}
+                    <div className="relative pt-2 pb-2">
+                      
+                      {/* Horizontal connecting track across stages (desktop only) */}
+                      <div className="hidden lg:block absolute top-[30px] left-[10%] right-[10%] h-[2px] bg-[#30363d]">
+                        {/* High-frequency animated traveling cyan pulse packet */}
+                        <div className="relative w-full h-full">
+                          <span className="animate-packet-travel-fast absolute top-[-3.5px] w-2.5 h-2.5 rounded-full bg-[#58a6ff] shadow-[0_0_10px_#58a6ff]"></span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+                        
+                        {/* Stage 1: Code Pull */}
+                        <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-3 bg-[#0d1117] p-4 rounded-[6px] border border-[#30363d]/60">
+                          <div className="w-10 h-10 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#58a6ff] shadow-sm">
+                            <GitBranch className="w-4 h-4" />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                              <span className="text-[10px] font-mono text-[#484f58]">01</span>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc]">Code Pull</h3>
+                            </div>
+                            <p className="text-[11px] text-[#8b949e] leading-relaxed">
+                              Pulls fresh production branch layout into an isolated environment.
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d] mt-auto">
+                            git.clone --depth=1
+                          </span>
+                        </div>
+
+                        {/* Stage 2: Secrets Injection */}
+                        <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-3 bg-[#0d1117] p-4 rounded-[6px] border border-[#30363d]/60">
+                          <div className="w-10 h-10 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#bc8cff] shadow-sm">
+                            <Lock className="w-4 h-4" />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                              <span className="text-[10px] font-mono text-[#484f58]">02</span>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc]">Secrets Injection</h3>
+                            </div>
+                            <p className="text-[11px] text-[#8b949e] leading-relaxed">
+                              Safely maps and encrypts hidden <code className="text-[#bc8cff]">.env</code> keys into the build stack.
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d] mt-auto">
+                            fernet.aes_128_gcm
+                          </span>
+                        </div>
+
+                        {/* Stage 3: Docker Containment */}
+                        <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-3 bg-[#0d1117] p-4 rounded-[6px] border border-[#30363d]/60">
+                          <div className="w-10 h-10 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#d29922] shadow-sm">
+                            <Server className="w-4 h-4" />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                              <span className="text-[10px] font-mono text-[#484f58]">03</span>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc]">Docker Containment</h3>
+                            </div>
+                            <p className="text-[11px] text-[#8b949e] leading-relaxed">
+                              Packages app layers inside a localized, secure server container instance.
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d] mt-auto">
+                            docker.build --cgroup
+                          </span>
+                        </div>
+
+                        {/* Stage 4: Proxy Routing */}
+                        <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-3 bg-[#0d1117] p-4 rounded-[6px] border border-[#30363d]/60">
+                          <div className="w-10 h-10 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#2ea44f] shadow-sm">
+                            <Network className="w-4 h-4" />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                              <span className="text-[10px] font-mono text-[#484f58]">04</span>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc]">Proxy Routing</h3>
+                            </div>
+                            <p className="text-[11px] text-[#8b949e] leading-relaxed">
+                              Configures Nginx reverse proxy routes to securely handle external client traffic.
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d] mt-auto">
+                            nginx.reverse_proxy
+                          </span>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+                )}
 
               </div>
             </div>
