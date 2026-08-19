@@ -50,17 +50,15 @@ export default function Login() {
     }
   };
 
-  // ── Live Terminal Simulation ──
+  // ── Live Terminal Simulation (Runs once and stays visible) ──
   const [visibleLines, setVisibleLines] = useState([]);
   const [terminalDone, setTerminalDone] = useState(false);
-  const [terminalFading, setTerminalFading] = useState(false);
   const terminalRef = useRef(null);
   const timeoutsRef = useRef([]);
 
   const runTerminal = useCallback(() => {
     setVisibleLines([]);
     setTerminalDone(false);
-    setTerminalFading(false);
     timeoutsRef.current.forEach(t => clearTimeout(t));
     timeoutsRef.current = [];
 
@@ -88,26 +86,6 @@ export default function Login() {
       timeoutsRef.current.forEach(t => clearTimeout(t));
     };
   }, [showLogin, runTerminal]);
-
-  // Smooth restart: pause → fade out → clear → replay
-  useEffect(() => {
-    if (terminalDone) {
-      // Wait 4s so user can read the final URL
-      const fadeTimer = setTimeout(() => {
-        setTerminalFading(true);
-      }, 4000);
-      
-      // After fade animation (600ms), restart
-      const restartTimer = setTimeout(() => {
-        runTerminal();
-      }, 4600);
-
-      return () => {
-        clearTimeout(fadeTimer);
-        clearTimeout(restartTimer);
-      };
-    }
-  }, [terminalDone, runTerminal]);
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#0d1117] text-[#c9d1d9] antialiased">
@@ -323,7 +301,15 @@ export default function Login() {
                   </div>
                   <div className="flex items-center gap-2 text-[10px] font-mono text-[#484f58]">
                     {terminalDone && (
-                      <span className="text-[#2ea44f]">● deployed</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#2ea44f]">● deployed</span>
+                        <button 
+                          onClick={runTerminal}
+                          className="text-[#8b949e] hover:text-[#f0f6fc] text-[10px] underline underline-offset-2 cursor-pointer transition-colors"
+                        >
+                          Replay
+                        </button>
+                      </div>
                     )}
                     {!terminalDone && visibleLines.length > 0 && (
                       <span className="text-[#d29922] animate-pulse">● deploying...</span>
@@ -334,7 +320,7 @@ export default function Login() {
                 {/* Terminal Output Body — strict monospace grid */}
                 <div 
                   ref={terminalRef}
-                  className={`bg-[#0d1117] p-5 sm:p-6 font-mono text-[12px] sm:text-[13px] leading-[1.8] overflow-y-auto max-h-[340px] scroll-smooth transition-opacity duration-500 ${terminalFading ? 'opacity-0' : 'opacity-100'}`}
+                  className="bg-[#0d1117] p-5 sm:p-6 font-mono text-[12px] sm:text-[13px] leading-[1.8] overflow-y-auto max-h-[340px] scroll-smooth"
                 >
                   {visibleLines.map((line, i) => (
                     <div 
