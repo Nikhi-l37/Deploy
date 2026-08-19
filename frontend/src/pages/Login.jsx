@@ -217,101 +217,149 @@ export default function Login() {
               </div>
             </div>
 
-            {/* 3-Step Visual Git Pipeline */}
+            {/* ========================================================== */}
+            {/* INTERCONNECTED DEPLOYMENT PIPELINE TERMINAL               */}
+            {/* ========================================================== */}
             <div className="max-w-4xl mx-auto pt-6">
-              <div className="text-left mb-4">
+              {/* Terminal Header Label */}
+              <div className="text-left mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
                 <span className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider font-mono">
-                  Deployment Pipeline Workflow
+                  Deployment Pipeline
                 </span>
+                <span className="text-[10px] font-mono text-[#484f58]">— real-time workflow</span>
               </div>
 
-              {/* Pipeline Nodes Container */}
-              <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] p-6 sm:p-8 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-                  
-                  {/* Step 1: Git Push */}
-                  <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-2">
-                    <div className="w-10 h-10 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#58a6ff]">
-                      <GitBranch className="w-5 h-5" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-[#8b949e]">01</span>
-                      <h3 className="text-sm font-semibold text-[#f0f6fc]">Push to GitHub</h3>
-                    </div>
-                    <p className="text-xs text-[#8b949e] leading-relaxed">
-                      Push to your <code className="bg-[#0d1117] px-1 py-0.5 rounded text-[#58a6ff] border border-[#30363d]">main</code> branch. HMAC-SHA256 webhooks notify Deployly instantly.
-                    </p>
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#0d1117] text-[#8b949e] border border-[#30363d]">
-                      Webhook Trigger
-                    </span>
-                  </div>
+              {/* Unified Pipeline Canvas */}
+              <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] shadow-sm overflow-hidden">
 
-                  {/* Step 2: Auto Build & Route */}
-                  <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-2">
-                    <div className="w-10 h-10 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#2ea44f]">
-                      <Server className="w-5 h-5" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-[#8b949e]">02</span>
-                      <h3 className="text-sm font-semibold text-[#f0f6fc]">Auto Build & Isolation</h3>
-                    </div>
-                    <p className="text-xs text-[#8b949e] leading-relaxed">
-                      Worker detects runtime, generates multi-stage Dockerfile, and injects Fernet encrypted secrets.
-                    </p>
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#0d1117] text-[#8b949e] border border-[#30363d]">
-                      Docker Engine + Redis
-                    </span>
-                  </div>
-
-                  {/* Step 3: Production Live */}
-                  <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-2">
-                    <div className="w-10 h-10 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#bc8cff]">
-                      <Globe className="w-5 h-5" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-[#8b949e]">03</span>
-                      <h3 className="text-sm font-semibold text-[#f0f6fc]">Instant Live URL</h3>
-                    </div>
-                    <p className="text-xs text-[#8b949e] leading-relaxed">
-                      Nginx config is hot-reloaded. Your application is live with wake-on-demand and auto-sleep.
-                    </p>
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#0d1117] text-[#8b949e] border border-[#30363d]">
-                      Nginx Reverse Proxy
-                    </span>
-                  </div>
-
+                {/* Terminal Title Bar */}
+                <div className="bg-[#161b22] border-b border-[#30363d] px-4 py-2.5 flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-[#f85149]"></span>
+                  <span className="w-3 h-3 rounded-full bg-[#d29922]"></span>
+                  <span className="w-3 h-3 rounded-full bg-[#2ea44f]"></span>
+                  <span className="ml-2 text-[11px] font-mono text-[#484f58]">deployat — pipeline.workflow</span>
                 </div>
+
+                {/* Pipeline Body */}
+                <div className="p-6 sm:p-8 bg-[#0d1117]">
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-4 md:gap-0 items-start relative">
+                    
+                    {/* ─── Node 1: Git Push ─── */}
+                    <div className="flex flex-col items-center text-center space-y-2.5 px-2">
+                      <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#58a6ff] relative z-10 shadow-[0_0_12px_rgba(88,166,255,0.15)]">
+                        <GitBranch className="w-5 h-5" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-[#484f58]">01</span>
+                        <h3 className="text-sm font-semibold text-[#f0f6fc]">Push</h3>
+                      </div>
+                      <p className="text-[11px] text-[#8b949e] leading-relaxed max-w-[180px]">
+                        Push to <code className="bg-[#161b22] px-1 py-0.5 rounded text-[#58a6ff] border border-[#30363d] text-[10px]">main</code> branch. HMAC-SHA256 webhooks fire instantly.
+                      </p>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d]">
+                        webhook.trigger
+                      </span>
+                    </div>
+
+                    {/* ─── Connector Line 1→2 ─── */}
+                    <div className="hidden md:flex items-start justify-center pt-5 px-1">
+                      <div className="relative w-16 h-[2px] bg-[#30363d] mt-[18px] rounded-full overflow-hidden">
+                        <span className="pipeline-packet absolute top-[-2px] w-3 h-[6px] rounded-full bg-[#2ea44f] shadow-[0_0_8px_rgba(46,164,79,0.8)]"></span>
+                      </div>
+                    </div>
+
+                    {/* ─── Node 2: Build Engine ─── */}
+                    <div className="flex flex-col items-center text-center space-y-2.5 px-2">
+                      <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#2ea44f] relative z-10 shadow-[0_0_12px_rgba(46,164,79,0.15)]">
+                        <Server className="w-5 h-5" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-[#484f58]">02</span>
+                        <h3 className="text-sm font-semibold text-[#f0f6fc]">Build</h3>
+                      </div>
+                      <p className="text-[11px] text-[#8b949e] leading-relaxed max-w-[180px]">
+                        Auto-detects runtime, generates Dockerfile, and injects Fernet-encrypted secrets.
+                      </p>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d]">
+                        docker.engine + redis
+                      </span>
+                    </div>
+
+                    {/* ─── Connector Line 2→3 ─── */}
+                    <div className="hidden md:flex items-start justify-center pt-5 px-1">
+                      <div className="relative w-16 h-[2px] bg-[#30363d] mt-[18px] rounded-full overflow-hidden">
+                        <span className="pipeline-packet-delayed absolute top-[-2px] w-3 h-[6px] rounded-full bg-[#2ea44f] shadow-[0_0_8px_rgba(46,164,79,0.8)]"></span>
+                      </div>
+                    </div>
+
+                    {/* ─── Node 3: Live Production ─── */}
+                    <div className="flex flex-col items-center text-center space-y-2.5 px-2">
+                      <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#bc8cff] relative z-10 shadow-[0_0_12px_rgba(188,140,255,0.15)]">
+                        <Globe className="w-5 h-5" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-[#484f58]">03</span>
+                        <h3 className="text-sm font-semibold text-[#f0f6fc]">Live</h3>
+                      </div>
+                      <p className="text-[11px] text-[#8b949e] leading-relaxed max-w-[180px]">
+                        Nginx hot-reloads config. App is live with wake-on-demand and auto-sleep.
+                      </p>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d]">
+                        nginx.reverse_proxy
+                      </span>
+                    </div>
+
+                  </div>
+
+                  {/* Mobile connector arrows (visible on small screens only) */}
+                  <div className="flex flex-col items-center gap-1 my-2 md:hidden">
+                    <div className="w-[2px] h-6 bg-[#30363d]"></div>
+                    <span className="text-[10px] text-[#484f58]">▼</span>
+                    <div className="w-[2px] h-6 bg-[#30363d]"></div>
+                  </div>
+                </div>
+
+                {/* Pipeline Status Bar */}
+                <div className="bg-[#161b22] border-t border-[#30363d] px-4 py-2 flex items-center justify-between text-[10px] font-mono text-[#484f58]">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
+                    <span className="text-[#8b949e]">pipeline.status: <span className="text-[#2ea44f]">ready</span></span>
+                  </div>
+                  <span>latency: ~3.2s avg</span>
+                </div>
+
               </div>
             </div>
 
-            {/* Feature Highlights Grid */}
+            {/* Feature Highlights Grid (with hover effects) */}
             <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-              <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] p-4 space-y-1.5">
+              <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#f0f6fc]">
-                  <Zap className="w-4 h-4 text-[#d29922]" />
+                  <Zap className="w-3.5 h-3.5 text-[#d29922]" />
                   <span>Zero-Config Builds</span>
                 </div>
-                <p className="text-xs text-[#8b949e] leading-relaxed">
+                <p className="text-[11px] text-[#8b949e] leading-relaxed">
                   Automatic language detection for Node.js, Python, Vite, Next.js, and custom Dockerfiles.
                 </p>
               </div>
 
-              <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] p-4 space-y-1.5">
+              <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#f0f6fc]">
-                  <Lock className="w-4 h-4 text-[#2ea44f]" />
+                  <Lock className="w-3.5 h-3.5 text-[#2ea44f]" />
                   <span>Fernet Encryption</span>
                 </div>
-                <p className="text-xs text-[#8b949e] leading-relaxed">
+                <p className="text-[11px] text-[#8b949e] leading-relaxed">
                   API keys and environment variables are symmetrically encrypted at rest in Supabase.
                 </p>
               </div>
 
-              <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] p-4 space-y-1.5">
+              <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#f0f6fc]">
-                  <Layers className="w-4 h-4 text-[#58a6ff]" />
+                  <Layers className="w-3.5 h-3.5 text-[#58a6ff]" />
                   <span>Strict Resource Limits</span>
                 </div>
-                <p className="text-xs text-[#8b949e] leading-relaxed">
+                <p className="text-[11px] text-[#8b949e] leading-relaxed">
                   Protected with 128MB RAM caps and 25% CPU throttling to prevent runaway processes.
                 </p>
               </div>
