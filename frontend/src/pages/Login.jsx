@@ -1,9 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabase';
 import { 
   Activity, ShieldCheck, Zap, Globe, ArrowRight, GitBranch, 
   Terminal, ArrowLeft, Layers, Server, Lock, ExternalLink
 } from 'lucide-react';
+
+// Terminal deployment simulation lines
+const PIPELINE_LINES = [
+  { text: '$ git push origin main', color: '#f0f6fc', delay: 600, type: 'command' },
+  { text: 'Enumerating objects: 42, done.', color: '#484f58', delay: 400, type: 'dim' },
+  { text: 'remote: Resolving deltas: 100% (18/18)', color: '#484f58', delay: 300, type: 'dim' },
+  { text: '', color: '', delay: 200, type: 'blank' },
+  { text: '⟫ Webhook received from GitHub', color: '#58a6ff', delay: 500, type: 'info', badge: 'HMAC-SHA256 ✓', badgeColor: '#2ea44f' },
+  { text: '⟫ Queuing build job → Redis', color: '#d29922', delay: 400, type: 'warn', badge: 'build_queue', badgeColor: '#d29922' },
+  { text: '⟫ Cloning repository...', color: '#8b949e', delay: 600, type: 'muted' },
+  { text: '⟫ Detecting runtime', color: '#58a6ff', delay: 500, type: 'info', badge: 'Node.js 20', badgeColor: '#2ea44f' },
+  { text: '⟫ Generating Dockerfile (multi-stage)', color: '#8b949e', delay: 400, type: 'muted' },
+  { text: '⟫ Building container deploy-a8f3c2e1', color: '#d29922', delay: 800, type: 'warn', badge: 'docker build', badgeColor: '#d29922' },
+  { text: '⟫ Injecting 3 encrypted env vars', color: '#bc8cff', delay: 400, type: 'purple', badge: 'Fernet AES', badgeColor: '#bc8cff' },
+  { text: '⟫ Container started on :43821', color: '#58a6ff', delay: 400, type: 'info' },
+  { text: '⟫ Nginx reverse proxy → hot reload', color: '#58a6ff', delay: 400, type: 'info', badge: 'config ✓', badgeColor: '#2ea44f' },
+  { text: '', color: '', delay: 300, type: 'blank' },
+  { text: '✓ Live at https://myapp.deployat.me', color: '#2ea44f', delay: 0, type: 'success' },
+];
 
 export default function Login() {
   const [showLogin, setShowLogin] = useState(false);
@@ -28,6 +47,56 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  // ── Live Terminal Simulation ──
+  const [visibleLines, setVisibleLines] = useState([]);
+  const [terminalDone, setTerminalDone] = useState(false);
+  const terminalRef = useRef(null);
+  const timeoutsRef = useRef([]);
+
+  const runTerminal = useCallback(() => {
+    // Clear previous
+    setVisibleLines([]);
+    setTerminalDone(false);
+    timeoutsRef.current.forEach(t => clearTimeout(t));
+    timeoutsRef.current = [];
+
+    let cumulative = 500; // initial pause before first line
+    PIPELINE_LINES.forEach((line, i) => {
+      cumulative += line.delay;
+      const t = setTimeout(() => {
+        setVisibleLines(prev => [...prev, line]);
+        // Auto-scroll terminal
+        if (terminalRef.current) {
+          terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+        }
+        // Mark done on last line
+        if (i === PIPELINE_LINES.length - 1) {
+          setTerminalDone(true);
+        }
+      }, cumulative);
+      timeoutsRef.current.push(t);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!showLogin) {
+      runTerminal();
+    }
+    return () => {
+      timeoutsRef.current.forEach(t => clearTimeout(t));
+    };
+  }, [showLogin, runTerminal]);
+
+  // Auto-replay after completion
+  useEffect(() => {
+    if (terminalDone) {
+      const replay = setTimeout(() => {
+        runTerminal();
+      }, 4000); // 4 second pause before replay
+      return () => clearTimeout(replay);
+    }
+  }, [terminalDone, runTerminal]);
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#0d1117] text-[#c9d1d9] antialiased">
@@ -218,121 +287,115 @@ export default function Login() {
             </div>
 
             {/* ========================================================== */}
-            {/* INTERCONNECTED DEPLOYMENT PIPELINE TERMINAL               */}
+            {/* LIVE DEPLOYMENT TERMINAL SIMULATION                        */}
             {/* ========================================================== */}
-            <div className="max-w-4xl mx-auto pt-6">
+            <div className="max-w-3xl mx-auto pt-6 w-full">
               {/* Terminal Header Label */}
               <div className="text-left mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
                 <span className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider font-mono">
-                  Deployment Pipeline
+                  Live Deploy Preview
                 </span>
-                <span className="text-[10px] font-mono text-[#484f58]">— real-time workflow</span>
+                <span className="text-[10px] font-mono text-[#484f58]">— watch a deployment happen</span>
               </div>
 
-              {/* Unified Pipeline Canvas */}
+              {/* Terminal Window */}
               <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] shadow-sm overflow-hidden">
 
-                {/* Terminal Title Bar */}
-                <div className="bg-[#161b22] border-b border-[#30363d] px-4 py-2.5 flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[#f85149]"></span>
-                  <span className="w-3 h-3 rounded-full bg-[#d29922]"></span>
-                  <span className="w-3 h-3 rounded-full bg-[#2ea44f]"></span>
-                  <span className="ml-2 text-[11px] font-mono text-[#484f58]">deployat — pipeline.workflow</span>
-                </div>
-
-                {/* Pipeline Body */}
-                <div className="p-6 sm:p-8 bg-[#0d1117]">
-                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-4 md:gap-0 items-start relative">
-                    
-                    {/* ─── Node 1: Git Push ─── */}
-                    <div className="flex flex-col items-center text-center space-y-2.5 px-2">
-                      <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#58a6ff] relative z-10 shadow-[0_0_12px_rgba(88,166,255,0.15)]">
-                        <GitBranch className="w-5 h-5" />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-mono text-[#484f58]">01</span>
-                        <h3 className="text-sm font-semibold text-[#f0f6fc]">Push</h3>
-                      </div>
-                      <p className="text-[11px] text-[#8b949e] leading-relaxed max-w-[180px]">
-                        Push to <code className="bg-[#161b22] px-1 py-0.5 rounded text-[#58a6ff] border border-[#30363d] text-[10px]">main</code> branch. HMAC-SHA256 webhooks fire instantly.
-                      </p>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d]">
-                        webhook.trigger
-                      </span>
-                    </div>
-
-                    {/* ─── Connector Line 1→2 ─── */}
-                    <div className="hidden md:flex items-start justify-center pt-5 px-1">
-                      <div className="relative w-16 h-[2px] bg-[#30363d] mt-[18px] rounded-full overflow-hidden">
-                        <span className="pipeline-packet absolute top-[-2px] w-3 h-[6px] rounded-full bg-[#2ea44f] shadow-[0_0_8px_rgba(46,164,79,0.8)]"></span>
-                      </div>
-                    </div>
-
-                    {/* ─── Node 2: Build Engine ─── */}
-                    <div className="flex flex-col items-center text-center space-y-2.5 px-2">
-                      <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#2ea44f] relative z-10 shadow-[0_0_12px_rgba(46,164,79,0.15)]">
-                        <Server className="w-5 h-5" />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-mono text-[#484f58]">02</span>
-                        <h3 className="text-sm font-semibold text-[#f0f6fc]">Build</h3>
-                      </div>
-                      <p className="text-[11px] text-[#8b949e] leading-relaxed max-w-[180px]">
-                        Auto-detects runtime, generates Dockerfile, and injects Fernet-encrypted secrets.
-                      </p>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d]">
-                        docker.engine + redis
-                      </span>
-                    </div>
-
-                    {/* ─── Connector Line 2→3 ─── */}
-                    <div className="hidden md:flex items-start justify-center pt-5 px-1">
-                      <div className="relative w-16 h-[2px] bg-[#30363d] mt-[18px] rounded-full overflow-hidden">
-                        <span className="pipeline-packet-delayed absolute top-[-2px] w-3 h-[6px] rounded-full bg-[#2ea44f] shadow-[0_0_8px_rgba(46,164,79,0.8)]"></span>
-                      </div>
-                    </div>
-
-                    {/* ─── Node 3: Live Production ─── */}
-                    <div className="flex flex-col items-center text-center space-y-2.5 px-2">
-                      <div className="w-12 h-12 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#bc8cff] relative z-10 shadow-[0_0_12px_rgba(188,140,255,0.15)]">
-                        <Globe className="w-5 h-5" />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-mono text-[#484f58]">03</span>
-                        <h3 className="text-sm font-semibold text-[#f0f6fc]">Live</h3>
-                      </div>
-                      <p className="text-[11px] text-[#8b949e] leading-relaxed max-w-[180px]">
-                        Nginx hot-reloads config. App is live with wake-on-demand and auto-sleep.
-                      </p>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161b22] text-[#8b949e] border border-[#30363d]">
-                        nginx.reverse_proxy
-                      </span>
-                    </div>
-
-                  </div>
-
-                  {/* Mobile connector arrows (visible on small screens only) */}
-                  <div className="flex flex-col items-center gap-1 my-2 md:hidden">
-                    <div className="w-[2px] h-6 bg-[#30363d]"></div>
-                    <span className="text-[10px] text-[#484f58]">▼</span>
-                    <div className="w-[2px] h-6 bg-[#30363d]"></div>
-                  </div>
-                </div>
-
-                {/* Pipeline Status Bar */}
-                <div className="bg-[#161b22] border-t border-[#30363d] px-4 py-2 flex items-center justify-between text-[10px] font-mono text-[#484f58]">
+                {/* macOS Terminal Title Bar */}
+                <div className="bg-[#161b22] border-b border-[#30363d] px-4 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
-                    <span className="text-[#8b949e]">pipeline.status: <span className="text-[#2ea44f]">ready</span></span>
+                    <span className="w-3 h-3 rounded-full bg-[#f85149]"></span>
+                    <span className="w-3 h-3 rounded-full bg-[#d29922]"></span>
+                    <span className="w-3 h-3 rounded-full bg-[#2ea44f]"></span>
+                    <span className="ml-2 text-[11px] font-mono text-[#484f58]">deployat — bash</span>
                   </div>
-                  <span>latency: ~3.2s avg</span>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-[#484f58]">
+                    {terminalDone && (
+                      <span className="text-[#2ea44f]">● deployed</span>
+                    )}
+                    {!terminalDone && visibleLines.length > 0 && (
+                      <span className="text-[#d29922] animate-pulse">● deploying...</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Terminal Output Body */}
+                <div 
+                  ref={terminalRef}
+                  className="bg-[#0d1117] p-5 sm:p-6 font-mono text-[12px] sm:text-[13px] leading-[1.7] overflow-y-auto max-h-[340px] scroll-smooth"
+                >
+                  {visibleLines.map((line, i) => (
+                    <div 
+                      key={i} 
+                      className="animate-fade-in"
+                      style={{ animationDelay: '0ms' }}
+                    >
+                      {line.type === 'blank' ? (
+                        <div className="h-3"></div>
+                      ) : line.type === 'command' ? (
+                        <div className="flex items-center gap-0">
+                          <span className="text-[#2ea44f] select-none">❯ </span>
+                          <span className="text-[#f0f6fc] font-semibold">{line.text.replace('$ ', '')}</span>
+                        </div>
+                      ) : line.type === 'success' ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[#2ea44f] font-bold text-sm">{line.text.split(' ')[0]}</span>
+                          <span className="text-[#2ea44f] font-semibold">{line.text.split(' ').slice(1, 3).join(' ')}</span>
+                          <a 
+                            href="#" 
+                            onClick={(e) => e.preventDefault()} 
+                            className="text-[#58a6ff] underline underline-offset-2 decoration-[#58a6ff]/40 hover:decoration-[#58a6ff]"
+                          >
+                            {line.text.split(' ').slice(3).join(' ')}
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span style={{ color: line.color }}>{line.text}</span>
+                          {line.badge && (
+                            <span 
+                              className="text-[10px] px-1.5 py-0 rounded border"
+                              style={{ 
+                                color: line.badgeColor, 
+                                borderColor: line.badgeColor + '40',
+                                backgroundColor: line.badgeColor + '15'
+                              }}
+                            >
+                              {line.badge}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Blinking cursor */}
+                  {!terminalDone && (
+                    <span className="inline-block w-2 h-4 bg-[#f0f6fc] ml-0.5 animate-pulse rounded-sm"></span>
+                  )}
+                </div>
+
+                {/* Terminal Status Bar */}
+                <div className="bg-[#161b22] border-t border-[#30363d] px-4 py-2 flex items-center justify-between text-[10px] font-mono text-[#484f58]">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${terminalDone ? 'bg-[#2ea44f]' : 'bg-[#d29922] animate-pulse'}`}></span>
+                      <span className="text-[#8b949e]">
+                        {terminalDone ? 'deployment complete' : `step ${visibleLines.length}/${PIPELINE_LINES.length}`}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span>pid: 48291</span>
+                    <span>mem: 42MB</span>
+                  </div>
                 </div>
 
               </div>
             </div>
 
-            {/* Feature Highlights Grid (with hover effects) */}
+            {/* Feature Highlights Grid */}
             <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
               <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#f0f6fc]">
