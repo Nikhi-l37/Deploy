@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { 
   Activity, ShieldCheck, Zap, Globe, ArrowRight, 
   ArrowLeft, Layers, Lock, GitBranch, Server, Cpu,
-  Terminal, Network, CheckCircle2
+  Network
 } from 'lucide-react';
 
 // Terminal deployment simulation lines
@@ -615,9 +615,6 @@ export default function Login() {
               </div>
             </div>
 
-
-            {/* Feature Highlights Grid */}
-                    
             {/* Feature Highlights Grid */}
             <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
               <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default">
