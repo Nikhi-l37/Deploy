@@ -8,20 +8,19 @@ import {
 // Terminal deployment simulation lines
 const PIPELINE_LINES = [
   { text: '$ git push origin main', color: '#f0f6fc', delay: 600, type: 'command' },
-  { text: 'Enumerating objects: 42, done.', color: '#484f58', delay: 400, type: 'dim' },
-  { text: 'remote: Resolving deltas: 100% (18/18)', color: '#484f58', delay: 300, type: 'dim' },
+  { text: 'Writing objects: 100% (42/42), 1.2 MiB | done.', color: '#484f58', delay: 350, type: 'dim' },
   { text: '', color: '', delay: 200, type: 'blank' },
-  { text: '⟫ Webhook received from GitHub', color: '#58a6ff', delay: 500, type: 'info', badge: 'HMAC-SHA256 ✓', badgeColor: '#2ea44f' },
-  { text: '⟫ Queuing build job → Redis', color: '#d29922', delay: 400, type: 'warn', badge: 'build_queue', badgeColor: '#d29922' },
-  { text: '⟫ Cloning repository...', color: '#8b949e', delay: 600, type: 'muted' },
-  { text: '⟫ Detecting runtime', color: '#58a6ff', delay: 500, type: 'info', badge: 'Node.js 20', badgeColor: '#2ea44f' },
-  { text: '⟫ Generating Dockerfile (multi-stage)', color: '#8b949e', delay: 400, type: 'muted' },
-  { text: '⟫ Building container deploy-a8f3c2e1', color: '#d29922', delay: 800, type: 'warn', badge: 'docker build', badgeColor: '#d29922' },
-  { text: '⟫ Injecting 3 encrypted env vars', color: '#bc8cff', delay: 400, type: 'purple', badge: 'Fernet AES', badgeColor: '#bc8cff' },
-  { text: '⟫ Container started on :43821', color: '#58a6ff', delay: 400, type: 'info' },
-  { text: '⟫ Nginx reverse proxy → hot reload', color: '#58a6ff', delay: 400, type: 'info', badge: 'config ✓', badgeColor: '#2ea44f' },
-  { text: '', color: '', delay: 300, type: 'blank' },
-  { text: '✓ Live at https://myapp.deployat.me', color: '#2ea44f', delay: 0, type: 'success' },
+  { ts: '00:01', text: 'Webhook received', color: '#58a6ff', delay: 400, type: 'info', badge: 'HMAC-SHA256 ✓', badgeColor: '#2ea44f' },
+  { ts: '00:01', text: 'Build queued', color: '#8b949e', delay: 300, type: 'muted', badge: 'redis', badgeColor: '#d29922' },
+  { ts: '00:02', text: 'Cloning repository', color: '#8b949e', delay: 500, type: 'muted' },
+  { ts: '00:03', text: 'Runtime detected', color: '#58a6ff', delay: 400, type: 'info', badge: 'Node.js 20 LTS', badgeColor: '#2ea44f' },
+  { ts: '00:03', text: 'Dockerfile generated', color: '#8b949e', delay: 350, type: 'muted', badge: 'multi-stage', badgeColor: '#58a6ff' },
+  { ts: '00:04', text: 'Building image', color: '#d29922', delay: 900, type: 'warn', badge: 'docker build', badgeColor: '#d29922' },
+  { ts: '00:12', text: 'Secrets injected', color: '#bc8cff', delay: 350, type: 'purple', badge: 'Fernet AES-128', badgeColor: '#bc8cff' },
+  { ts: '00:13', text: 'Container started', color: '#58a6ff', delay: 350, type: 'info', badge: ':49203', badgeColor: '#58a6ff' },
+  { ts: '00:13', text: 'Nginx configured', color: '#2ea44f', delay: 300, type: 'muted', badge: 'reload ✓', badgeColor: '#2ea44f' },
+  { text: '', color: '', delay: 250, type: 'blank' },
+  { ts: '00:14', text: '✓ Live at https://myapp.deployat.me', color: '#2ea44f', delay: 0, type: 'success' },
 ];
 
 export default function Login() {
@@ -352,10 +351,14 @@ export default function Login() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 flex-wrap">
+                          {/* Timestamp column */}
+                          {line.ts && (
+                            <span className="text-[#484f58] text-[10px] font-mono w-[34px] shrink-0 select-none">{line.ts}</span>
+                          )}
                           <span style={{ color: line.color }}>{line.text}</span>
                           {line.badge && (
                             <span 
-                              className="text-[10px] px-1.5 py-0 rounded border"
+                              className="text-[10px] px-1.5 py-0 rounded border font-mono"
                               style={{ 
                                 color: line.badgeColor, 
                                 borderColor: line.badgeColor + '40',
