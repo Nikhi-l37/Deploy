@@ -400,12 +400,15 @@ export default function Login() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
                     <span className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider font-mono">
-                      Live Infrastructure Canvas
+                      Service Architecture
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold text-[#f0f6fc] tracking-tight">
-                    Multi-Service Topology & Routing
+                    How Your Services Connect
                   </h2>
+                  <p className="text-xs text-[#8b949e] mt-1">
+                    Connect web apps, backend APIs, and databases with automatic private networking.
+                  </p>
                 </div>
 
                 {/* Topology Preset Switcher */}
@@ -419,7 +422,7 @@ export default function Login() {
                     }`}
                   >
                     <Network className="w-3.5 h-3.5 text-[#58a6ff]" />
-                    <span>Microservices Mesh</span>
+                    <span>Microservices App</span>
                   </button>
 
                   <button
@@ -431,7 +434,7 @@ export default function Login() {
                     }`}
                   >
                     <Box className="w-3.5 h-3.5 text-[#bc8cff]" />
-                    <span>Grouped Service Cluster</span>
+                    <span>Full-Stack Database Cluster</span>
                   </button>
                 </div>
               </div>
@@ -463,13 +466,13 @@ export default function Login() {
                     <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
                     <span>production-mesh</span>
                     <span className="text-[#484f58]">·</span>
-                    <span className="text-[#484f58]">us-east-1 (cgroups v2)</span>
+                    <span className="text-[#484f58]">Private VPC Network</span>
                   </div>
 
                   {/* Right: Actions */}
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 text-[11px] font-mono text-[#8b949e] px-2 py-1 rounded bg-[#0d1117] border border-[#30363d]">
-                      <RefreshCw className="w-3 h-3 text-[#2ea44f] animate-spin" style={{ animationDuration: '4s' }} />
+                      <RefreshCw className="w-3 h-3 text-[#2ea44f] animate-spin" style={{ animationDuration: '5s' }} />
                       <span>Sync</span>
                     </div>
                     <div className="flex items-center gap-1 text-[11px] font-medium text-[#f0f6fc] px-2.5 py-1 rounded bg-[#238636] hover:bg-[#2ea043] border border-[rgba(240,246,252,0.1)] transition-colors cursor-pointer">
@@ -503,83 +506,83 @@ export default function Login() {
                           </filter>
                         </defs>
 
-                        {/* Wire 1: Ackee Analytics ➔ Frontend */}
+                        {/* Wire 1: Analytics ➔ Frontend */}
                         <path 
                           id="wire-analytics-fe"
-                          d="M 230 225 C 290 225, 300 100, 370 100" 
+                          d="M 230 225 C 290 225, 290 95, 345 95" 
                           fill="none" 
                           stroke="#21262d" 
                           strokeWidth="2" 
                         />
                         <path 
-                          d="M 230 225 C 290 225, 300 100, 370 100" 
+                          d="M 230 225 C 290 225, 290 95, 345 95" 
                           fill="none" 
                           stroke="#30363d" 
                           strokeWidth="1.5" 
                           strokeDasharray="4 4" 
                         />
-                        <circle r="3.5" fill="#58a6ff" filter="url(#glow-cyan)">
-                          <animateMotion dur="3.2s" repeatCount="indefinite" path="M 230 225 C 290 225, 300 100, 370 100" />
+                        <circle r="3.5" fill="#2dd4bf" filter="url(#glow-cyan)">
+                          <animateMotion dur="3.2s" repeatCount="indefinite" path="M 230 225 C 290 225, 290 95, 345 95" />
                         </circle>
 
                         {/* Wire 2: Frontend ➔ Backend */}
                         <path 
                           id="wire-fe-be"
-                          d="M 520 100 C 580 100, 590 145, 650 145" 
+                          d="M 545 95 C 600 95, 600 135, 650 135" 
                           fill="none" 
                           stroke="#21262d" 
                           strokeWidth="2" 
                         />
                         <path 
-                          d="M 520 100 C 580 100, 590 145, 650 145" 
+                          d="M 545 95 C 600 95, 600 135, 650 135" 
                           fill="none" 
                           stroke="#30363d" 
                           strokeWidth="1.5" 
                           strokeDasharray="4 4" 
                         />
                         <circle r="4" fill="#2ea44f" filter="url(#glow-green)">
-                          <animateMotion dur="2.4s" repeatCount="indefinite" path="M 520 100 C 580 100, 590 145, 650 145" />
+                          <animateMotion dur="2.4s" repeatCount="indefinite" path="M 545 95 C 600 95, 600 135, 650 135" />
                         </circle>
 
                         {/* Wire 3: API Gateway ➔ Backend */}
                         <path 
                           id="wire-gw-be"
-                          d="M 520 380 C 580 380, 590 175, 650 175" 
+                          d="M 545 380 C 605 380, 605 165, 650 165" 
                           fill="none" 
                           stroke="#21262d" 
                           strokeWidth="2" 
                         />
                         <path 
-                          d="M 520 380 C 580 380, 590 175, 650 175" 
+                          d="M 545 380 C 605 380, 605 165, 650 165" 
                           fill="none" 
                           stroke="#30363d" 
                           strokeWidth="1.5" 
                           strokeDasharray="4 4" 
                         />
                         <circle r="3.5" fill="#58a6ff" filter="url(#glow-cyan)">
-                          <animateMotion dur="2.8s" repeatCount="indefinite" path="M 520 380 C 580 380, 590 175, 650 175" />
+                          <animateMotion dur="2.8s" repeatCount="indefinite" path="M 545 380 C 605 380, 605 165, 650 165" />
                         </circle>
 
                         {/* Wire 4: Backend ➔ Postgres */}
                         <path 
                           id="wire-be-pg"
-                          d="M 720 200 L 720 320" 
+                          d="M 750 200 L 750 320" 
                           fill="none" 
                           stroke="#21262d" 
                           strokeWidth="2" 
                         />
                         <path 
-                          d="M 720 200 L 720 320" 
+                          d="M 750 200 L 750 320" 
                           fill="none" 
                           stroke="#30363d" 
                           strokeWidth="1.5" 
                           strokeDasharray="4 4" 
                         />
-                        <circle r="3.5" fill="#bc8cff" filter="url(#glow-purple)">
-                          <animateMotion dur="2.0s" repeatCount="indefinite" path="M 720 200 L 720 320" />
+                        <circle r="3.5" fill="#336791" filter="url(#glow-purple)">
+                          <animateMotion dur="2.0s" repeatCount="indefinite" path="M 750 200 L 750 320" />
                         </circle>
 
-                        {/* Wire 5: Frontend ➔ API Gateway internal sync */}
+                        {/* Wire 5: Frontend ➔ API Gateway sync */}
                         <path 
                           d="M 445 150 L 445 330" 
                           fill="none" 
@@ -589,101 +592,132 @@ export default function Login() {
                         />
                       </svg>
 
-                      {/* ─── SERVICE NODE CARDS (ABSOLUTE 2D COORDINATES) ─── */}
+                      {/* ─── SERVICE NODE CARDS WITH BRAND LOGOS ─── */}
 
-                      {/* Node 1: Ackee Analytics (Left) */}
+                      {/* Node 1: Analytics Dashboard (Left) */}
                       <div 
-                        className="absolute left-6 sm:left-10 top-[175px] w-[180px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#58a6ff] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                        className="absolute left-6 sm:left-10 top-[175px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#2dd4bf] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-[#1b7c84] flex items-center justify-center text-white text-[10px] font-bold">
-                            ●
-                          </span>
-                          <span className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors">
-                            ackee analytics
-                          </span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                            {/* Telemetry / Pulse Chart SVG */}
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                              <path d="M3 13.5l4-4 4 4 5-6 5 5" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="21" cy="12.5" r="2" fill="#2dd4bf"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#2dd4bf] transition-colors leading-tight">
+                              Analytics
+                            </h3>
+                            <span className="text-[10px] text-[#8b949e]">Traffic & Metrics</span>
+                          </div>
                         </div>
                         <p className="text-[10px] font-mono text-[#58a6ff] truncate">
-                          ackee-prod.up.deployat.me
+                          analytics.deployat.me
                         </p>
                         <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                           <span className="text-[#2ea44f]">✓</span>
-                          <span>Docker Image</span>
+                          <span>Live telemetry</span>
                         </div>
                       </div>
 
-                      {/* Node 2: JS Frontend (Center Top) */}
+                      {/* Node 2: Web Frontend (Center Top) */}
                       <div 
-                        className="absolute left-[36%] sm:left-[38%] top-[50px] w-[180px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#f1e05a] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                        className="absolute left-[36%] sm:left-[38%] top-[45px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#61dafb] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-[4px] bg-[#f1e05a] text-[#000000] text-[9px] font-black flex items-center justify-center">
-                            JS
-                          </span>
-                          <span className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#f1e05a] transition-colors">
-                            frontend
-                          </span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                            {/* Official React Atom SVG */}
+                            <svg className="w-4 h-4" viewBox="-11.5 -10.23174 23 20.46348">
+                              <circle cx="0" cy="0" r="2.05" fill="#61dafb"/>
+                              <g stroke="#61dafb" strokeWidth="1" fill="none">
+                                <ellipse rx="11" ry="4.2"/>
+                                <ellipse rx="11" ry="4.2" transform="rotate(60)"/>
+                                <ellipse rx="11" ry="4.2" transform="rotate(120)"/>
+                              </g>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#61dafb] transition-colors leading-tight">
+                              Web Frontend
+                            </h3>
+                            <span className="text-[10px] text-[#8b949e]">React / Next.js</span>
+                          </div>
                         </div>
                         <p className="text-[10px] font-mono text-[#58a6ff] truncate">
-                          frontend-prod.up.deployat.me
+                          app.deployat.me
                         </p>
                         <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[#2ea44f]">✓</span>
-                            <span>Deployed now</span>
+                            <span>Live on Web</span>
                           </div>
                           <span className="text-[#484f58]">:3000</span>
                         </div>
                       </div>
 
-                      {/* Node 3: GO API Gateway (Center Bottom) */}
+                      {/* Node 3: API Gateway (Center Bottom) */}
                       <div 
-                        className="absolute left-[36%] sm:left-[38%] top-[330px] w-[180px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#00add8] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                        className="absolute left-[36%] sm:left-[38%] top-[330px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#00add8] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-[4px] bg-[#00add8] text-white text-[9px] font-black flex items-center justify-center">
-                            GO
-                          </span>
-                          <span className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#00add8] transition-colors">
-                            api gateway
-                          </span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                            {/* Official Go Vector Logo */}
+                            <svg className="w-4.5 h-4" viewBox="0 0 24 24" fill="none">
+                              <path d="M1.8 10.2c-.1-.3-.1-.6-.1-.9 0-4.2 3.6-7.7 8.1-7.7 3.3 0 6.2 1.9 7.4 4.5l-2.7 1.3c-.8-1.6-2.5-2.6-4.6-2.6-2.8 0-5.1 2.1-5.2 4.7h6.6v3.2H4.7c.1 2.6 2.4 4.7 5.2 4.7 2.1 0 3.8-1.1 4.6-2.6l2.7 1.3c-1.2 2.7-4.1 4.5-7.4 4.5-4.5 0-8.1-3.5-8.1-7.7 0-.3 0-.6.1-.9zM18.8 8.4h3.5v3.2h-3.5V8.4zm0 5.1h3.5v3.2h-3.5v-3.2z" fill="#00ADD8"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#00add8] transition-colors leading-tight">
+                              API Gateway
+                            </h3>
+                            <span className="text-[10px] text-[#8b949e]">Nginx & Go Router</span>
+                          </div>
                         </div>
                         <p className="text-[10px] font-mono text-[#58a6ff] truncate">
-                          api-prod.up.deployat.me
+                          api.deployat.me
                         </p>
                         <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[#2ea44f]">✓</span>
-                            <span>Deployed now</span>
+                            <span>Reverse Proxy</span>
                           </div>
                           <span className="text-[#484f58]">HTTP/WS</span>
                         </div>
                       </div>
 
-                      {/* Node 4: Python Backend (Right Top) */}
+                      {/* Node 4: Backend API (Right Top) */}
                       <div 
-                        className="absolute right-6 sm:right-12 top-[95px] w-[180px] sm:w-[210px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#3572A5] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                        className="absolute right-6 sm:right-12 top-[85px] w-[185px] sm:w-[210px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#387eb8] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-[4px] bg-[#3572A5] text-white text-[9px] font-black flex items-center justify-center">
-                              PY
-                            </span>
-                            <span className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors">
-                              backend
-                            </span>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                              {/* Official Two-Tone Python Snakes Logo */}
+                              <svg className="w-4 h-4" viewBox="0 0 110 110">
+                                <path fill="#387eb8" d="M54.5 5.5c-26.8 0-25.1 11.6-25.1 11.6l.03 12h25.6v3.6H19.5S5.5 31.2 5.5 58.2c0 27 12.2 26.1 12.2 26.1h7.3v-10.3s-.4-12.2 12-12.2h25.4s11.4.2 11.4-11.2V16.7S75.2 5.5 54.5 5.5zm-13.8 7.4c2.5 0 4.5 2 4.5 4.5s-2 4.5-4.5 4.5-4.5-2-4.5-4.5 2-4.5 4.5-4.5z"/>
+                                <path fill="#ffe052" d="M55.5 104.5c26.8 0 25.1-11.6 25.1-11.6l-.03-12H55v-3.6h35.5s14 1.5 14-25.5c0-27-12.2-26.1-12.2-26.1h-7.3v10.3s.4 12.2-12 12.2H47.6s-11.4-.2-11.4 11.2v33.9s-1.4 11.2 19.3 11.2zm13.8-7.4c-2.5 0-4.5-2-4.5-4.5s2-4.5 4.5-4.5 4.5 2 4.5 4.5-2 4.5-4.5 4.5z"/>
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">
+                                Backend API
+                              </h3>
+                              <span className="text-[10px] text-[#8b949e]">Python FastAPI</span>
+                            </div>
                           </div>
                           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">
                             3 Replicas
                           </span>
                         </div>
                         <p className="text-[10px] font-mono text-[#8b949e] truncate">
-                          fastapi · uvicorn workers
+                          REST endpoints & webhooks
                         </p>
                         <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[#2ea44f]">✓</span>
-                            <span>Deployed now</span>
+                            <span>Auto Scaling</span>
                           </div>
                           <span className="text-[#484f58]">:8000</span>
                         </div>
@@ -691,34 +725,41 @@ export default function Login() {
 
                       {/* Node 5: Postgres Database (Right Bottom) */}
                       <div 
-                        className="absolute right-6 sm:right-12 top-[320px] w-[180px] sm:w-[210px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#336791] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                        className="absolute right-6 sm:right-12 top-[320px] w-[185px] sm:w-[210px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#336791] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-[4px] bg-[#336791] text-white flex items-center justify-center">
-                            <Database className="w-3 h-3 text-white" />
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                            {/* Official PostgreSQL Elephant Logo */}
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C7.8 2 4.1 4.9 3.2 9c-.4 1.9-.3 3.7.4 5.5.5 1.3 1.3 2.3 2.2 3.2v3.4c0 .6.4 1 1 1h3c.6 0 1-.4 1-1v-1.9c.4.1.8.1 1.2.1 2.2 0 4.2-1 5.6-2.7 1.5-1.8 2.2-4.2 2-6.6-.4-4.3-3.9-7.9-7.6-7.9z" fill="#336791"/>
+                              <circle cx="9.5" cy="8.5" r="1" fill="#ffffff"/>
+                            </svg>
                           </div>
-                          <span className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors">
-                            postgres
-                          </span>
+                          <div>
+                            <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">
+                              PostgreSQL DB
+                            </h3>
+                            <span className="text-[10px] text-[#8b949e]">Primary Database</span>
+                          </div>
                         </div>
                         <p className="text-[10px] font-mono text-[#8b949e] truncate">
-                          PostgreSQL 16 · Supabase
+                          Postgres 16 · Supabase
                         </p>
                         <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[#2ea44f]">✓</span>
-                            <span>Docker Image</span>
+                            <span>Encrypted at rest</span>
                           </div>
                           <div className="flex items-center gap-1 text-[#484f58]">
                             <HardDrive className="w-3 h-3" />
-                            <span>pg-data</span>
+                            <span>10 GB</span>
                           </div>
                         </div>
                       </div>
 
                     </div>
                   ) : (
-                    /* PRESET 2: GROUPED SERVICE CLUSTER (METABASE + DB + REDIS) */
+                    /* PRESET 2: FULL-STACK DATABASE CLUSTER (METABASE + REDIS) */
                     <div className="w-full h-full relative animate-fade-in">
                       
                       {/* SVG CONNECTOR WIRES */}
@@ -736,147 +777,184 @@ export default function Login() {
 
                         {/* Wire: Frontend ➔ Backend */}
                         <path 
-                          d="M 280 120 L 370 120" 
+                          d="M 270 120 L 370 120" 
                           fill="none" 
                           stroke="#30363d" 
                           strokeWidth="1.5" 
                           strokeDasharray="4 4" 
                         />
                         <circle r="4" fill="#2ea44f" filter="url(#glow-green-2)">
-                          <animateMotion dur="2.2s" repeatCount="indefinite" path="M 280 120 L 370 120" />
+                          <animateMotion dur="2.2s" repeatCount="indefinite" path="M 270 120 L 370 120" />
                         </circle>
 
                         {/* Wire: Backend ➔ Redis */}
                         <path 
-                          d="M 520 120 C 560 120, 560 210, 600 210" 
+                          d="M 540 120 C 580 120, 580 210, 620 210" 
                           fill="none" 
                           stroke="#30363d" 
                           strokeWidth="1.5" 
                           strokeDasharray="4 4" 
                         />
-                        <circle r="3.5" fill="#f85149" filter="url(#glow-amber)">
-                          <animateMotion dur="2.8s" repeatCount="indefinite" path="M 520 120 C 560 120, 560 210, 600 210" />
+                        <circle r="3.5" fill="#D82C20" filter="url(#glow-amber)">
+                          <animateMotion dur="2.8s" repeatCount="indefinite" path="M 540 120 C 580 120, 580 210, 620 210" />
                         </circle>
 
                         {/* Wire: Backend ➔ Metabase Cluster */}
                         <path 
-                          d="M 445 175 L 445 280" 
+                          d="M 455 175 L 455 280" 
                           fill="none" 
                           stroke="#30363d" 
                           strokeWidth="1.5" 
                           strokeDasharray="4 4" 
                         />
-                        <circle r="3.5" fill="#58a6ff">
-                          <animateMotion dur="2.5s" repeatCount="indefinite" path="M 445 175 L 445 280" />
+                        <circle r="3.5" fill="#509EE3">
+                          <animateMotion dur="2.5s" repeatCount="indefinite" path="M 455 175 L 455 280" />
                         </circle>
                       </svg>
 
-                      {/* Node: Frontend (Top-Left) */}
+                      {/* Node: Web App (Top-Left) */}
                       <div 
-                        className="absolute left-6 sm:left-14 top-[70px] w-[180px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer"
+                        className="absolute left-6 sm:left-14 top-[70px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-[#000000] border border-[#30363d] text-white text-[9px] font-bold flex items-center justify-center">
-                            ▲
-                          </span>
-                          <span className="text-xs font-semibold text-[#f0f6fc]">frontend</span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                            {/* React Atom */}
+                            <svg className="w-4 h-4" viewBox="-11.5 -10.23174 23 20.46348">
+                              <circle cx="0" cy="0" r="2.05" fill="#61dafb"/>
+                              <g stroke="#61dafb" strokeWidth="1" fill="none">
+                                <ellipse rx="11" ry="4.2"/>
+                                <ellipse rx="11" ry="4.2" transform="rotate(60)"/>
+                                <ellipse rx="11" ry="4.2" transform="rotate(120)"/>
+                              </g>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-semibold text-[#f0f6fc]">Web Client</h3>
+                            <span className="text-[10px] text-[#8b949e]">Frontend UI</span>
+                          </div>
                         </div>
                         <p className="text-[10px] font-mono text-[#58a6ff] truncate">
-                          frontend-prod.up.deployat.me
+                          client.deployat.me
                         </p>
                         <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                           <span className="text-[#2ea44f]">✓</span>
-                          <span>Deployed just now</span>
+                          <span>Auto Deployed</span>
                         </div>
                       </div>
 
-                      {/* Node: Rust Backend (Top-Center) */}
+                      {/* Node: Node.js / Rust Server (Top-Center) */}
                       <div 
-                        className="absolute left-[34%] sm:left-[37%] top-[70px] w-[180px] sm:w-[210px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer"
+                        className="absolute left-[34%] sm:left-[37%] top-[70px] w-[185px] sm:w-[210px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer"
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-[4px] bg-[#dea584] text-[#000000] text-[9px] font-black flex items-center justify-center">
-                              R
-                            </span>
-                            <span className="text-xs font-semibold text-[#f0f6fc]">backend</span>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                              {/* Node.js Hexagon Logo */}
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2l8.5 4.9v9.8L12 21.5 3.5 16.7V6.9L12 2z" fill="#68A063"/>
+                                <path d="M12 4.2L5.3 8v8l6.7 3.8 6.7-3.8V8L12 4.2z" fill="#0d1117"/>
+                                <path d="M12 6.5l4.5 2.6v5.2L12 16.9l-4.5-2.6V9.1L12 6.5z" fill="#68A063"/>
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc]">Node API Server</h3>
+                              <span className="text-[10px] text-[#8b949e]">Backend Engine</span>
+                            </div>
                           </div>
                           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">
                             3 Replicas
                           </span>
                         </div>
                         <p className="text-[10px] font-mono text-[#8b949e] truncate">
-                          Rust Actix-web server
+                          Express · High Throughput
                         </p>
                         <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                           <span className="text-[#2ea44f]">✓</span>
-                          <span>Deployed just now</span>
+                          <span>Healthy</span>
                         </div>
                       </div>
 
-                      {/* Node: Redis (Top-Right) */}
+                      {/* Node: Redis Cache (Top-Right) */}
                       <div 
-                        className="absolute right-6 sm:right-14 top-[160px] w-[170px] sm:w-[190px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer"
+                        className="absolute right-6 sm:right-14 top-[160px] w-[175px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-[4px] bg-[#d82c20] text-white text-[9px] font-black flex items-center justify-center">
-                            RD
-                          </span>
-                          <span className="text-xs font-semibold text-[#f0f6fc]">redis</span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                            {/* Official Redis 3D Cube Logo */}
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#D82C20"/>
+                              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#D82C20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="12" cy="7" r="1.5" fill="#ffffff"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-semibold text-[#f0f6fc]">Redis Cache</h3>
+                            <span className="text-[10px] text-[#8b949e]">Fast In-Memory</span>
+                          </div>
                         </div>
                         <p className="text-[10px] font-mono text-[#8b949e] truncate">
-                          Redis 7.2 in-memory
+                          Queue & Session Storage
                         </p>
                         <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[#2ea44f]">✓</span>
-                            <span>Docker Image</span>
+                            <span>In-Memory</span>
                           </div>
-                          <span className="text-[#484f58]">/bitnami</span>
+                          <span className="text-[#484f58]">6379</span>
                         </div>
                       </div>
 
-                      {/* GROUP CONTAINER: METABASE CLUSTER (BOTTOM) */}
-                      <div className="absolute left-6 sm:left-14 bottom-6 right-6 sm:right-[320px] bg-[#161b22]/60 border border-[#1f6feb]/40 rounded-[10px] p-3 space-y-3 shadow-xl backdrop-blur-sm">
+                      {/* GROUP CONTAINER: METABASE & DATABASE CLUSTER (BOTTOM) */}
+                      <div className="absolute left-6 sm:left-14 bottom-6 right-6 sm:right-[300px] bg-[#161b22]/60 border border-[#1f6feb]/40 rounded-[10px] p-3 space-y-3 shadow-xl backdrop-blur-sm">
                         <div className="flex items-center justify-between text-[11px] font-mono text-[#58a6ff]">
                           <div className="flex items-center gap-1.5">
                             <Folder className="w-3.5 h-3.5" />
-                            <span className="font-semibold">Metabase Group</span>
+                            <span className="font-semibold">Analytics & Database Group</span>
                           </div>
-                          <span className="text-[10px] text-[#8b949e]">2 services</span>
+                          <span className="text-[10px] text-[#8b949e]">2 linked services</span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {/* Inner Node: Metabase */}
                           <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] p-3 space-y-1.5">
                             <div className="flex items-center gap-2">
-                              <span className="w-4 h-4 rounded bg-[#509ee3] text-white text-[8px] font-bold flex items-center justify-center">
-                                M
-                              </span>
-                              <span className="text-xs font-semibold text-[#f0f6fc]">Metabase</span>
+                              <div className="w-5 h-5 rounded bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-0.5">
+                                {/* Official Metabase Stacked Bar SVG */}
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                                  <rect x="3" y="10" width="4" height="10" rx="1.5" fill="#509EE3"/>
+                                  <rect x="10" y="4" width="4" height="16" rx="1.5" fill="#509EE3"/>
+                                  <rect x="17" y="13" width="4" height="7" rx="1.5" fill="#509EE3"/>
+                                </svg>
+                              </div>
+                              <span className="text-xs font-semibold text-[#f0f6fc]">Metabase BI</span>
                             </div>
                             <p className="text-[9px] font-mono text-[#58a6ff] truncate">
-                              mtbase-prod.up.deployat.me
+                              bi.deployat.me
                             </p>
                             <div className="flex items-center gap-1 text-[9px] text-[#8b949e] font-mono">
                               <span className="text-[#2ea44f]">✓</span>
-                              <span>Docker Image</span>
+                              <span>BI Dashboards</span>
                             </div>
                           </div>
 
                           {/* Inner Node: Postgres */}
                           <div className="bg-[#161b22] border border-[#30363d] rounded-[6px] p-3 space-y-1.5">
                             <div className="flex items-center gap-2">
-                              <Database className="w-4 h-4 text-[#336791]" />
-                              <span className="text-xs font-semibold text-[#f0f6fc]">postgres</span>
+                              <div className="w-5 h-5 rounded bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-0.5">
+                                {/* Official PostgreSQL Elephant */}
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                                  <path d="M12 2C7.8 2 4.1 4.9 3.2 9c-.4 1.9-.3 3.7.4 5.5.5 1.3 1.3 2.3 2.2 3.2v3.4c0 .6.4 1 1 1h3c.6 0 1-.4 1-1v-1.9c.4.1.8.1 1.2.1 2.2 0 4.2-1 5.6-2.7 1.5-1.8 2.2-4.2 2-6.6-.4-4.3-3.9-7.9-7.6-7.9z" fill="#336791"/>
+                                </svg>
+                              </div>
+                              <span className="text-xs font-semibold text-[#f0f6fc]">PostgreSQL</span>
                             </div>
                             <p className="text-[9px] font-mono text-[#8b949e] truncate">
-                              Internal Network Route
+                              Internal Data Storage
                             </p>
                             <div className="flex items-center justify-between text-[9px] text-[#8b949e] font-mono">
                               <div className="flex items-center gap-1">
                                 <span className="text-[#2ea44f]">✓</span>
-                                <span>Docker Image</span>
+                                <span>SQL Storage</span>
                               </div>
                               <span className="text-[#484f58]">pg-data</span>
                             </div>
@@ -894,10 +972,10 @@ export default function Login() {
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
-                      <span className="text-[#8b949e]">all 5 nodes healthy</span>
+                      <span className="text-[#8b949e]">all 5 services online</span>
                     </span>
                     <span className="hidden sm:inline">|</span>
-                    <span className="hidden sm:inline text-[#8b949e]">live traffic packets traveling via reverse proxy</span>
+                    <span className="hidden sm:inline text-[#8b949e]">automatic internal DNS & proxy routing active</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span>latency: 18ms</span>
