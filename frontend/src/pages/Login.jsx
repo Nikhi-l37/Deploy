@@ -276,6 +276,131 @@ export default function Login() {
             </div>
 
             {/* ========================================================== */}
+            {/* 4-STEP DEVELOPER JOURNEY (FROM CODE TO PRODUCTION)         */}
+            {/* ========================================================== */}
+            <div className="max-w-5xl mx-auto pt-4 w-full space-y-6">
+              <div className="text-center space-y-1.5">
+                <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-[#161b22] border border-[#30363d] text-[11px] text-[#8b949e] font-mono mb-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
+                  <span>HOW DEPLOYAT POWERS YOUR APPS</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#f0f6fc] tracking-tight">
+                  From Code to Cloud in 4 Steps
+                </h2>
+                <p className="text-xs text-[#8b949e] max-w-lg mx-auto">
+                  Push your code, configure your secrets, and let our engine handle builds, containment, and routing.
+                </p>
+              </div>
+
+              {/* 4 Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+                
+                {/* Step 1: Git Push */}
+                <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[8px] p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-150 group">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-9 h-9 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#f0f6fc] p-2 group-hover:border-[#8b949e] transition-colors">
+                        <svg className="w-full h-full fill-current" viewBox="0 0 24 24">
+                          <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                        </svg>
+                      </div>
+                      <span className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
+                        STEP 01
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors">
+                        1. Push from Git
+                      </h3>
+                      <p className="text-xs text-[#8b949e] leading-relaxed mt-1">
+                        Commit your code. Deployat captures changes instantly using verified GitHub webhooks.
+                      </p>
+                    </div>
+                  </div>
+                  <code className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded border border-[#30363d] truncate">
+                    git push origin main
+                  </code>
+                </div>
+
+                {/* Step 2: Auto Containerize */}
+                <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[8px] p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-150 group">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-9 h-9 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#58a6ff] group-hover:border-[#58a6ff] transition-colors">
+                        <Server className="w-4.5 h-4.5" />
+                      </div>
+                      <span className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
+                        STEP 02
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors">
+                        2. Auto Containerize
+                      </h3>
+                      <p className="text-xs text-[#8b949e] leading-relaxed mt-1">
+                        Zero config needed. Auto-detects Node.js, Python, or Next.js and builds a fast Docker image.
+                      </p>
+                    </div>
+                  </div>
+                  <code className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded border border-[#30363d] truncate">
+                    docker.build --cgroup
+                  </code>
+                </div>
+
+                {/* Step 3: Encrypted Secrets */}
+                <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[8px] p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-150 group">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-9 h-9 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#bc8cff] group-hover:border-[#bc8cff] transition-colors">
+                        <Lock className="w-4.5 h-4.5" />
+                      </div>
+                      <span className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
+                        STEP 03
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors">
+                        3. Encrypted .env
+                      </h3>
+                      <p className="text-xs text-[#8b949e] leading-relaxed mt-1">
+                        Safely injects API keys with symmetric Fernet AES-128 encryption at rest in Supabase.
+                      </p>
+                    </div>
+                  </div>
+                  <code className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded border border-[#30363d] truncate">
+                    fernet.aes_128_gcm
+                  </code>
+                </div>
+
+                {/* Step 4: Instant Live URL */}
+                <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[8px] p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-150 group">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="w-9 h-9 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#2ea44f] group-hover:border-[#2ea44f] transition-colors">
+                        <Globe className="w-4.5 h-4.5" />
+                      </div>
+                      <span className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
+                        STEP 04
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors">
+                        4. Live on Web
+                      </h3>
+                      <p className="text-xs text-[#8b949e] leading-relaxed mt-1">
+                        Automatically generates Nginx reverse proxy routes with custom HTTPS live URLs in 3s.
+                      </p>
+                    </div>
+                  </div>
+                  <code className="text-[10px] font-mono text-[#2ea44f] bg-[#0d1117] px-2.5 py-1 rounded border border-[#30363d] truncate">
+                    https://app.deployat.me
+                  </code>
+                </div>
+
+              </div>
+            </div>
+
+            {/* ========================================================== */}
             {/* LIVE DEPLOYMENT TERMINAL SIMULATION                        */}
             {/* ========================================================== */}
             <div className="max-w-3xl mx-auto pt-6 w-full">
