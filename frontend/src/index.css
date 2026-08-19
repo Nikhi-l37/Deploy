@@ -114,3 +114,9 @@
 .animate-packet-travel-fast {
   animation: packet-travel-horizontal 2.2s ease-in-out infinite;
 }
+
+.bg-dot-grid {
+  background-image: radial-gradient(rgba(48, 54, 61, 0.75) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
