@@ -50,26 +50,25 @@ export default function Login() {
   // ── Live Terminal Simulation ──
   const [visibleLines, setVisibleLines] = useState([]);
   const [terminalDone, setTerminalDone] = useState(false);
+  const [terminalFading, setTerminalFading] = useState(false);
   const terminalRef = useRef(null);
   const timeoutsRef = useRef([]);
 
   const runTerminal = useCallback(() => {
-    // Clear previous
     setVisibleLines([]);
     setTerminalDone(false);
+    setTerminalFading(false);
     timeoutsRef.current.forEach(t => clearTimeout(t));
     timeoutsRef.current = [];
 
-    let cumulative = 500; // initial pause before first line
+    let cumulative = 500;
     PIPELINE_LINES.forEach((line, i) => {
       cumulative += line.delay;
       const t = setTimeout(() => {
         setVisibleLines(prev => [...prev, line]);
-        // Auto-scroll terminal
         if (terminalRef.current) {
           terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
         }
-        // Mark done on last line
         if (i === PIPELINE_LINES.length - 1) {
           setTerminalDone(true);
         }
@@ -87,13 +86,23 @@ export default function Login() {
     };
   }, [showLogin, runTerminal]);
 
-  // Auto-replay after completion
+  // Smooth restart: pause → fade out → clear → replay
   useEffect(() => {
     if (terminalDone) {
-      const replay = setTimeout(() => {
+      // Wait 4s so user can read the final URL
+      const fadeTimer = setTimeout(() => {
+        setTerminalFading(true);
+      }, 4000);
+      
+      // After fade animation (600ms), restart
+      const restartTimer = setTimeout(() => {
         runTerminal();
-      }, 4000); // 4 second pause before replay
-      return () => clearTimeout(replay);
+      }, 4600);
+
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(restartTimer);
+      };
     }
   }, [terminalDone, runTerminal]);
 
@@ -319,10 +328,10 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Terminal Output Body */}
+                {/* Terminal Output Body — strict monospace grid */}
                 <div 
                   ref={terminalRef}
-                  className="bg-[#0d1117] p-5 sm:p-6 font-mono text-[12px] sm:text-[13px] leading-[1.7] overflow-y-auto max-h-[340px] scroll-smooth"
+                  className={`bg-[#0d1117] p-5 sm:p-6 font-mono text-[12px] sm:text-[13px] leading-[1.8] overflow-y-auto max-h-[340px] scroll-smooth transition-opacity duration-500 ${terminalFading ? 'opacity-0' : 'opacity-100'}`}
                 >
                   {visibleLines.map((line, i) => (
                     <div 
@@ -333,38 +342,36 @@ export default function Login() {
                       {line.type === 'blank' ? (
                         <div className="h-3"></div>
                       ) : line.type === 'command' ? (
+                        /* Authentic terminal command prompt */
                         <div className="flex items-center gap-0">
-                          <span className="text-[#2ea44f] select-none">❯ </span>
-                          <span className="text-[#f0f6fc] font-semibold">{line.text.replace('$ ', '')}</span>
+                          <span className="text-[#3fb950] select-none">$ </span>
+                          <span className="text-[#f0f6fc]">{line.text.replace('$ ', '')}</span>
                         </div>
                       ) : line.type === 'success' ? (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[#2ea44f] font-bold text-sm">{line.text.split(' ')[0]}</span>
-                          <span className="text-[#2ea44f] font-semibold">{line.text.split(' ').slice(1, 3).join(' ')}</span>
+                        /* Final success line with clickable URL */
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {line.ts && (
+                            <span className="text-[#484f58] text-[10px] w-[34px] shrink-0 select-none">{line.ts}</span>
+                          )}
+                          <span className="text-[#3fb950]">✓</span>
+                          <span className="text-[#3fb950]">Live at</span>
                           <a 
                             href="#" 
                             onClick={(e) => e.preventDefault()} 
                             className="text-[#58a6ff] underline underline-offset-2 decoration-[#58a6ff]/40 hover:decoration-[#58a6ff]"
                           >
-                            {line.text.split(' ').slice(3).join(' ')}
+                            https://myapp.deployat.me
                           </a>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {/* Timestamp column */}
+                        /* Standard log line with timestamp + badge */
+                        <div className="flex items-center gap-2">
                           {line.ts && (
-                            <span className="text-[#484f58] text-[10px] font-mono w-[34px] shrink-0 select-none">{line.ts}</span>
+                            <span className="text-[#484f58] text-[10px] w-[34px] shrink-0 select-none">{line.ts}</span>
                           )}
                           <span style={{ color: line.color }}>{line.text}</span>
                           {line.badge && (
-                            <span 
-                              className="text-[10px] px-1.5 py-0 rounded border font-mono"
-                              style={{ 
-                                color: line.badgeColor, 
-                                borderColor: line.badgeColor + '40',
-                                backgroundColor: line.badgeColor + '15'
-                              }}
-                            >
+                            <span className="text-[10px] px-1.5 py-[1px] rounded bg-[#21262d] border border-[#30363d] text-[#8b949e]">
                               {line.badge}
                             </span>
                           )}
@@ -375,24 +382,19 @@ export default function Login() {
 
                   {/* Blinking cursor */}
                   {!terminalDone && (
-                    <span className="inline-block w-2 h-4 bg-[#f0f6fc] ml-0.5 animate-pulse rounded-sm"></span>
+                    <span className="inline-block w-[7px] h-[14px] bg-[#c9d1d9] animate-pulse rounded-[1px] align-middle ml-0.5 mt-0.5"></span>
                   )}
                 </div>
 
                 {/* Terminal Status Bar */}
                 <div className="bg-[#161b22] border-t border-[#30363d] px-4 py-2 flex items-center justify-between text-[10px] font-mono text-[#484f58]">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${terminalDone ? 'bg-[#2ea44f]' : 'bg-[#d29922] animate-pulse'}`}></span>
-                      <span className="text-[#8b949e]">
-                        {terminalDone ? 'deployment complete' : `step ${visibleLines.length}/${PIPELINE_LINES.length}`}
-                      </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${terminalDone ? 'bg-[#3fb950]' : 'bg-[#d29922] animate-pulse'}`}></span>
+                    <span className="text-[#8b949e]">
+                      {terminalDone ? 'deploy complete · 14s' : `running · step ${visibleLines.length}/${PIPELINE_LINES.length}`}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span>pid: 48291</span>
-                    <span>mem: 42MB</span>
-                  </div>
+                  <span>bash · utf-8</span>
                 </div>
 
               </div>
