@@ -28,7 +28,7 @@ const PIPELINE_LINES = [
 export default function Login() {
   const [showLogin, setShowLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [architectureTab, setArchitectureTab] = useState('developer'); // 'developer' | 'engine'
+  const [architectureTab, setArchitectureTab] = useState('pipeline'); // 'pipeline' | 'microservices' | 'cluster'
 
   const handleGithubLogin = async () => {
     try {
@@ -276,131 +276,6 @@ export default function Login() {
             </div>
 
             {/* ========================================================== */}
-            {/* 4-STEP DEVELOPER JOURNEY (FROM CODE TO PRODUCTION)         */}
-            {/* ========================================================== */}
-            <div className="max-w-5xl mx-auto pt-4 w-full space-y-6">
-              <div className="text-center space-y-1.5">
-                <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-[#161b22] border border-[#30363d] text-[11px] text-[#8b949e] font-mono mb-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
-                  <span>HOW DEPLOYAT POWERS YOUR APPS</span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#f0f6fc] tracking-tight">
-                  From Code to Cloud in 4 Steps
-                </h2>
-                <p className="text-xs text-[#8b949e] max-w-lg mx-auto">
-                  Push your code, configure your secrets, and let our engine handle builds, containment, and routing.
-                </p>
-              </div>
-
-              {/* 4 Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
-                
-                {/* Step 1: Git Push */}
-                <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[8px] p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-150 group">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="w-9 h-9 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#f0f6fc] p-2 group-hover:border-[#8b949e] transition-colors">
-                        <svg className="w-full h-full fill-current" viewBox="0 0 24 24">
-                          <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-                        </svg>
-                      </div>
-                      <span className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
-                        STEP 01
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors">
-                        1. Push from Git
-                      </h3>
-                      <p className="text-xs text-[#8b949e] leading-relaxed mt-1">
-                        Commit your code. Deployat captures changes instantly using verified GitHub webhooks.
-                      </p>
-                    </div>
-                  </div>
-                  <code className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded border border-[#30363d] truncate">
-                    git push origin main
-                  </code>
-                </div>
-
-                {/* Step 2: Auto Containerize */}
-                <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[8px] p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-150 group">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="w-9 h-9 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#58a6ff] group-hover:border-[#58a6ff] transition-colors">
-                        <Server className="w-4.5 h-4.5" />
-                      </div>
-                      <span className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
-                        STEP 02
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors">
-                        2. Auto Containerize
-                      </h3>
-                      <p className="text-xs text-[#8b949e] leading-relaxed mt-1">
-                        Zero config needed. Auto-detects Node.js, Python, or Next.js and builds a fast Docker image.
-                      </p>
-                    </div>
-                  </div>
-                  <code className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded border border-[#30363d] truncate">
-                    docker.build --cgroup
-                  </code>
-                </div>
-
-                {/* Step 3: Encrypted Secrets */}
-                <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[8px] p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-150 group">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="w-9 h-9 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#bc8cff] group-hover:border-[#bc8cff] transition-colors">
-                        <Lock className="w-4.5 h-4.5" />
-                      </div>
-                      <span className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
-                        STEP 03
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors">
-                        3. Encrypted .env
-                      </h3>
-                      <p className="text-xs text-[#8b949e] leading-relaxed mt-1">
-                        Safely injects API keys with symmetric Fernet AES-128 encryption at rest in Supabase.
-                      </p>
-                    </div>
-                  </div>
-                  <code className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded border border-[#30363d] truncate">
-                    fernet.aes_128_gcm
-                  </code>
-                </div>
-
-                {/* Step 4: Instant Live URL */}
-                <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[8px] p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-150 group">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="w-9 h-9 rounded-[6px] bg-[#21262d] border border-[#30363d] flex items-center justify-center text-[#2ea44f] group-hover:border-[#2ea44f] transition-colors">
-                        <Globe className="w-4.5 h-4.5" />
-                      </div>
-                      <span className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
-                        STEP 04
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors">
-                        4. Live on Web
-                      </h3>
-                      <p className="text-xs text-[#8b949e] leading-relaxed mt-1">
-                        Automatically generates Nginx reverse proxy routes with custom HTTPS live URLs in 3s.
-                      </p>
-                    </div>
-                  </div>
-                  <code className="text-[10px] font-mono text-[#2ea44f] bg-[#0d1117] px-2.5 py-1 rounded border border-[#30363d] truncate">
-                    https://app.deployat.me
-                  </code>
-                </div>
-
-              </div>
-            </div>
-
-            {/* ========================================================== */}
             {/* LIVE DEPLOYMENT TERMINAL SIMULATION                        */}
             {/* ========================================================== */}
             <div className="max-w-3xl mx-auto pt-6 w-full">
@@ -537,29 +412,41 @@ export default function Login() {
                 </div>
 
                 {/* Topology Preset Switcher */}
-                <div className="inline-flex items-center p-1 rounded-[8px] bg-[#161b22] border border-[#30363d] select-none">
+                <div className="inline-flex items-center p-1 rounded-[8px] bg-[#161b22] border border-[#30363d] select-none flex-wrap gap-1">
+                  <button
+                    onClick={() => setArchitectureTab('pipeline')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${
+                      architectureTab === 'pipeline'
+                        ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm'
+                        : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5 text-[#2ea44f]" />
+                    <span>Deployment Pipeline</span>
+                  </button>
+
                   <button
                     onClick={() => setArchitectureTab('developer')}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${
                       architectureTab === 'developer'
                         ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm'
                         : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'
                     }`}
                   >
                     <Network className="w-3.5 h-3.5 text-[#58a6ff]" />
-                    <span>Microservices App</span>
+                    <span>Microservices Mesh</span>
                   </button>
 
                   <button
                     onClick={() => setArchitectureTab('engine')}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${
                       architectureTab === 'engine'
                         ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm'
                         : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'
                     }`}
                   >
                     <Box className="w-3.5 h-3.5 text-[#bc8cff]" />
-                    <span>Full-Stack Database Cluster</span>
+                    <span>Database Cluster</span>
                   </button>
                 </div>
               </div>
@@ -591,7 +478,9 @@ export default function Login() {
                     <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
                     <span>production-mesh</span>
                     <span className="text-[#484f58]">·</span>
-                    <span className="text-[#484f58]">Private VPC Network</span>
+                    <span className="text-[#484f58]">
+                      {architectureTab === 'pipeline' ? 'Automated 4-Stage Engine' : 'Private VPC Network'}
+                    </span>
                   </div>
 
                   {/* Right: Actions */}
@@ -610,7 +499,167 @@ export default function Login() {
                 {/* ─── 2D TOPOLOGY GRAPH (DOT GRID CANVAS) ─── */}
                 <div className="relative w-full h-[520px] bg-[#0b0e14] bg-dot-grid overflow-hidden">
 
-                  {/* PRESET 1: FULL-STACK MICROSERVICES GRAPH */}
+                  {/* ─── VIEW 1: 4-STEP DEPLOYMENT PIPELINE ─── */}
+                  {architectureTab === 'pipeline' && (
+                    <div className="w-full h-full relative animate-fade-in">
+                      
+                      {/* SVG CONNECTOR FLOW WITH LIGHT SPIKE */}
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                        <defs>
+                          <filter id="glow-green-pipe" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                          </filter>
+                        </defs>
+
+                        {/* Continuous 4-Stage Connector Wire */}
+                        <path 
+                          d="M 230 250 C 255 250, 255 125, 275 125 L 450 125 C 475 125, 475 325, 495 325 L 670 325 C 690 325, 690 185, 710 185" 
+                          fill="none" 
+                          stroke="#21262d" 
+                          strokeWidth="2.5" 
+                        />
+                        <path 
+                          d="M 230 250 C 255 250, 255 125, 275 125 L 450 125 C 475 125, 475 325, 495 325 L 670 325 C 690 325, 690 185, 710 185" 
+                          fill="none" 
+                          stroke="#30363d" 
+                          strokeWidth="1.5" 
+                          strokeDasharray="4 4" 
+                        />
+                        <circle r="4" fill="#2ea44f" filter="url(#glow-green-pipe)">
+                          <animateMotion 
+                            dur="4.5s" 
+                            repeatCount="indefinite" 
+                            path="M 230 250 C 255 250, 255 125, 275 125 L 450 125 C 475 125, 475 325, 495 325 L 670 325 C 690 325, 690 185, 710 185" 
+                          />
+                        </circle>
+                      </svg>
+
+                      {/* Stage 1: Git Push */}
+                      <div 
+                        className="absolute left-6 sm:left-10 top-[200px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#8b949e] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#f0f6fc]">
+                              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">
+                                1. Git Push
+                              </h3>
+                              <span className="text-[10px] text-[#8b949e]">GitHub Webhook</span>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">
+                            01
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-mono text-[#58a6ff] truncate">
+                          git push origin main
+                        </p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                          <span className="text-[#2ea44f]">✓</span>
+                          <span>HMAC-SHA256 verified</span>
+                        </div>
+                      </div>
+
+                      {/* Stage 2: Auto Containerize */}
+                      <div 
+                        className="absolute left-[28%] sm:left-[30%] top-[75px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#58a6ff] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#58a6ff]">
+                              <Server className="w-3.5 h-3.5" />
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">
+                                2. Containerize
+                              </h3>
+                              <span className="text-[10px] text-[#8b949e]">Docker Build</span>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">
+                            02
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-mono text-[#8b949e] truncate">
+                          Auto runtime detection
+                        </p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                          <span className="text-[#2ea44f]">✓</span>
+                          <span>multi-stage cgroups</span>
+                        </div>
+                      </div>
+
+                      {/* Stage 3: Encrypted Secrets */}
+                      <div 
+                        className="absolute left-[52%] sm:left-[54%] top-[275px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#bc8cff] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#bc8cff]">
+                              <Lock className="w-3.5 h-3.5" />
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">
+                                3. Inject .env
+                              </h3>
+                              <span className="text-[10px] text-[#8b949e]">Secrets Injection</span>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">
+                            03
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-mono text-[#bc8cff] truncate">
+                          fernet.aes_128_gcm
+                        </p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                          <span className="text-[#2ea44f]">✓</span>
+                          <span>Encrypted at rest</span>
+                        </div>
+                      </div>
+
+                      {/* Stage 4: Live on Web */}
+                      <div 
+                        className="absolute right-6 sm:right-10 top-[135px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#2ea44f] rounded-[8px] p-3.5 space-y-2.5 transition-all duration-150 z-10 shadow-lg cursor-pointer group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#2ea44f]">
+                              <Globe className="w-3.5 h-3.5" />
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">
+                                4. Live on Web
+                              </h3>
+                              <span className="text-[10px] text-[#8b949e]">Nginx Proxy</span>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">
+                            04
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-mono text-[#2ea44f] truncate">
+                          https://app.deployat.me
+                        </p>
+                        <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[#2ea44f]">✓</span>
+                            <span>SSL active</span>
+                          </div>
+                          <span className="text-[#484f58]">~3.2s</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* ─── VIEW 2: FULL-STACK MICROSERVICES GRAPH ─── */}
                   {architectureTab === 'developer' ? (
                     <div className="w-full h-full relative animate-fade-in">
                       
