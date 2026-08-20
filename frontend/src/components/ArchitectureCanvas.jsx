@@ -202,7 +202,7 @@ export default function ArchitectureCanvas() {
                   </div>
                   <p className="text-[10.5px] font-mono text-[#58a6ff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">git commit -m "feat"</p>
                   <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#58a6ff] font-medium">● Full-Stack App</span>
+                    <span className="text-[#f0f6fc] font-medium">● Full-Stack App</span>
                     <ArrowUp className="w-3.5 h-3.5 text-[#58a6ff] animate-bounce" />
                   </div>
                 </div>
@@ -239,7 +239,7 @@ export default function ArchitectureCanvas() {
                     </div>
                     <span className="w-2.5 h-2.5 rounded-full bg-[#bc8cff] animate-pulse"></span>
                   </div>
-                  <p className="text-[10.5px] font-mono text-[#c9d1d9] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">docker.build --cgroup</p>
+                  <p className="text-[10.5px] font-mono text-[#bc8cff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">docker.build --cgroup</p>
                   <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                     <span className="text-[#bc8cff] font-bold">✓</span>
                     <span className="text-[#c9d1d9]">auto-detect runtime</span>
@@ -277,7 +277,7 @@ export default function ArchitectureCanvas() {
                   </div>
                   <p className="text-[10.5px] font-mono text-[#2ea44f] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">https://myapp.deployat.me</p>
                   <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#2ea44f] font-semibold">✓ Active SSL</span>
+                    <span className="text-[#f0f6fc] font-semibold">✓ Active SSL</span>
                     <span className="text-[#484f58]">~3.2s</span>
                   </div>
                 </div>
