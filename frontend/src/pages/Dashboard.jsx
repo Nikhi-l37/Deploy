@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { 
   LogOut, Plus, Activity, Code, Globe, RefreshCw, Trash2, X, 
   Terminal, Settings, Database, Folder, Play, Save, GitBranch, 
-  Layers, AlertTriangle, AlertCircle, Info, ExternalLink, Check
+  Layers, AlertTriangle, AlertCircle, Info, ExternalLink, Check, Copy
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -39,9 +39,19 @@ export default function Dashboard({ session }) {
   const [isSavingEnv, setIsSavingEnv] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [copiedLogs, setCopiedLogs] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
+  };
+
+  const handleCopyLogs = () => {
+    if (!logs || logs.length === 0) return;
+    const fullLogText = logs.map(l => l.log_text).join('\n');
+    navigator.clipboard.writeText(fullLogText);
+    setCopiedLogs(true);
+    showToast("Build logs copied to clipboard!", "success");
+    setTimeout(() => setCopiedLogs(false), 2000);
   };
 
   useEffect(() => {
@@ -582,7 +592,28 @@ export default function Dashboard({ session }) {
                         <div className="w-2.5 h-2.5 rounded-full bg-[#3fb950]"></div>
                         <span className="ml-2 text-xs text-[#8b949e]">tty1 • {selectedProject.id.substring(0,8)}</span>
                       </div>
-                      <span className="text-[11px] text-[#484f58]">UTF-8</span>
+                      <div className="flex items-center gap-3">
+                        {logs.length > 0 && (
+                          <button
+                            onClick={handleCopyLogs}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#c9d1d9] hover:text-white text-[11px] font-mono transition-colors cursor-pointer"
+                            title="Copy all logs to clipboard"
+                          >
+                            {copiedLogs ? (
+                              <>
+                                <Check className="w-3 h-3 text-[#3fb950]" />
+                                <span className="text-[#3fb950]">Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 text-[#8b949e]" />
+                                <span>Copy Logs</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                        <span className="text-[11px] text-[#484f58]">UTF-8</span>
+                      </div>
                     </div>
                     <div 
                       ref={logsContainerRef} 

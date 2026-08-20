@@ -272,15 +272,28 @@ def run_pipeline(project_id: str):
         push_log(project_id, "Building Docker image. This may take a minute...")
         image_name = f"{safe_name}:latest"
         
-        # We use the low-level API to stream logs
-        build_logs = docker_client.api.build(path=build_path, tag=image_name, decode=True, buildargs=build_args)
-        for chunk in build_logs:
-            if 'stream' in chunk:
-                line = chunk['stream'].strip()
-                if line:
-                    push_log(project_id, f"[BUILD] {line}")
-            elif 'error' in chunk:
-                raise Exception(f"Docker Build Error: {chunk['error']}")
+        # Use direct docker CLI subprocess for 100% reliable real-time log streaming without socket buffer errors
+        cmd = ["docker", "build", "-t", image_name, build_path]
+        for k, v in build_args.items():
+            cmd.extend(["--build-arg", f"{k}={v}"])
+            
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            bufsize=1
+        )
+        for line in iter(process.stdout.readline, ''):
+            clean_line = line.strip()
+            if clean_line:
+                push_log(project_id, f"[BUILD] {clean_line}")
+        process.stdout.close()
+        return_code = process.wait()
+        if return_code != 0:
+            raise Exception(f"Docker build failed with exit code {return_code}")
 
         # 5. Clean up old container if it exists
         if project.get("container_id"):
