@@ -157,6 +157,10 @@ export default function ArchitectureCanvas() {
                       <feGaussianBlur stdDeviation="3.5" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
+                    <filter id="glow-red-dev" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3.5" result="blur" />
+                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
                   </defs>
 
                   {/* Wire 1: User Code ➔ GitHub (Vertical Up) */}
@@ -166,21 +170,21 @@ export default function ArchitectureCanvas() {
                     <animateMotion dur="2.0s" repeatCount="indefinite" path="M 130 305 L 130 180" />
                   </circle>
 
-                  {/* Wire 2: GitHub ➔ Our Platform (Horizontal) */}
+                  {/* Wire 2: GitHub ➔ Our Platform (Horizontal Purple) */}
                   <path d="M 230 115 L 275 115" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 230 115 L 275 115" fill="none" stroke="#2ea44f" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#2ea44f" filter="url(#glow-green-dev)">
+                  <path d="M 230 115 L 275 115" fill="none" stroke="#bc8cff" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4.5" fill="#bc8cff" filter="url(#glow-purple-dev)">
                     <animateMotion dur="2.2s" repeatCount="indefinite" path="M 230 115 L 275 115" />
                   </circle>
 
-                  {/* Wire 3: Our Platform ➔ Adding Environment Variables (Horizontal) */}
+                  {/* Wire 3: Our Platform ➔ Adding Environment Variables (Horizontal Red) */}
                   <path d="M 480 115 L 525 115" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 480 115 L 525 115" fill="none" stroke="#bc8cff" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#bc8cff" filter="url(#glow-purple-dev)">
+                  <path d="M 480 115 L 525 115" fill="none" stroke="#f85149" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4.5" fill="#f85149" filter="url(#glow-red-dev)">
                     <animateMotion dur="2.2s" repeatCount="indefinite" path="M 480 115 L 525 115" />
                   </circle>
 
-                  {/* Wire 4: Environment Variables ➔ Live on Internet (Horizontal) */}
+                  {/* Wire 4: Environment Variables ➔ Live on Internet (Horizontal Green) */}
                   <path d="M 730 115 L 770 115" fill="none" stroke="#21262d" strokeWidth="3" />
                   <path d="M 730 115 L 770 115" fill="none" stroke="#2ea44f" strokeWidth="1.5" strokeDasharray="4 4" />
                   <circle r="4.5" fill="#2ea44f" filter="url(#glow-green-dev)">
@@ -224,49 +228,49 @@ export default function ArchitectureCanvas() {
                   </div>
                 </div>
 
-                {/* Node 3: Our Platform (Top Center-Left) */}
-                <div className="absolute left-[275px] top-[50px] w-[205px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#2ea44f] hover:shadow-[0_0_20px_rgba(46,164,79,0.2)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                {/* Node 3: Our Platform (Top Center-Left - Styled with Purple) */}
+                <div className="absolute left-[275px] top-[50px] w-[205px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_20px_rgba(188,140,255,0.2)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#2ea44f]/40 flex items-center justify-center text-[#2ea44f] transition-colors">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#bc8cff]/40 flex items-center justify-center text-[#bc8cff] transition-colors">
                         <Activity className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">Our Platform</h3>
-                        <span className="text-[10.5px] text-[#8b949e] font-mono">Build Engine</span>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Our Platform</h3>
+                        <span className="text-[10.5px] text-[#bc8cff] font-mono">Build Engine</span>
                       </div>
                     </div>
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#2ea44f] animate-pulse"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#bc8cff] animate-pulse"></span>
                   </div>
                   <p className="text-[10.5px] font-mono text-[#c9d1d9] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">docker.build --cgroup</p>
                   <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#2ea44f] font-bold">✓</span>
+                    <span className="text-[#bc8cff] font-bold">✓</span>
                     <span className="text-[#c9d1d9]">auto-detect runtime</span>
                   </div>
                 </div>
 
-                {/* Node 4: Adding Environment Variables (Top Center-Right) */}
-                <div className="absolute left-[525px] top-[50px] w-[205px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_15px_rgba(188,140,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                {/* Node 4: Adding Environment Variables (Top Center-Right - Styled with Red) */}
+                <div className="absolute left-[525px] top-[50px] w-[205px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#f85149] hover:shadow-[0_0_20px_rgba(248,81,73,0.2)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#bc8cff]">
+                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#f85149]/40 flex items-center justify-center text-[#f85149] transition-colors">
                       <Lock className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Environment Keys</h3>
-                      <span className="text-[10.5px] text-[#8b949e]">.env Secrets Injection</span>
+                      <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#f85149] transition-colors leading-tight">Environment Keys</h3>
+                      <span className="text-[10.5px] text-[#f85149]">.env Secrets Injection</span>
                     </div>
                   </div>
-                  <p className="text-[10.5px] font-mono text-[#bc8cff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">API_KEY=••••••••</p>
+                  <p className="text-[10.5px] font-mono text-[#f85149] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">API_KEY=••••••••</p>
                   <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#bc8cff]">🔒</span>
+                    <span className="text-[#f85149]">🔒</span>
                     <span className="text-[#c9d1d9]">Fernet AES-128 GCM</span>
                   </div>
                 </div>
 
-                {/* Node 5: Live on Internet (Top Far-Right) */}
+                {/* Node 5: Live on Internet (Top Far-Right - Styled with Green) */}
                 <div className="absolute left-[770px] top-[50px] w-[200px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#2ea44f] hover:shadow-[0_0_20px_rgba(46,164,79,0.2)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#2ea44f]">
+                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#2ea44f]/40 flex items-center justify-center text-[#2ea44f] transition-colors">
                       <Globe className="w-4 h-4" />
                     </div>
                     <div>
@@ -304,7 +308,7 @@ export default function ArchitectureCanvas() {
 
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#f0f6fc]">
-                        <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#2ea44f]">2</span>
+                        <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#bc8cff]">2</span>
                         <span>Intake & Build</span>
                       </div>
                       <p className="text-[10.5px] text-[#8b949e] leading-relaxed">Pulls code & compiles container.</p>
@@ -312,7 +316,7 @@ export default function ArchitectureCanvas() {
 
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#f0f6fc]">
-                        <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#bc8cff]">3</span>
+                        <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#f85149]">3</span>
                         <span>Inject .env</span>
                       </div>
                       <p className="text-[10.5px] text-[#8b949e] leading-relaxed">Secrets decrypted & injected.</p>
