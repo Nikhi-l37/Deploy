@@ -166,7 +166,7 @@ export default function Login() {
             {/* ========================================================== */}
             {/* LIVE DEPLOYMENT TERMINAL SIMULATION (Elevated Container)    */}
             {/* ========================================================== */}
-            <div className="max-w-5xl mx-auto w-full">
+            <div className="max-w-5xl mx-auto w-full pt-8 sm:pt-12">
               {/* Terminal Header Label */}
               <div className="text-left mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
