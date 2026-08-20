@@ -225,15 +225,15 @@ export default function ArchitectureCanvas() {
                 </div>
 
                 {/* Node 3: Our Platform (Top Center-Left) */}
-                <div className="absolute left-[275px] top-[50px] w-[205px] bg-[#161b22] border-2 border-[#2ea44f]/70 hover:border-[#2ea44f] shadow-[0_0_20px_rgba(46,164,79,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 cursor-pointer group transition-all duration-200">
+                <div className="absolute left-[275px] top-[50px] w-[205px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#2ea44f] hover:shadow-[0_0_20px_rgba(46,164,79,0.2)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#2ea44f]/40 flex items-center justify-center text-[#2ea44f]">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#2ea44f]/40 flex items-center justify-center text-[#2ea44f] transition-colors">
                         <Activity className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-[13px] font-bold text-[#f0f6fc]">Our Platform</h3>
-                        <span className="text-[10.5px] text-[#2ea44f] font-mono font-medium">Build Engine</span>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">Our Platform</h3>
+                        <span className="text-[10.5px] text-[#8b949e] font-mono">Build Engine</span>
                       </div>
                     </div>
                     <span className="w-2.5 h-2.5 rounded-full bg-[#2ea44f] animate-pulse"></span>
@@ -426,15 +426,15 @@ export default function ArchitectureCanvas() {
                   </div>
                 </div>
 
-                {/* STAGE 3: COMPUTE & SANDBOX ENGINE (HERO / FOCAL ANCHOR CARD - CENTER: left 380px, width 240px -> right edge 620px) */}
-                <div className="absolute left-[380px] top-[145px] w-[240px] bg-[#161b22] border-2 border-[#FF9900]/80 hover:border-[#FF9900] shadow-[0_0_25px_rgba(255,153,0,0.18)] rounded-[10px] p-4 space-y-3 z-20 cursor-pointer group transition-all duration-200">
+                {/* STAGE 3: COMPUTE & SANDBOX ENGINE (CENTER: left 380px, width 240px -> right edge 620px) */}
+                <div className="absolute left-[380px] top-[145px] w-[240px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#FF9900] hover:shadow-[0_0_25px_rgba(255,153,0,0.2)] rounded-[10px] p-4 space-y-3 z-20 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between border-b border-[#30363d]/80 pb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="h-7 px-1.5 rounded-[6px] bg-[#0d1117] border border-[#FF9900]/40 flex items-center justify-center">
+                      <div className="h-7 px-1.5 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#FF9900]/40 flex items-center justify-center transition-colors">
                         <BrandLogos.AWS />
                       </div>
                       <div>
-                        <span className="text-[9.5px] font-mono uppercase tracking-wider text-[#FF9900] font-bold block">Stage 03 · Core</span>
+                        <span className="text-[9.5px] font-mono uppercase tracking-wider text-[#8b949e] group-hover:text-[#FF9900] transition-colors block">Stage 03 · Core</span>
                         <h3 className="text-[14px] font-bold text-[#f0f6fc]">AWS EC2 Host</h3>
                       </div>
                     </div>
