@@ -40,10 +40,23 @@ export const BrandLogos = {
     </svg>
   ),
   AWS: () => (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-      <path d="M6.5 12c0 2.5 1.8 4.2 4.2 4.2 1.8 0 3.2-1 3.8-2.3l-1.5-.9c-.4.8-1.3 1.4-2.3 1.4-1.5 0-2.5-1-2.5-2.4 0-1.4 1-2.4 2.5-2.4 1 0 1.9.6 2.3 1.4l1.5-.9c-.6-1.3-2-2.3-3.8-2.3-2.4 0-4.2 1.7-4.2 4.2z" fill="#FF9900"/>
-      <path d="M19.5 16.5C14.5 20 8.5 20.5 3.5 18c-.4-.2-.1-.8.3-.6 4.7 2.3 10.3 1.8 15-.9.4-.3.9.3.7.0z" fill="#FF9900"/>
-      <path d="M20.5 15.2c-.3-.4-1.8-.2-2.6 0-.3 0-.3-.3 0-.5 1.5-.9 3.2-.5 3.5-.2.3.4-.2 2.1-1.6 3.1-.3.2-.5.1-.4-.2.4-.6 1.4-1.8 1.1-2.2z" fill="#FF9900"/>
+    <svg className="w-6 h-4" viewBox="0 0 75 45" fill="none">
+      {/* Letter 'a' */}
+      <path d="M18.8 20.3c0-2.8-1.5-4.4-4.2-4.4-2.5 0-4.1 1.4-4.5 3.5h-3.5c.5-3.8 3.5-6.3 8-6.3 4.9 0 7.7 2.7 7.7 7.2v10.9h-3.5v-2.7c-1.3 1.9-3.4 3-5.9 3-4.1 0-6.8-2.6-6.8-6.1 0-3.9 3-6 8.9-6.3l3.8-.2v-1.4c0-1.7-.9-2.7-2.6-2.7-1.5 0-2.4.7-2.6 1.9h-3.5c.3-2.9 2.5-4.7 6.1-4.7 3.6 0 6.1 1.7 6.1 5.3v2.9zm-3.8 4.4c-3.1.2-5.3 1.1-5.3 3.3 0 1.9 1.4 3.1 3.5 3.1 2.3 0 4.1-1.4 4.5-3.3v-3.1h-2.7z" fill="#ffffff"/>
+      {/* Letter 'w' */}
+      <path d="M37.3 13.5l-4.5 17.7h-3.7l-3.3-13.4-3.3 13.4h-3.7l-4.5-17.7h3.7l2.7 13.6 3.4-13.6h3.4l3.4 13.6 2.7-13.6h3.7z" fill="#ffffff"/>
+      {/* Letter 's' */}
+      <path d="M47.8 17.5c-.8-.7-2-1.2-3.4-1.2-1.9 0-3 .9-3 2.1 0 1.3.9 1.9 3.2 2.5l2.2.6c3.6 1 5.4 2.7 5.4 5.7 0 3.7-3 6.1-7.7 6.1-3.6 0-6.3-1.4-7.5-3.7l3-1.8c.8 1.6 2.4 2.5 4.5 2.5 2.4 0 3.8-1 3.8-2.5 0-1.4-1.1-2.1-3.4-2.7l-2.2-.6c-3.4-.9-5.1-2.6-5.1-5.4 0-3.4 2.8-5.6 7-5.6 3.1 0 5.4 1 6.8 2.6l-2.6 2.0z" fill="#ffffff"/>
+      {/* AWS Iconic Smile Arrow */}
+      <path d="M54.5 35.8c-8.9 5.6-21.6 8.6-32.6 8.6-15.4 0-29.3-5.7-39.8-15.3-.8-.7-.2-1.8.8-1.2 10.5 6.3 23.4 10.2 36.8 10.2 9.8 0 20.4-2.4 30-7.4 1.5-.8 2.7 1.2 4.8 5.1z" fill="#FF9900"/>
+      <path d="M57.5 32c-1.1-1.4-7.4-3.4-10.3-2.8-.9.2-1-.7-.2-1.3 5.2-3.6 13.6-2.6 14.5-1.4 1 1.2-.2 9.6-5.1 13.7-.7.6-1.5.3-1.1-.5 1.1-2.7 3.4-6.2 2.2-7.7z" fill="#FF9900"/>
+    </svg>
+  ),
+  Watchdog: () => (
+    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#0d1117" stroke="#bc8cff" strokeWidth="1.5"/>
+      <path d="M5 12h2.5l2-4 3 8 2.5-5 1.5 2.5H19" stroke="#bc8cff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="19" cy="6" r="2" fill="#2ea44f" />
     </svg>
   ),
   Supabase: () => (
@@ -394,7 +407,7 @@ export default function ArchitectureCanvas() {
                 {/* STAGE 1: INGESTION & TRIGGER (Top-Left: left 30px, width 210px -> right edge 240px) */}
                 <div className="absolute left-[30px] top-[50px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#f0f6fc]">
                         <BrandLogos.GitHub />
                       </div>
@@ -415,7 +428,7 @@ export default function ArchitectureCanvas() {
                 {/* STAGE 2: CONTROL PLANE & SECURITY (Bottom-Left: left 30px, width 210px -> right edge 240px) */}
                 <div className="absolute left-[30px] top-[320px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#3ECF8E] hover:shadow-[0_0_15px_rgba(62,207,142,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
                         <BrandLogos.Supabase />
                       </div>
@@ -437,7 +450,7 @@ export default function ArchitectureCanvas() {
                 <div className="absolute left-[380px] top-[145px] w-[240px] bg-[#161b22] border-2 border-[#FF9900]/80 hover:border-[#FF9900] shadow-[0_0_25px_rgba(255,153,0,0.18)] rounded-[10px] p-4 space-y-3 z-20 cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between border-b border-[#30363d]/80 pb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-[6px] bg-[#0d1117] border border-[#FF9900]/40 flex items-center justify-center p-1">
+                      <div className="w-9 h-7 rounded-[6px] bg-[#0d1117] border border-[#FF9900]/40 flex items-center justify-center p-0.5">
                         <BrandLogos.AWS />
                       </div>
                       <div>
@@ -477,7 +490,7 @@ export default function ArchitectureCanvas() {
                 {/* STAGE 4: LIVE MESH & STATE REGISTRY (Top-Right: left 760px, width 210px -> left edge 760px) */}
                 <div className="absolute left-[760px] top-[50px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#58a6ff]">
                         <Database className="w-4 h-4" />
                       </div>
@@ -498,9 +511,9 @@ export default function ArchitectureCanvas() {
                 {/* STAGE 5: RESOURCE OPTIMIZER / WATCHDOG (Bottom-Right: left 760px, width 210px -> left edge 760px) */}
                 <div className="absolute left-[760px] top-[320px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_15px_rgba(188,140,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#bc8cff]">
-                        <Activity className="w-4 h-4" />
+                        <BrandLogos.Watchdog />
                       </div>
                       <div>
                         <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Stage 5: Watchdog</h3>
