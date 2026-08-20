@@ -57,7 +57,7 @@
   
   /* Inputs */
   .input-field {
-    @apply w-full bg-[#010409] border border-[#30363d] text-[#f0f6fc] px-3.5 py-2 rounded-md text-sm transition-all duration-150 placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff];
+    @apply w-full bg-[#010409] border border-[#30363d] text-[#f0f6fc] px-3.5 py-2 rounded-md text-sm placeholder-[#484f58] focus:outline-none focus:border-[#484f58] focus:ring-0;
   }
   
   /* Status Indicators */
