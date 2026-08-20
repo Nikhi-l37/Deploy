@@ -8,19 +8,19 @@ import ArchitectureCanvas from '../components/ArchitectureCanvas';
 
 // Terminal deployment simulation lines with clean developer technical descriptions
 const PIPELINE_LINES = [
-  { text: '$ git push origin main', delay: 400, type: 'command' },
-  { text: 'remote: Resolving deltas: 100% (26/26), 1.45 MiB | 12.8 MiB/s, done.', delay: 250, type: 'dim' },
-  { ts: '00:01', text: 'GitHub Webhook received and HMAC-SHA256 signature verified', color: '#58a6ff', delay: 350, type: 'info', badge: 'HMAC-SHA256 ✓' },
-  { ts: '00:02', text: 'Build job queued and dispatched to background worker', color: '#79c0ff', delay: 300, type: 'queue', badge: 'Redis Stream' },
-  { ts: '00:03', text: 'Cloning repository: github.com/developer/fullstack-app into build workspace', color: '#7ee787', delay: 400, type: 'clone', badge: 'depth=1' },
-  { ts: '00:04', text: 'Runtime environment auto-detected: Node.js 20 LTS (Fastify + React SSR)', color: '#d29922', delay: 350, type: 'runtime', badge: 'Node.js 20' },
-  { ts: '00:05', text: 'Dynamic multi-stage Dockerfile generated with Alpine 3.19 base image', color: '#db6d28', delay: 350, type: 'dockerfile', badge: 'multi-stage' },
-  { ts: '00:07', text: 'Compiling container image: installing dependencies and caching build layers', color: '#f85149', delay: 700, type: 'build', badge: 'docker build' },
-  { ts: '00:10', text: 'Allocating Linux cgroups v2 sandbox with 128MB RAM cap & 25% CPU throttle', color: '#bc8cff', delay: 350, type: 'cgroup', badge: '128MB Cap' },
-  { ts: '00:12', text: 'Symmetrically decrypting .env secrets (Fernet AES-128 GCM) into container environment', color: '#d2a8ff', delay: 350, type: 'secrets', badge: 'Fernet AES' },
-  { ts: '00:13', text: 'Container has started in sandbox and bound to internal dynamic port :49203', color: '#3fb950', delay: 350, type: 'container', badge: 'port :49203' },
-  { ts: '00:14', text: 'Nginx edge reverse proxy reloaded and Let\'s Encrypt SSL certificate provisioned', color: '#3fb950', delay: 300, type: 'nginx', badge: 'HTTP/2 SSL ✓' },
-  { ts: '00:15', text: '✓ Deployment complete! Application is live at https://myapp.deployat.me', color: '#3fb950', delay: 0, type: 'success', badge: 'ready in 15.2s' },
+  { text: '$ git push origin main', delay: 350, type: 'command' },
+  { text: 'remote: Resolving deltas: 100% (26/26), 1.45 MiB | 12.8 MiB/s, done.', delay: 200, type: 'dim' },
+  { ts: '00:01', prefix: '✓', action: 'GitHub Webhook received and verified', target: 'HMAC-SHA256', delay: 300, badge: 'verified' },
+  { ts: '00:02', prefix: '✓', action: 'Build job dispatched to background worker', target: 'Redis Stream', delay: 250, badge: 'queued' },
+  { ts: '00:03', prefix: '✓', action: 'Cloning repository into build workspace', target: 'depth=1', delay: 350, badge: 'git clone' },
+  { ts: '00:04', prefix: '✓', action: 'Runtime auto-detected', target: 'Node.js 20 LTS (Fastify + React SSR)', delay: 300, badge: 'Node.js 20' },
+  { ts: '00:05', prefix: '✓', action: 'Multi-stage Dockerfile generated', target: 'Alpine 3.19 base', delay: 300, badge: 'multi-stage' },
+  { ts: '00:07', prefix: '✓', action: 'Compiling container image & caching build layers', target: 'docker build', delay: 600, badge: 'cached' },
+  { ts: '00:10', prefix: '✓', action: 'Allocating sandbox', target: '128MB RAM cap & 25% CPU throttle', delay: 300, badge: 'cgroups v2' },
+  { ts: '00:12', prefix: '✓', action: 'Decrypting .env secrets into container environment', target: 'Fernet AES-128 GCM', delay: 300, badge: 'AES-128' },
+  { ts: '00:13', prefix: '✓', action: 'Container running in sandbox and bound to port', target: ':49203', delay: 300, badge: 'healthy' },
+  { ts: '00:14', prefix: '✓', action: 'Nginx edge reverse proxy reloaded & SSL certificate provisioned', target: 'HTTP/2 SSL', delay: 250, badge: 'active' },
+  { ts: '00:15', prefix: '🚀', action: 'Deployment complete! Application is live at', target: 'https://myapp.deployat.me', delay: 0, type: 'success', badge: '15.2s' },
 ];
 
 export default function Login() {
@@ -58,7 +58,7 @@ export default function Login() {
     timeoutsRef.current.forEach(t => clearTimeout(t));
     timeoutsRef.current = [];
 
-    let cumulative = 400;
+    let cumulative = 300;
     PIPELINE_LINES.forEach((line, i) => {
       cumulative += line.delay;
       const t = setTimeout(() => {
@@ -193,7 +193,7 @@ export default function Login() {
                   <div className="flex items-center gap-2 text-[11px] font-mono text-[#8b949e]">
                     {terminalDone && (
                       <div className="flex items-center gap-2.5">
-                        <span className="text-[#2ea44f] font-semibold">● deployed (15.2s)</span>
+                        <span className="text-[#3fb950] font-medium">● deployed in 15.2s</span>
                         <button 
                           onClick={runTerminal}
                           className="text-[#8b949e] hover:text-[#f0f6fc] text-[11px] px-2 py-0.5 rounded bg-[#21262d] border border-[#30363d] hover:border-[#8b949e] cursor-pointer transition-colors"
@@ -203,15 +203,15 @@ export default function Login() {
                       </div>
                     )}
                     {!terminalDone && visibleLines.length > 0 && (
-                      <span className="text-[#d29922] animate-pulse font-medium">● deploying container...</span>
+                      <span className="text-[#d29922] animate-pulse font-medium">● executing pipeline...</span>
                     )}
                   </div>
                 </div>
 
-                {/* Recessed Screen Area - Zero scrollbar, clean single-view container */}
+                {/* Recessed Screen Area - Clean GitHub Actions Terminal Theme */}
                 <div 
                   ref={terminalRef}
-                  className="bg-[#080b10] p-5 sm:p-6 font-mono text-[12.5px] sm:text-[13px] leading-[1.75] space-y-1"
+                  className="bg-[#080b10] p-5 sm:p-6 font-mono text-[12.5px] sm:text-[13px] leading-[1.75] space-y-1.5"
                 >
                   {visibleLines.map((line, i) => (
                     <div 
@@ -225,33 +225,37 @@ export default function Login() {
                           <span className="text-[#f0f6fc] font-normal">{line.text.replace('$ ', '')}</span>
                         </div>
                       ) : line.type === 'dim' ? (
-                        <div className="text-[#6e7681] text-[11.5px] sm:text-[12px] font-normal pl-3 pb-1">
+                        <div className="text-[#6e7681] text-[11.5px] sm:text-[12px] font-normal pl-4 pb-1">
                           {line.text}
                         </div>
                       ) : line.type === 'success' ? (
                         <div className="flex items-center justify-between gap-2.5 mt-2 bg-[#238636]/15 p-2.5 rounded-md border border-[#238636]/40 text-xs sm:text-[13px] font-normal">
                           <div className="flex items-center gap-2.5">
-                            {line.ts && (
-                              <span className="text-[#8b949e] text-xs font-mono select-none font-normal">{line.ts}</span>
-                            )}
-                            <span className="text-[#3fb950] font-normal">{line.text}</span>
+                            <span className="text-[#3fb950] text-sm select-none">✓</span>
+                            <span className="text-[#8b949e] text-xs font-mono select-none">{line.ts}</span>
+                            <span className="text-[#f0f6fc]">{line.action}</span>
+                            <span className="text-[#3fb950] underline underline-offset-2">{line.target}</span>
                           </div>
                           {line.badge && (
-                            <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#238636]/30 text-[#3fb950] border border-[#238636]/50 font-normal">
-                              {line.badge}
+                            <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#238636]/30 text-[#3fb950] border border-[#238636]/50 font-normal shrink-0">
+                              ready · {line.badge}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <div className="flex items-center justify-between gap-3 py-0.5">
+                        <div className="flex items-center justify-between gap-3 py-0.5 hover:bg-[#161b22]/30 px-1 rounded transition-colors">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            {line.ts && (
-                              <span className="text-[#6e7681] select-none text-xs font-normal">
-                                {line.ts}
-                              </span>
-                            )}
-                            <span style={{ color: line.color }} className="font-normal truncate">
-                              {line.text}
+                            <span className="text-[#3fb950] text-xs select-none">✓</span>
+                            <span className="text-[#6e7681] select-none text-xs font-mono">
+                              {line.ts}
+                            </span>
+                            <span className="text-[#c9d1d9] truncate">
+                              {line.action}
+                              {line.target && (
+                                <span className="text-[#f0f6fc] font-medium ml-1.5 bg-[#161b22] px-1.5 py-0.5 rounded border border-[#30363d] text-[11.5px]">
+                                  {line.target}
+                                </span>
+                              )}
                             </span>
                           </div>
                           {line.badge && (
