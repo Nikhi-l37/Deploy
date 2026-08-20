@@ -40,23 +40,20 @@ export const BrandLogos = {
     </svg>
   ),
   AWS: () => (
-    <svg className="w-5.5 h-5.5" viewBox="0 0 32 32" fill="none">
-      {/* Amazon Web Services EC2 Compute Brand Shield */}
-      <rect width="32" height="32" rx="6" fill="#FF9900" />
-      <path d="M8 12.5c0-1.8 1.1-2.9 2.8-2.9 1.6 0 2.6.9 2.9 2.3h-1.4c-.2-.7-.7-1.1-1.5-1.1-.9 0-1.5.6-1.5 1.7v1.8c0 1.1.6 1.7 1.5 1.7.8 0 1.3-.4 1.5-1.1h1.4c-.3 1.4-1.3 2.3-2.9 2.3-1.7 0-2.8-1.1-2.8-2.9v-1.8z" fill="#232F3E"/>
-      <path d="M15 9.8h1.4v7.4H15v-7.4z" fill="#232F3E"/>
-      <path d="M18.5 14.6c0-1.6 1.1-2.7 2.7-2.7 1.6 0 2.7 1.1 2.7 2.7v.2h-4c.1.9.7 1.4 1.6 1.4.7 0 1.2-.3 1.4-.8h1.3c-.3 1.2-1.3 2-2.7 2-1.8 0-3-1.2-3-2.8zm4-ـ.8c0-.7-.5-1.2-1.3-1.2-.8 0-1.3.5-1.4 1.2h2.7z" fill="#232F3E"/>
-      <path d="M7 23c4.2 2.5 9.8 3.5 14.8 2.2.4-.1.7.3.4.6-3.8 3.2-10.2 3.8-15.6 1-.4-.2-.2-.8.4-.8z" fill="#232F3E"/>
-      <path d="M22.5 24.8c-.5-.2-2.5-.2-3.4.1-.3.1-.3-.3 0-.5 1.7-.8 3.8-.4 4.1-.1.3.3 0 2.4-1.6 3.5-.3.2-.5.1-.4-.2.4-.6 1.8-2.4 1.3-2.8z" fill="#232F3E"/>
+    <svg className="w-7 h-4.5" viewBox="0 0 44 26" fill="none">
+      {/* Crisp Official Amazon Web Services Typography */}
+      <text x="1" y="15" fill="#f0f6fc" fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="900" fontSize="15.5" letterSpacing="-0.8">aws</text>
+      {/* Signature Amazon #FF9900 Smile Arrow */}
+      <path d="M3.5 19 C 12 24, 27 24, 37 17.5" stroke="#FF9900" strokeWidth="2.4" strokeLinecap="round"/>
+      <path d="M34 15.5 L 39 17.5 L 35 20.5 Z" fill="#FF9900"/>
     </svg>
   ),
   Watchdog: () => (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-      {/* High-Tech Watchdog Daemon & Resource Optimizer Shield */}
-      <circle cx="12" cy="12" r="9.5" stroke="#bc8cff" strokeWidth="1.5" strokeDasharray="3 2" />
-      <path d="M12 3v3m0 12v3M3 12h3m12 0h3" stroke="#bc8cff" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="4.5" fill="#bc8cff" fillOpacity="0.2" stroke="#bc8cff" strokeWidth="1.5" />
-      <path d="M9.5 12h1.5l1-2 1.5 4 1-2h1.5" stroke="#2ea44f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="#bc8cff" strokeWidth="1.8" />
+      <path d="M12 6v6l4 2.5" stroke="#bc8cff" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="2" fill="#2ea44f" />
+      <path d="M7 17l2-2M17 17l-2-2" stroke="#bc8cff" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
   Supabase: () => (
@@ -450,7 +447,7 @@ export default function ArchitectureCanvas() {
                 <div className="absolute left-[380px] top-[145px] w-[240px] bg-[#161b22] border-2 border-[#FF9900]/80 hover:border-[#FF9900] shadow-[0_0_25px_rgba(255,153,0,0.18)] rounded-[10px] p-4 space-y-3 z-20 cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between border-b border-[#30363d]/80 pb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-0.5">
+                      <div className="h-7 px-1.5 rounded-[6px] bg-[#0d1117] border border-[#FF9900]/40 flex items-center justify-center">
                         <BrandLogos.AWS />
                       </div>
                       <div>
