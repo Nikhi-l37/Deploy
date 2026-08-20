@@ -33,6 +33,21 @@ export default function Dashboard({ session }) {
   const [rootDir, setRootDir] = useState('/');
   const [startCmd, setStartCmd] = useState('');
 
+  // Toast & Modal Feedback States (Replacing browser alerts/confirms)
+  const [toast, setToast] = useState(null);
+  const [deleteConfirmProject, setDeleteConfirmProject] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const user = session.user;
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
@@ -161,7 +176,7 @@ export default function Dashboard({ session }) {
   const handleCreateProject = async (e) => {
     e.preventDefault();
     if (projects.length >= 2) {
-      alert("You have reached the maximum number of allowed apps (2).");
+      showToast("You have reached the maximum number of allowed apps (2).", "error");
       return;
     }
     
@@ -182,8 +197,9 @@ export default function Dashboard({ session }) {
       setDeployStep(1);
       setShowModal(false);
       fetchProjects();
+      showToast("Project deployment initiated successfully!", "success");
     } catch (err) {
-      alert('Failed to create project: ' + err.message);
+      showToast('Failed to create project: ' + (err.response?.data?.detail || err.message), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -196,8 +212,9 @@ export default function Dashboard({ session }) {
       });
       fetchProjects();
       setActiveTab('logs');
+      showToast("Redeploy initiated successfully!", "success");
     } catch (err) {
-      alert('Failed to deploy: ' + err.message);
+      showToast('Failed to deploy: ' + (err.response?.data?.detail || err.message), 'error');
     }
   };
 
@@ -205,19 +222,21 @@ export default function Dashboard({ session }) {
     try {
       await api.get(`/gateway/${projectId}`);
       fetchProjects();
+      showToast("Container wake-up triggered!", "info");
     } catch (err) {
-      alert('Failed to wake up: ' + err.message);
+      showToast('Failed to wake up: ' + (err.response?.data?.detail || err.message), 'error');
     }
   };
 
-  const handleDelete = async (projectId) => {
-    if (!confirm('Are you sure you want to delete this project?')) return;
+  const executeDelete = async (projectId) => {
     try {
       await api.delete(`/projects/${projectId}`);
       if (selectedProjectId === projectId) setSelectedProjectId(null);
+      setDeleteConfirmProject(null);
       fetchProjects();
+      showToast("Project deleted successfully", "info");
     } catch (err) {
-      alert('Failed to delete: ' + err.message);
+      showToast('Failed to delete: ' + (err.response?.data?.detail || err.message), 'error');
     }
   };
 
@@ -231,9 +250,9 @@ export default function Dashboard({ session }) {
       await api.post(`/projects/${selectedProjectId}/env`, {
         env_vars: envDict
       });
-      alert('Environment variables saved! Redeploy to apply changes.');
+      showToast('Environment variables saved! Redeploy to apply changes.', 'success');
     } catch (err) {
-      alert('Failed to save env vars: ' + err.message);
+      showToast('Failed to save env vars: ' + (err.response?.data?.detail || err.message), 'error');
     }
   };
 
@@ -243,10 +262,10 @@ export default function Dashboard({ session }) {
         root_directory: rootDir,
         start_command: startCmd
       });
-      alert('Settings saved! Redeploy to apply changes.');
+      showToast('Settings saved! Redeploy to apply changes.', 'success');
       fetchProjects();
     } catch (err) {
-      alert('Failed to save settings: ' + err.message);
+      showToast('Failed to save settings: ' + (err.response?.data?.detail || err.message), 'error');
     }
   };
 
@@ -440,7 +459,7 @@ export default function Dashboard({ session }) {
                                 <button 
                                   onClick={(e) => { 
                                     e.stopPropagation(); 
-                                    handleDelete(project.id); 
+                                    setDeleteConfirmProject(project); 
                                   }} 
                                   className="p-1.5 bg-[#da3633]/15 border border-[#da3633]/40 rounded-md text-[#f85149] hover:bg-[#da3633]/30 transition-colors"
                                   title="Delete"
@@ -711,7 +730,7 @@ export default function Dashboard({ session }) {
                         <p className="text-xs text-[#8b949e] mt-0.5">Stops container, removes image, frees allocated port, and drops records from Supabase.</p>
                       </div>
                       <button 
-                        onClick={() => handleDelete(selectedProject.id)} 
+                        onClick={() => setDeleteConfirmProject(selectedProject)} 
                         className="btn btn-danger"
                       >
                         <Trash2 className="w-4 h-4" /> Delete App
@@ -933,6 +952,72 @@ export default function Dashboard({ session }) {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Sleek Floating GitHub-style Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-fade-in flex items-center gap-3 bg-[#161b22] border border-[#30363d] text-[#f0f6fc] text-xs sm:text-sm px-4 py-3 rounded-[8px] shadow-2xl backdrop-blur-md">
+          {toast.type === 'success' && (
+            <div className="w-5 h-5 rounded-full bg-[#238636]/20 border border-[#238636] flex items-center justify-center text-[#3fb950] shrink-0">
+              <Check className="w-3.5 h-3.5" />
+            </div>
+          )}
+          {toast.type === 'error' && (
+            <div className="w-5 h-5 rounded-full bg-[#da3633]/20 border border-[#da3633] flex items-center justify-center text-[#f85149] shrink-0">
+              <AlertCircle className="w-3.5 h-3.5" />
+            </div>
+          )}
+          {toast.type === 'info' && (
+            <div className="w-5 h-5 rounded-full bg-[#388bfd]/20 border border-[#388bfd] flex items-center justify-center text-[#58a6ff] shrink-0">
+              <Info className="w-3.5 h-3.5" />
+            </div>
+          )}
+          <div className="font-medium pr-2">{toast.message}</div>
+          <button 
+            onClick={() => setToast(null)} 
+            className="text-[#8b949e] hover:text-[#f0f6fc] p-1 rounded hover:bg-[#21262d] transition-colors ml-auto"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal (Replacing native browser confirm) */}
+      {deleteConfirmProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-[10px] shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-3 text-[#f85149]">
+                <div className="w-9 h-9 rounded-full bg-[#da3633]/15 border border-[#da3633]/30 flex items-center justify-center">
+                  <Trash2 className="w-4.5 h-4.5 text-[#f85149]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#f0f6fc]">Delete Project</h3>
+                  <p className="text-xs text-[#8b949e]">This action cannot be undone.</p>
+                </div>
+              </div>
+              <p className="text-xs text-[#c9d1d9] leading-relaxed pt-1">
+                Are you sure you want to delete <strong className="text-[#f0f6fc]">{deleteConfirmProject.name}</strong> and stop all running containers?
+              </p>
+            </div>
+            <div className="px-5 py-3.5 bg-[#0d1117] border-t border-[#30363d] flex justify-end gap-2.5">
+              <button 
+                type="button"
+                onClick={() => setDeleteConfirmProject(null)} 
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={() => executeDelete(deleteConfirmProject.id)} 
+                className="btn btn-danger"
+              >
+                Delete Project
+              </button>
+            </div>
           </div>
         </div>
       )}
