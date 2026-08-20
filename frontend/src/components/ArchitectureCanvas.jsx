@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   Activity, Network, Server, Cpu, Globe, Database, 
   Lock, HardDrive, Plus, Minus, Maximize2, RefreshCw, 
-  Grid, ShieldCheck, Zap, Cloud, Laptop, Layers, ArrowRight
+  Grid, ShieldCheck, Zap, Cloud, Laptop, Layers, ArrowRight, 
+  FileCode, Terminal, Key, CheckCircle2, ArrowUp
 } from 'lucide-react';
 
 // =========================================================================
@@ -74,7 +75,7 @@ export const BrandLogos = {
 };
 
 export default function ArchitectureCanvas() {
-  const [activeTab, setActiveTab] = useState('developer');
+  const [activeTab, setActiveTab] = useState('user');
 
   return (
     <div className="max-w-5xl mx-auto pt-8 w-full space-y-4">
@@ -91,17 +92,17 @@ export default function ArchitectureCanvas() {
             How Deployat Works
           </h2>
           <p className="text-xs text-[#8b949e] mt-1">
-            Explore developer workflows, live request routing, and AWS container orchestration.
+            Explore the full journey: user code, GitHub webhooks, environment keys, and live URLs.
           </p>
         </div>
 
         <div className="inline-flex items-center p-1 rounded-[8px] bg-[#161b22] border border-[#30363d] select-none flex-wrap gap-1">
           <button
-            onClick={() => setActiveTab('developer')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${activeTab === 'developer' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
+            onClick={() => setActiveTab('user')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${activeTab === 'user' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
           >
             <Activity className="w-3.5 h-3.5 text-[#2ea44f]" />
-            <span>1. Developer Flow</span>
+            <span>1. User Flow</span>
           </button>
 
           <button
@@ -146,7 +147,7 @@ export default function ArchitectureCanvas() {
           <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-[#8b949e]">
             <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
             <span>
-              {activeTab === 'developer' && 'Developer Experience · Git push to live SSL'}
+              {activeTab === 'user' && 'User Flow · Code ➔ GitHub ➔ Our Platform ➔ .env Keys ➔ Live Internet'}
               {activeTab === 'routing' && 'End-User Routing · Gateway ➔ Container ➔ DB'}
               {activeTab === 'engine' && 'AWS Cloud Core · EC2 cgroups + Supabase Auth'}
             </span>
@@ -167,8 +168,10 @@ export default function ArchitectureCanvas() {
         {/* Canvas Body (Dot-Grid Surface) */}
         <div className="relative w-full h-[520px] bg-[#0b0e14] bg-dot-grid overflow-hidden">
 
-          {/* VIEW 1: DEVELOPER FLOW */}
-          {activeTab === 'developer' && (
+          {/* ================================================================= */}
+          {/* VIEW 1: USER FLOW (CODE -> GITHUB -> PLATFORM -> .ENV -> LIVE)    */}
+          {/* ================================================================= */}
+          {activeTab === 'user' && (
             <div className="w-full h-full relative animate-fade-in">
               <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
                 <defs>
@@ -180,120 +183,178 @@ export default function ArchitectureCanvas() {
                     <feGaussianBlur stdDeviation="3" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
+                  <filter id="glow-purple-dev" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
                 </defs>
-                <path d="M 230 110 C 285 110, 285 240, 340 240" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 230 110 C 285 110, 285 240, 340 240" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
-                <circle r="4" fill="#2ea44f" filter="url(#glow-green-dev)">
-                  <animateMotion dur="2.4s" repeatCount="indefinite" path="M 230 110 C 285 110, 285 240, 340 240" />
-                </circle>
-                <path d="M 230 380 C 285 380, 285 280, 340 280" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 230 380 C 285 380, 285 280, 340 280" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
+
+                {/* Wire 1: User Code (Bottom-Left) ➔ GitHub (Top-Left) (Vertical Up) */}
+                <path d="M 125 300 L 125 185" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                <path d="M 125 300 L 125 185" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
                 <circle r="4" fill="#58a6ff" filter="url(#glow-cyan-dev)">
-                  <animateMotion dur="2.6s" repeatCount="indefinite" path="M 230 380 C 285 380, 285 280, 340 280" />
+                  <animateMotion dur="2.0s" repeatCount="indefinite" path="M 125 300 L 125 185" />
                 </circle>
-                <path d="M 550 240 C 605 240, 605 110, 660 110" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 550 240 C 605 240, 605 110, 660 110" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
+
+                {/* Wire 2: GitHub ➔ Our Platform (Horizontal) */}
+                <path d="M 215 125 L 265 125" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                <path d="M 215 125 L 265 125" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
                 <circle r="4" fill="#2ea44f" filter="url(#glow-green-dev)">
-                  <animateMotion dur="2.2s" repeatCount="indefinite" path="M 550 240 C 605 240, 605 110, 660 110" />
+                  <animateMotion dur="2.2s" repeatCount="indefinite" path="M 215 125 L 265 125" />
                 </circle>
-                <path d="M 550 280 C 605 280, 605 380, 660 380" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 550 280 C 605 280, 605 380, 660 380" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
-                <circle r="4" fill="#58a6ff" filter="url(#glow-cyan-dev)">
-                  <animateMotion dur="2.5s" repeatCount="indefinite" path="M 550 280 C 605 280, 605 380, 660 380" />
+
+                {/* Wire 3: Our Platform ➔ Adding Environment Variables (Horizontal) */}
+                <path d="M 455 125 L 495 125" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                <path d="M 455 125 L 495 125" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
+                <circle r="4" fill="#bc8cff" filter="url(#glow-purple-dev)">
+                  <animateMotion dur="2.2s" repeatCount="indefinite" path="M 455 125 L 495 125" />
+                </circle>
+
+                {/* Wire 4: Environment Variables ➔ Live on Internet (Horizontal) */}
+                <path d="M 685 125 L 725 125" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                <path d="M 685 125 L 725 125" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
+                <circle r="4" fill="#2ea44f" filter="url(#glow-green-dev)">
+                  <animateMotion dur="2.0s" repeatCount="indefinite" path="M 685 125 L 725 125" />
                 </circle>
               </svg>
 
-              {/* Node 1: Frontend Repo */}
-              <div className="absolute left-6 sm:left-10 top-[60px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#61dafb] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
+              {/* Node 1: User Code (Bottom-Left) */}
+              <div className="absolute left-4 sm:left-6 top-[295px] w-[170px] sm:w-[185px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#58a6ff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
-                    <BrandLogos.React />
+                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#58a6ff]">
+                    <FileCode className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#61dafb] transition-colors leading-tight">Frontend Repo</h3>
-                    <span className="text-[10px] text-[#8b949e]">React / Next.js</span>
+                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">User Code</h3>
+                    <span className="text-[10px] text-[#8b949e]">Local Workspace</span>
                   </div>
                 </div>
-                <p className="text-[10px] font-mono text-[#8b949e] truncate">github.com/org/client-ui</p>
-                <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#2ea44f]">✓</span>
-                  <span>git push origin main</span>
+                <p className="text-[10px] font-mono text-[#58a6ff] truncate">git commit -m "feat"</p>
+                <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                  <span className="text-[#58a6ff]">● Full-Stack App</span>
+                  <ArrowUp className="w-3 h-3 text-[#58a6ff] animate-bounce" />
                 </div>
               </div>
 
-              {/* Node 2: Backend Repo */}
-              <div className="absolute left-6 sm:left-10 top-[330px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#387eb8] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
+              {/* Node 2: GitHub (Top-Left) */}
+              <div className="absolute left-4 sm:left-6 top-[55px] w-[170px] sm:w-[185px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#8b949e] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
-                    <BrandLogos.Python />
+                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#f0f6fc]">
+                    <BrandLogos.GitHub />
                   </div>
                   <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">Backend API Repo</h3>
-                    <span className="text-[10px] text-[#8b949e]">Python / Node.js</span>
+                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#f0f6fc] transition-colors leading-tight">GitHub</h3>
+                    <span className="text-[10px] text-[#8b949e]">Remote Repo</span>
                   </div>
                 </div>
-                <p className="text-[10px] font-mono text-[#8b949e] truncate">github.com/org/backend-api</p>
+                <p className="text-[10px] font-mono text-[#8b949e] truncate">git push origin main</p>
                 <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                   <span className="text-[#2ea44f]">✓</span>
-                  <span>git push origin main</span>
+                  <span>Webhook triggered</span>
                 </div>
               </div>
 
-              {/* Node 3: Deployat Cloud Platform */}
-              <div className="absolute left-[36%] sm:left-[38%] top-[190px] w-[200px] sm:w-[210px] bg-[#161b22] border-2 border-[#2ea44f]/60 hover:border-[#2ea44f] rounded-[8px] p-4 space-y-3 z-10 shadow-xl cursor-pointer group transition-all">
+              {/* Node 3: Our Platform (Top Center-Left) */}
+              <div className="absolute left-[24%] sm:left-[26%] top-[55px] w-[180px] sm:w-[195px] bg-[#161b22] border-2 border-[#2ea44f]/60 hover:border-[#2ea44f] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-xl cursor-pointer group transition-all">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#2ea44f]/40 flex items-center justify-center text-[#2ea44f]">
-                      <Activity className="w-4 h-4" />
+                    <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#2ea44f]/40 flex items-center justify-center text-[#2ea44f]">
+                      <Activity className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-bold text-[#f0f6fc]">Deployat Cloud</h3>
-                      <span className="text-[10px] text-[#2ea44f] font-mono">Intake Engine</span>
+                      <h3 className="text-xs font-bold text-[#f0f6fc]">Our Platform</h3>
+                      <span className="text-[10px] text-[#2ea44f] font-mono">Build Engine</span>
                     </div>
                   </div>
                   <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
                 </div>
-                <p className="text-[10px] text-[#8b949e] leading-relaxed">
-                  Catches commits, generates Docker containers, and assigns public routes.
-                </p>
-                <div className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
-                  automated intake & build
+                <p className="text-[10px] font-mono text-[#8b949e] truncate">docker.build --cgroup</p>
+                <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                  <span className="text-[#2ea44f]">✓</span>
+                  <span>auto runtime detect</span>
                 </div>
               </div>
 
-              {/* Node 4: Live Frontend URL */}
-              <div className="absolute right-6 sm:right-10 top-[60px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#2ea44f] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
+              {/* Node 4: Adding Environment Variables (Top Center-Right) */}
+              <div className="absolute left-[48%] sm:left-[51%] top-[55px] w-[180px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#bc8cff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#bc8cff]">
+                    <Lock className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Environment Keys</h3>
+                    <span className="text-[10px] text-[#8b949e]">.env Secrets</span>
+                  </div>
+                </div>
+                <p className="text-[10px] font-mono text-[#bc8cff] truncate">API_KEY=••••••••</p>
+                <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                  <span className="text-[#bc8cff]">🔒</span>
+                  <span>Fernet AES-128 GCM</span>
+                </div>
+              </div>
+
+              {/* Node 5: Live on Internet (Top Far-Right) */}
+              <div className="absolute right-4 sm:right-6 top-[55px] w-[180px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#2ea44f] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
                 <div className="flex items-center gap-2.5">
                   <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#2ea44f]">
                     <Globe className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">Web Application</h3>
-                    <span className="text-[10px] text-[#8b949e]">Live on Edge</span>
+                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">Live on Internet</h3>
+                    <span className="text-[10px] text-[#8b949e]">Nginx Reverse Proxy</span>
                   </div>
                 </div>
-                <p className="text-[10px] font-mono text-[#2ea44f] truncate">https://app.deployat.me</p>
+                <p className="text-[10px] font-mono text-[#2ea44f] truncate">https://myapp.deployat.me</p>
                 <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                   <span className="text-[#2ea44f]">✓ Active SSL</span>
-                  <span className="text-[#484f58]">:3000</span>
+                  <span className="text-[#484f58]">~3.2s</span>
                 </div>
               </div>
 
-              {/* Node 5: Live API URL */}
-              <div className="absolute right-6 sm:right-10 top-[330px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#58a6ff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#58a6ff]">
-                    <Server className="w-3.5 h-3.5" />
+              {/* Interactive Workflow Summary Panel (Lower Canvas Area) */}
+              <div className="absolute left-[24%] sm:left-[26%] right-4 sm:right-6 top-[230px] sm:top-[245px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] rounded-[8px] p-4 sm:p-5 space-y-3 shadow-lg select-none">
+                <div className="flex items-center justify-between border-b border-[#30363d]/60 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-3.5 h-3.5 text-[#2ea44f]" />
+                    <span className="text-xs font-semibold text-[#f0f6fc] font-mono">Automated End-to-End Pipeline</span>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">Live REST API</h3>
-                    <span className="text-[10px] text-[#8b949e]">Backend Routes</span>
-                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#2ea44f] border border-[#30363d]">
+                    0-Config Workflow
+                  </span>
                 </div>
-                <p className="text-[10px] font-mono text-[#58a6ff] truncate">https://api.deployat.me</p>
-                <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#2ea44f]">✓ Active SSL</span>
-                  <span className="text-[#484f58]">:8000</span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-left pt-1">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#f0f6fc]">
+                      <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9px] font-mono flex items-center justify-center text-[#58a6ff]">1</span>
+                      <span>Push Code</span>
+                    </div>
+                    <p className="text-[10px] text-[#8b949e] leading-relaxed">Push to GitHub repository from your local IDE.</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#f0f6fc]">
+                      <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9px] font-mono flex items-center justify-center text-[#2ea44f]">2</span>
+                      <span>Intake & Build</span>
+                    </div>
+                    <p className="text-[10px] text-[#8b949e] leading-relaxed">Deployat pulls code and auto-generates Docker container.</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#f0f6fc]">
+                      <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9px] font-mono flex items-center justify-center text-[#bc8cff]">3</span>
+                      <span>Inject .env</span>
+                    </div>
+                    <p className="text-[10px] text-[#8b949e] leading-relaxed">Secrets decrypted symmetrically and injected securely.</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#f0f6fc]">
+                      <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9px] font-mono flex items-center justify-center text-[#2ea44f]">4</span>
+                      <span>Live Internet</span>
+                    </div>
+                    <p className="text-[10px] text-[#8b949e] leading-relaxed">Nginx routes live traffic to your app with SSL in seconds.</p>
+                  </div>
                 </div>
               </div>
             </div>
