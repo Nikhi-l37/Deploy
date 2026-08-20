@@ -395,7 +395,7 @@ export default function ArchitectureCanvas() {
                 <div className="absolute left-[30px] top-[50px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#f0f6fc]">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#58a6ff]/40 flex items-center justify-center p-1 text-[#f0f6fc] transition-colors">
                         <BrandLogos.GitHub />
                       </div>
                       <div>
@@ -405,7 +405,7 @@ export default function ArchitectureCanvas() {
                     </div>
                     <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] font-bold">01</span>
                   </div>
-                  <p className="text-[10.5px] font-mono text-[#c9d1d9] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">HMAC-SHA256 validated</p>
+                  <p className="text-[10.5px] font-mono text-[#58a6ff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">HMAC-SHA256 validated</p>
                   <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                     <span className="text-[#58a6ff] font-bold">✓</span>
                     <span className="text-[#c9d1d9]">Push & PR Triggers</span>
@@ -416,7 +416,7 @@ export default function ArchitectureCanvas() {
                 <div className="absolute left-[30px] top-[320px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#3ECF8E] hover:shadow-[0_0_15px_rgba(62,207,142,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#3ECF8E]/40 flex items-center justify-center p-1 transition-colors">
                         <BrandLogos.Supabase />
                       </div>
                       <div>
@@ -426,7 +426,7 @@ export default function ArchitectureCanvas() {
                     </div>
                     <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] font-bold">02</span>
                   </div>
-                  <p className="text-[10.5px] font-mono text-[#c9d1d9] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">Fernet AES-128 keys</p>
+                  <p className="text-[10.5px] font-mono text-[#3ECF8E] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">Fernet AES-128 keys</p>
                   <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                     <span className="text-[#3ECF8E]">🔒</span>
                     <span className="text-[#c9d1d9]">User Auth & Env State</span>
@@ -469,8 +469,11 @@ export default function ArchitectureCanvas() {
                   </div>
 
                   <div className="flex items-center justify-between text-[10px] font-mono text-[#8b949e] pt-1 border-t border-[#30363d]/60">
-                    <span className="text-[#2ea44f] font-semibold">✓ Isolated Sandbox</span>
-                    <span className="text-[#c9d1d9]">Multi-Stage</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#FF9900] font-bold">✓</span>
+                      <span className="text-[#c9d1d9]">Isolated Sandbox</span>
+                    </div>
+                    <span className="text-[#8b949e]">Multi-Stage</span>
                   </div>
                 </div>
 
@@ -478,7 +481,7 @@ export default function ArchitectureCanvas() {
                 <div className="absolute left-[760px] top-[50px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#58a6ff]">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#58a6ff]/40 flex items-center justify-center p-1 text-[#58a6ff] transition-colors">
                         <Database className="w-4 h-4" />
                       </div>
                       <div>
@@ -488,9 +491,12 @@ export default function ArchitectureCanvas() {
                     </div>
                     <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] font-bold">04</span>
                   </div>
-                  <p className="text-[10.5px] font-mono text-[#c9d1d9] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">status: RUNNING / SLEEPING</p>
+                  <p className="text-[10.5px] font-mono text-[#58a6ff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">status: RUNNING / SLEEPING</p>
                   <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#2ea44f] font-semibold">✓ Port Mapping</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#58a6ff] font-bold">✓</span>
+                      <span className="text-[#c9d1d9]">Port Mapping</span>
+                    </div>
                     <span className="text-[#58a6ff] font-bold">:49203</span>
                   </div>
                 </div>
@@ -499,7 +505,7 @@ export default function ArchitectureCanvas() {
                 <div className="absolute left-[760px] top-[320px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_15px_rgba(188,140,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#bc8cff]">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#bc8cff]/40 flex items-center justify-center p-1 text-[#bc8cff] transition-colors">
                         <BrandLogos.Watchdog />
                       </div>
                       <div>
@@ -511,7 +517,10 @@ export default function ArchitectureCanvas() {
                   </div>
                   <p className="text-[10.5px] font-mono text-[#bc8cff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">0MB RAM when idle</p>
                   <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#2ea44f] font-semibold">⚡ Instant Wake</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#bc8cff]">⚡</span>
+                      <span className="text-[#c9d1d9]">Instant Wake</span>
+                    </div>
                     <span className="text-[#c9d1d9] font-bold">&lt;1.0s</span>
                   </div>
                 </div>
