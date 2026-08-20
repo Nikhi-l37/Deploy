@@ -457,17 +457,17 @@ export default function Dashboard({ session }) {
                               <button 
                                 onClick={(e) => { 
                                   e.stopPropagation(); 
-                                  if (project.status !== 'BUILDING' && project.status !== 'QUEUED') {
+                                  if (project.status !== 'BUILDING') {
                                     handleManualDeploy(project.id); 
                                   }
                                 }} 
-                                disabled={project.status === 'BUILDING' || project.status === 'QUEUED'}
+                                disabled={project.status === 'BUILDING'}
                                 className="p-1.5 bg-[#21262d] border border-[#30363d] rounded-md text-[#c9d1d9] hover:text-white hover:bg-[#30363d] disabled:opacity-50 transition-colors"
                                 title="Redeploy"
                               >
                                 <RefreshCw className={`w-3.5 h-3.5 ${project.status === 'BUILDING' ? 'animate-spin text-[#58a6ff]' : ''}`} />
                               </button>
-                              {project.status === 'FAILED' && (
+                              {(project.status === 'FAILED' || project.status === 'QUEUED') && (
                                 <button 
                                   onClick={(e) => { 
                                     e.stopPropagation(); 
@@ -518,7 +518,7 @@ export default function Dashboard({ session }) {
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => handleManualDeploy(selectedProject.id)}
-                  disabled={selectedProject.status === 'BUILDING' || selectedProject.status === 'QUEUED'}
+                  disabled={selectedProject.status === 'BUILDING'}
                   className="btn btn-primary"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${selectedProject.status === 'BUILDING' ? 'animate-spin' : ''}`} />

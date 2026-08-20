@@ -95,9 +95,19 @@ async def watchdog_task():
             
         await asyncio.sleep(config.WATCHDOG_POLL_INTERVAL)
 
+import threading
+import builder
+
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(watchdog_task())
+    # Auto-start builder queue worker thread so deploys process automatically
+    try:
+        worker_thread = threading.Thread(target=builder.start_worker, daemon=True)
+        worker_thread.start()
+        print("[Startup] Builder Worker background daemon thread started.")
+    except Exception as e:
+        print(f"[Startup] Error starting builder worker thread: {e}")
 
 
 # ---------- WAKE-ON-DEMAND GATEWAY ----------
