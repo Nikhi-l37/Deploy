@@ -229,51 +229,57 @@ export default function Login() {
           /* ============================================================ */
           /* B. MODERN DEVELOPER LANDING PAGE (When showLogin === false)  */
           /* ============================================================ */
-          <div className="w-full space-y-16 py-4 animate-fade-in text-center">
+          <div className="w-full space-y-24 animate-fade-in text-center">
             
-            {/* Hero Section */}
-            <div className="space-y-5 max-w-3xl mx-auto">
+            {/* Hero Section - Full Viewport Screen Showcase */}
+            <section className="min-h-[calc(100vh-140px)] flex flex-col items-center justify-center text-center py-10 sm:py-16 space-y-8 max-w-4xl mx-auto">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#161b22] border border-[#30363d] text-xs text-[#8b949e] font-mono">
-                <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
-                <span className="text-[#f0f6fc] font-medium">Deployat v1.0</span>
-                <span>•</span>
-                <span>Self-Hosted Developer PaaS</span>
+              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#161b22] border border-[#30363d] text-xs sm:text-sm text-[#8b949e] font-mono shadow-sm">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#2ea44f] animate-pulse"></span>
+                <span className="text-[#f0f6fc] font-semibold">Deployat v1.0</span>
+                <span className="text-[#484f58]">•</span>
+                <span className="text-[#c9d1d9]">Self-Hosted Developer PaaS</span>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-[#f0f6fc] leading-tight">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[#f0f6fc] leading-[1.12] sm:leading-[1.1]">
                 The fastest path from <br className="hidden sm:inline" />
                 <span className="text-[#2ea44f]">code</span> to <span className="text-[#f0f6fc]">production</span>.
               </h1>
 
               {/* Subtitle */}
-              <p className="text-sm sm:text-base text-[#8b949e] max-w-xl mx-auto leading-relaxed">
+              <p className="text-base sm:text-xl lg:text-2xl text-[#8b949e] max-w-3xl mx-auto leading-relaxed font-normal">
                 Connect your repository, configure environment secrets, and Deployat automatically builds Docker containers and generates Nginx reverse proxy routes in seconds.
               </p>
 
               {/* Action Buttons */}
-              <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
                 <button
                   onClick={handleGithubLogin}
                   disabled={isLoading}
-                  className="flex items-center gap-2.5 bg-[#238636] hover:bg-[#2ea043] active:bg-[#29903b] text-[#ffffff] font-semibold py-2.5 px-6 rounded-[6px] border border-[rgba(240,246,252,0.1)] shadow-[0_1px_0_rgba(27,31,36,0.1)] transition-colors text-sm cursor-pointer"
+                  className="flex items-center gap-3 bg-[#238636] hover:bg-[#2ea043] active:bg-[#29903b] text-[#ffffff] font-semibold py-3.5 px-8 rounded-[8px] border border-[rgba(240,246,252,0.1)] shadow-[0_2px_8px_rgba(35,134,54,0.3)] transition-all transform hover:-translate-y-0.5 text-base cursor-pointer"
                 >
-                  <svg className="w-4 h-4 fill-[#ffffff]" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 fill-[#ffffff]" viewBox="0 0 24 24">
                     <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
                   </svg>
                   <span>Get Started Free</span>
-                  <ArrowRight className="w-4 h-4 text-[#ffffff] opacity-80" />
+                  <ArrowRight className="w-5 h-5 text-[#ffffff] opacity-80" />
                 </button>
 
                 <button 
                   onClick={() => setShowLogin(true)}
-                  className="flex items-center gap-1.5 text-xs sm:text-sm font-medium py-2.5 px-5 rounded-[6px] border border-[#30363d] bg-[#161b22] text-[#c9d1d9] hover:text-[#f0f6fc] hover:bg-[#21262d] transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-base font-medium py-3.5 px-7 rounded-[8px] border border-[#30363d] bg-[#161b22] text-[#c9d1d9] hover:text-[#f0f6fc] hover:bg-[#21262d] hover:border-[#8b949e] transition-colors cursor-pointer"
                 >
                   <span>Sign In</span>
                 </button>
               </div>
-            </div>
+
+              {/* Scroll Cue indicator */}
+              <div className="pt-6 flex flex-col items-center gap-1.5 text-xs font-mono text-[#8b949e] opacity-70 animate-bounce">
+                <span>Explore Live Deployment & Architecture</span>
+                <span className="text-sm">↓</span>
+              </div>
+            </section>
 
             {/* ========================================================== */}
             {/* LIVE DEPLOYMENT TERMINAL SIMULATION                        */}
