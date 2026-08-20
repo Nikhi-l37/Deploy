@@ -40,23 +40,23 @@ export const BrandLogos = {
     </svg>
   ),
   AWS: () => (
-    <svg className="w-6 h-4" viewBox="0 0 75 45" fill="none">
-      {/* Letter 'a' */}
-      <path d="M18.8 20.3c0-2.8-1.5-4.4-4.2-4.4-2.5 0-4.1 1.4-4.5 3.5h-3.5c.5-3.8 3.5-6.3 8-6.3 4.9 0 7.7 2.7 7.7 7.2v10.9h-3.5v-2.7c-1.3 1.9-3.4 3-5.9 3-4.1 0-6.8-2.6-6.8-6.1 0-3.9 3-6 8.9-6.3l3.8-.2v-1.4c0-1.7-.9-2.7-2.6-2.7-1.5 0-2.4.7-2.6 1.9h-3.5c.3-2.9 2.5-4.7 6.1-4.7 3.6 0 6.1 1.7 6.1 5.3v2.9zm-3.8 4.4c-3.1.2-5.3 1.1-5.3 3.3 0 1.9 1.4 3.1 3.5 3.1 2.3 0 4.1-1.4 4.5-3.3v-3.1h-2.7z" fill="#ffffff"/>
-      {/* Letter 'w' */}
-      <path d="M37.3 13.5l-4.5 17.7h-3.7l-3.3-13.4-3.3 13.4h-3.7l-4.5-17.7h3.7l2.7 13.6 3.4-13.6h3.4l3.4 13.6 2.7-13.6h3.7z" fill="#ffffff"/>
-      {/* Letter 's' */}
-      <path d="M47.8 17.5c-.8-.7-2-1.2-3.4-1.2-1.9 0-3 .9-3 2.1 0 1.3.9 1.9 3.2 2.5l2.2.6c3.6 1 5.4 2.7 5.4 5.7 0 3.7-3 6.1-7.7 6.1-3.6 0-6.3-1.4-7.5-3.7l3-1.8c.8 1.6 2.4 2.5 4.5 2.5 2.4 0 3.8-1 3.8-2.5 0-1.4-1.1-2.1-3.4-2.7l-2.2-.6c-3.4-.9-5.1-2.6-5.1-5.4 0-3.4 2.8-5.6 7-5.6 3.1 0 5.4 1 6.8 2.6l-2.6 2.0z" fill="#ffffff"/>
-      {/* AWS Iconic Smile Arrow */}
-      <path d="M54.5 35.8c-8.9 5.6-21.6 8.6-32.6 8.6-15.4 0-29.3-5.7-39.8-15.3-.8-.7-.2-1.8.8-1.2 10.5 6.3 23.4 10.2 36.8 10.2 9.8 0 20.4-2.4 30-7.4 1.5-.8 2.7 1.2 4.8 5.1z" fill="#FF9900"/>
-      <path d="M57.5 32c-1.1-1.4-7.4-3.4-10.3-2.8-.9.2-1-.7-.2-1.3 5.2-3.6 13.6-2.6 14.5-1.4 1 1.2-.2 9.6-5.1 13.7-.7.6-1.5.3-1.1-.5 1.1-2.7 3.4-6.2 2.2-7.7z" fill="#FF9900"/>
+    <svg className="w-5.5 h-5.5" viewBox="0 0 32 32" fill="none">
+      {/* Amazon Web Services EC2 Compute Brand Shield */}
+      <rect width="32" height="32" rx="6" fill="#FF9900" />
+      <path d="M8 12.5c0-1.8 1.1-2.9 2.8-2.9 1.6 0 2.6.9 2.9 2.3h-1.4c-.2-.7-.7-1.1-1.5-1.1-.9 0-1.5.6-1.5 1.7v1.8c0 1.1.6 1.7 1.5 1.7.8 0 1.3-.4 1.5-1.1h1.4c-.3 1.4-1.3 2.3-2.9 2.3-1.7 0-2.8-1.1-2.8-2.9v-1.8z" fill="#232F3E"/>
+      <path d="M15 9.8h1.4v7.4H15v-7.4z" fill="#232F3E"/>
+      <path d="M18.5 14.6c0-1.6 1.1-2.7 2.7-2.7 1.6 0 2.7 1.1 2.7 2.7v.2h-4c.1.9.7 1.4 1.6 1.4.7 0 1.2-.3 1.4-.8h1.3c-.3 1.2-1.3 2-2.7 2-1.8 0-3-1.2-3-2.8zm4-ـ.8c0-.7-.5-1.2-1.3-1.2-.8 0-1.3.5-1.4 1.2h2.7z" fill="#232F3E"/>
+      <path d="M7 23c4.2 2.5 9.8 3.5 14.8 2.2.4-.1.7.3.4.6-3.8 3.2-10.2 3.8-15.6 1-.4-.2-.2-.8.4-.8z" fill="#232F3E"/>
+      <path d="M22.5 24.8c-.5-.2-2.5-.2-3.4.1-.3.1-.3-.3 0-.5 1.7-.8 3.8-.4 4.1-.1.3.3 0 2.4-1.6 3.5-.3.2-.5.1-.4-.2.4-.6 1.8-2.4 1.3-2.8z" fill="#232F3E"/>
     </svg>
   ),
   Watchdog: () => (
-    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#0d1117" stroke="#bc8cff" strokeWidth="1.5"/>
-      <path d="M5 12h2.5l2-4 3 8 2.5-5 1.5 2.5H19" stroke="#bc8cff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="19" cy="6" r="2" fill="#2ea44f" />
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+      {/* High-Tech Watchdog Daemon & Resource Optimizer Shield */}
+      <circle cx="12" cy="12" r="9.5" stroke="#bc8cff" strokeWidth="1.5" strokeDasharray="3 2" />
+      <path d="M12 3v3m0 12v3M3 12h3m12 0h3" stroke="#bc8cff" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="4.5" fill="#bc8cff" fillOpacity="0.2" stroke="#bc8cff" strokeWidth="1.5" />
+      <path d="M9.5 12h1.5l1-2 1.5 4 1-2h1.5" stroke="#2ea44f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
   Supabase: () => (
@@ -450,7 +450,7 @@ export default function ArchitectureCanvas() {
                 <div className="absolute left-[380px] top-[145px] w-[240px] bg-[#161b22] border-2 border-[#FF9900]/80 hover:border-[#FF9900] shadow-[0_0_25px_rgba(255,153,0,0.18)] rounded-[10px] p-4 space-y-3 z-20 cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between border-b border-[#30363d]/80 pb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-7 rounded-[6px] bg-[#0d1117] border border-[#FF9900]/40 flex items-center justify-center p-0.5">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-0.5">
                         <BrandLogos.AWS />
                       </div>
                       <div>
