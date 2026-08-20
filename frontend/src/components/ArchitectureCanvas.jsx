@@ -68,9 +68,6 @@ export default function ArchitectureCanvas() {
           <h2 className="text-xl sm:text-2xl font-bold text-[#f0f6fc] tracking-tight">
             How Deployat Works
           </h2>
-          <p className="text-xs sm:text-[13px] text-[#8b949e] mt-1">
-            Explore the end-to-end user experience and the underlying AWS cloud compute pipeline.
-          </p>
         </div>
 
         {/* Segmented Controller (2 Tabs) */}

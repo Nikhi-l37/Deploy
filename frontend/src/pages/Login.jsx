@@ -161,12 +161,6 @@ export default function Login() {
                   <span>Sign In</span>
                 </button>
               </div>
-
-              {/* Scroll Cue indicator */}
-              <div className="pt-2 flex flex-col items-center gap-1 text-xs font-mono text-[#8b949e] opacity-70 animate-bounce">
-                <span>Explore Live Deployment & Architecture</span>
-                <span className="text-sm">↓</span>
-              </div>
             </section>
 
             {/* ========================================================== */}
@@ -179,7 +173,6 @@ export default function Login() {
                 <span className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider font-mono">
                   Live Deploy Preview
                 </span>
-                <span className="text-[11px] font-mono text-[#484f58]">— watch a real deployment happen in real-time</span>
               </div>
 
               <div className="bg-[#161b22] border border-[#30363d] rounded-[10px] shadow-2xl overflow-hidden text-left">
