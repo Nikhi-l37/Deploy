@@ -313,9 +313,9 @@ export default function Dashboard({ session }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9] antialiased">
-      {/* Top GitHub Style Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-[#010409] border-b border-[#21262d] px-4 sm:px-8 py-3">
+    <div className="min-h-screen bg-[#010409] text-[#c9d1d9] antialiased">
+      {/* Top GitHub Style Navigation Bar (Elevated Layer) */}
+      <header className="sticky top-0 z-40 bg-[#161b22] border-b border-[#30363d] px-4 sm:px-8 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-md bg-[#238636] flex items-center justify-center text-white shadow-sm">
@@ -323,14 +323,14 @@ export default function Dashboard({ session }) {
             </div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-semibold text-[#f0f6fc] tracking-tight">Deployat</h1>
-              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#0d1117] text-[#8b949e] border border-[#21262d]">
+              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#0d1117] text-[#8b949e] border border-[#30363d]">
                 PaaS
               </span>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 text-xs text-[#8b949e] bg-[#0d1117] border border-[#21262d] px-3 py-1.5 rounded-md">
+            <div className="hidden sm:flex items-center gap-2 text-xs text-[#8b949e] bg-[#0d1117] border border-[#30363d] px-3 py-1.5 rounded-md">
               <span className="w-2 h-2 rounded-full bg-[#3fb950]"></span>
               <span>{user?.user_metadata?.user_name || user?.email || 'Developer'}</span>
             </div>
@@ -355,21 +355,21 @@ export default function Dashboard({ session }) {
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-8">
         
-        {/* SECTION 1: Services List Table */}
+        {/* SECTION 1: Services List Table (Elevated Panel) */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <h2 className="text-sm font-semibold text-[#f0f6fc] uppercase tracking-wider">Your Services</h2>
-              <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-[#0d1117] text-[#8b949e] border border-[#21262d]">
+              <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-[#161b22] text-[#8b949e] border border-[#30363d]">
                 {projects.length} / 2 Active
               </span>
             </div>
           </div>
 
-          <div className="bg-[#010409] border border-[#21262d] rounded-md overflow-hidden shadow-sm">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-md overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse text-xs sm:text-sm">
               <thead>
-                <tr className="bg-[#010409] border-b border-[#21262d] text-xs text-[#8b949e] font-semibold">
+                <tr className="bg-[#161b22] border-b border-[#30363d] text-xs text-[#8b949e] font-semibold">
                   <th className="py-3 px-4">Service Name</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">URL / Port</th>
@@ -503,9 +503,9 @@ export default function Dashboard({ session }) {
 
         {/* SECTION 2: Selected Project Details & Tabs */}
         {selectedProject && (
-          <section className="bg-[#010409] border border-[#21262d] rounded-md overflow-hidden shadow-sm flex flex-col min-h-[500px]">
+          <section className="bg-[#161b22] border border-[#30363d] rounded-md overflow-hidden shadow-sm flex flex-col min-h-[500px]">
             {/* Project Header Bar */}
-            <div className="p-5 border-b border-[#21262d] bg-[#010409] flex flex-wrap items-center justify-between gap-4">
+            <div className="p-5 border-b border-[#30363d] bg-[#161b22] flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-[#f0f6fc] flex items-center gap-2">
                   <GitBranch className="w-5 h-5 text-[#2ea043]" />
@@ -538,7 +538,7 @@ export default function Dashboard({ session }) {
             </div>
 
             {/* GitHub Style Navigation Tabs */}
-            <div className="flex items-center px-4 border-b border-[#21262d] bg-[#000205]">
+            <div className="flex items-center px-4 border-b border-[#30363d] bg-[#0d1117]">
               <button 
                 onClick={() => setActiveTab('logs')}
                 className={`px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 flex items-center gap-2 transition-colors ${
@@ -572,7 +572,7 @@ export default function Dashboard({ session }) {
             </div>
 
             {/* Tab Content Body */}
-            <div className="p-6 flex-1 bg-[#000205]">
+            <div className="p-6 flex-1 bg-[#0d1117]">
               
               {/* TAB 1: LOGS */}
               {activeTab === 'logs' && (
@@ -584,8 +584,8 @@ export default function Dashboard({ session }) {
                     <span className="text-xs text-[#8b949e] font-mono">Real-time terminal stream</span>
                   </div>
 
-                  <div className="flex-1 flex flex-col bg-[#000205] border border-[#21262d] rounded-md overflow-hidden font-mono text-xs shadow-inner">
-                    <div className="bg-[#010409] border-b border-[#21262d] px-4 py-2 flex items-center justify-between">
+                  <div className="flex-1 flex flex-col bg-[#010409] border border-[#30363d] rounded-md overflow-hidden font-mono text-xs shadow-inner">
+                    <div className="bg-[#161b22] border-b border-[#30363d] px-4 py-2 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-[#f85149]"></div>
                         <div className="w-2.5 h-2.5 rounded-full bg-[#d29922]"></div>
@@ -596,7 +596,7 @@ export default function Dashboard({ session }) {
                         {logs.length > 0 && (
                           <button
                             onClick={handleCopyLogs}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0d1117] hover:bg-[#161b22] border border-[#21262d] text-[#c9d1d9] hover:text-white text-[11px] font-mono transition-colors cursor-pointer"
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#c9d1d9] hover:text-white text-[11px] font-mono transition-colors cursor-pointer"
                             title="Copy all logs to clipboard"
                           >
                             {copiedLogs ? (

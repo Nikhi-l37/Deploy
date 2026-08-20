@@ -85,10 +85,10 @@ export default function Login() {
   }, [runTerminal]);
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-[#0d1117] text-[#c9d1d9] antialiased">
+    <div className="min-h-screen w-full flex flex-col bg-[#010409] text-[#c9d1d9] antialiased">
       
-      {/* 1. TOP NAVIGATION BAR */}
-      <header className="sticky top-0 z-40 w-full bg-[#010409] border-b border-[#21262d] px-4 sm:px-8 py-3">
+      {/* 1. TOP NAVIGATION BAR (Elevated Layer) */}
+      <header className="sticky top-0 z-40 w-full bg-[#161b22] border-b border-[#30363d] px-4 sm:px-8 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Logo & Badge */}
           <div className="flex items-center gap-2.5 select-none">
@@ -97,7 +97,7 @@ export default function Login() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-base font-semibold text-[#f0f6fc] tracking-tight">Deployat</span>
-              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#0d1117] text-[#8b949e] border border-[#21262d]">
+              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#0d1117] text-[#8b949e] border border-[#30363d]">
                 PaaS
               </span>
             </div>
@@ -108,7 +108,7 @@ export default function Login() {
             <button 
               onClick={handleGithubLogin}
               disabled={isLoading}
-              className="flex items-center gap-2 text-xs sm:text-sm text-[#f0f6fc] font-medium py-1.5 px-3.5 rounded-[6px] border border-[#30363d] bg-[#010409] hover:bg-[#161b22] hover:border-[#8b949e] transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 text-xs sm:text-sm text-[#f0f6fc] font-medium py-1.5 px-3.5 rounded-[6px] border border-[#30363d] bg-[#21262d] hover:bg-[#30363d] hover:border-[#8b949e] transition-colors cursor-pointer disabled:opacity-50"
             >
               {/* Official GitHub Octocat SVG */}
               <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -120,14 +120,14 @@ export default function Login() {
         </div>
       </header>
 
-      {/* 2. MAIN CONTENT VIEW */}
+      {/* 2. MAIN CONTENT VIEW (Base Deep Black Canvas) */}
       <main className="flex-1 flex flex-col items-center justify-start px-4 py-6 max-w-6xl mx-auto w-full">
         <div className="w-full space-y-24 animate-fade-in text-center">
             
             {/* Hero Section - Full Viewport Screen Showcase */}
             <section className="min-h-[calc(100vh-140px)] flex flex-col items-center justify-center text-center py-10 sm:py-16 space-y-8 max-w-4xl mx-auto">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#010409] border border-[#21262d] text-xs sm:text-sm text-[#8b949e] font-mono shadow-sm">
+              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#161b22] border border-[#30363d] text-xs sm:text-sm text-[#8b949e] font-mono shadow-sm">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#2ea44f] animate-pulse"></span>
                 <span className="text-[#f0f6fc] font-semibold">Deployat v1.0</span>
                 <span className="text-[#484f58]">•</span>
@@ -162,7 +162,7 @@ export default function Login() {
                 <button 
                   onClick={handleGithubLogin}
                   disabled={isLoading}
-                  className="flex items-center gap-2 text-base font-medium py-3.5 px-7 rounded-[8px] border border-[#30363d] bg-[#010409] text-[#c9d1d9] hover:text-[#f0f6fc] hover:bg-[#161b22] hover:border-[#8b949e] transition-colors cursor-pointer disabled:opacity-50"
+                  className="flex items-center gap-2 text-base font-medium py-3.5 px-7 rounded-[8px] border border-[#30363d] bg-[#161b22] text-[#c9d1d9] hover:text-[#f0f6fc] hover:bg-[#21262d] hover:border-[#8b949e] transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <span>Sign In</span>
                 </button>
@@ -176,7 +176,7 @@ export default function Login() {
             </section>
 
             {/* ========================================================== */}
-            {/* LIVE DEPLOYMENT TERMINAL SIMULATION                        */}
+            {/* LIVE DEPLOYMENT TERMINAL SIMULATION (Elevated Container)    */}
             {/* ========================================================== */}
             <div className="max-w-5xl mx-auto pt-8 w-full">
               {/* Terminal Header Label */}
@@ -188,8 +188,8 @@ export default function Login() {
                 <span className="text-[11px] font-mono text-[#484f58]">— watch a real deployment happen in real-time</span>
               </div>
 
-              <div className="bg-[#010409] border border-[#21262d] rounded-[10px] shadow-2xl overflow-hidden">
-                <div className="bg-[#010409] backdrop-blur border-b border-[#21262d] px-4 py-3 flex items-center justify-between">
+              <div className="bg-[#161b22] border border-[#30363d] rounded-[10px] shadow-2xl overflow-hidden">
+                <div className="bg-[#161b22]/95 backdrop-blur border-b border-[#30363d] px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full bg-[#f85149]"></span>
                     <span className="w-3 h-3 rounded-full bg-[#d29922]"></span>
@@ -202,7 +202,7 @@ export default function Login() {
                         <span className="text-[#2ea44f] font-semibold">● deployed (15.2s)</span>
                         <button 
                           onClick={runTerminal}
-                          className="text-[#8b949e] hover:text-[#f0f6fc] text-[11px] px-2 py-0.5 rounded bg-[#0d1117] border border-[#21262d] hover:border-[#8b949e] cursor-pointer transition-colors"
+                          className="text-[#8b949e] hover:text-[#f0f6fc] text-[11px] px-2 py-0.5 rounded bg-[#21262d] border border-[#30363d] hover:border-[#8b949e] cursor-pointer transition-colors"
                         >
                           Replay
                         </button>
@@ -214,9 +214,10 @@ export default function Login() {
                   </div>
                 </div>
 
+                {/* Recessed Screen Area */}
                 <div 
                   ref={terminalRef}
-                  className="bg-[#000205] p-6 sm:p-7 font-mono text-[12.5px] sm:text-[13.5px] leading-[2.0] sm:leading-[2.2] overflow-y-auto max-h-[460px] scroll-smooth"
+                  className="bg-[#080b10] p-6 sm:p-7 font-mono text-[12.5px] sm:text-[13.5px] leading-[2.0] sm:leading-[2.2] overflow-y-auto max-h-[460px] scroll-smooth"
                 >
                   {visibleLines.map((line, i) => (
                     <div 
@@ -240,20 +241,7 @@ export default function Login() {
                           {line.ts && (
                             <span className="text-[#8b949e] text-[11px] w-[38px] shrink-0 select-none font-semibold">{line.ts}</span>
                           )}
-                          <span className="text-[#2ea44f] font-bold">✓</span>
-                          <span className="text-[#f0f6fc] font-semibold">Deployment complete! Live at</span>
-                          <a 
-                            href="#" 
-                            onClick={(e) => e.preventDefault()} 
-                            className="text-[#58a6ff] font-bold underline underline-offset-4 decoration-[#58a6ff]/60 hover:decoration-[#58a6ff]"
-                          >
-                            https://myapp.deployat.me
-                          </a>
-                          {line.badge && (
-                            <span className="ml-auto text-[10.5px] px-2 py-0.5 rounded bg-[#238636] text-[#ffffff] font-semibold shadow-sm">
-                              {line.badge}
-                            </span>
-                          )}
+                          <span className="text-[#3fb950] font-semibold">{line.text}</span>
                         </div>
                       ) : (
                         <div className="flex items-start gap-2.5 flex-wrap">
@@ -266,7 +254,7 @@ export default function Login() {
                             {line.text}
                           </span>
                           {line.badge && (
-                            <span className="px-1.5 py-0.5 rounded text-[10.5px] font-mono bg-[#0d1117] border border-[#21262d] text-[#8b949e] font-normal leading-none self-center">
+                            <span className="px-1.5 py-0.5 rounded text-[10.5px] font-mono bg-[#161b22] border border-[#30363d] text-[#8b949e] font-normal leading-none self-center">
                               {line.badge}
                             </span>
                           )}
@@ -279,7 +267,7 @@ export default function Login() {
                   )}
                 </div>
 
-                <div className="bg-[#010409] border-t border-[#21262d] px-4 py-2.5 flex items-center justify-between text-[11px] font-mono text-[#8b949e]">
+                <div className="bg-[#161b22] border-t border-[#30363d] px-4 py-2.5 flex items-center justify-between text-[11px] font-mono text-[#8b949e]">
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${terminalDone ? 'bg-[#3fb950]' : 'bg-[#d29922] animate-pulse'}`}></span>
                     <span className="text-[#c9d1d9]">
@@ -293,9 +281,9 @@ export default function Login() {
 
             <ArchitectureCanvas />
 
-            {/* Feature Highlights Grid */}
+            {/* Feature Highlights Grid (Elevated Cards) */}
             <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-              <div className="bg-[#010409] border border-[#21262d] hover:border-[#30363d] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default">
+              <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default shadow-sm">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#f0f6fc]">
                   <Zap className="w-3.5 h-3.5 text-[#d29922]" />
                   <span>Zero-Config Builds</span>
@@ -305,7 +293,7 @@ export default function Login() {
                 </p>
               </div>
 
-              <div className="bg-[#010409] border border-[#21262d] hover:border-[#30363d] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default">
+              <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default shadow-sm">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#f0f6fc]">
                   <Lock className="w-3.5 h-3.5 text-[#2ea44f]" />
                   <span>Fernet Encryption</span>
@@ -315,7 +303,7 @@ export default function Login() {
                 </p>
               </div>
 
-              <div className="bg-[#010409] border border-[#21262d] hover:border-[#30363d] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default">
+              <div className="bg-[#161b22] border border-[#30363d] hover:border-[#444c56] rounded-[6px] p-4 space-y-1.5 transition-colors duration-150 cursor-default shadow-sm">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#f0f6fc]">
                   <Layers className="w-3.5 h-3.5 text-[#58a6ff]" />
                   <span>Strict Resource Limits</span>
@@ -328,8 +316,8 @@ export default function Login() {
           </div>
       </main>
 
-      {/* 3. FOOTER */}
-      <footer className="w-full bg-[#010409] border-t border-[#21262d] px-4 sm:px-8 py-4 mt-auto">
+      {/* 3. FOOTER (Elevated Layer) */}
+      <footer className="w-full bg-[#161b22] border-t border-[#30363d] px-4 sm:px-8 py-4 mt-auto">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs text-[#8b949e]">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#2ea44f]"></span>
