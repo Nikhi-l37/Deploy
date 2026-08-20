@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { 
   LogOut, Plus, Activity, Code, Globe, RefreshCw, Trash2, X, 
   Terminal, Settings, Database, Folder, Play, Save, GitBranch, 
-  Layers, AlertTriangle, ExternalLink, Check
+  Layers, AlertTriangle, AlertCircle, Info, ExternalLink, Check
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -783,19 +783,21 @@ export default function Dashboard({ session }) {
                   </div>
 
                   <div className="space-y-2.5 pt-1">
-                    {/* GitHub Warning Callout */}
-                    <div className="border-l-4 border-[#d29922] bg-[#bb8009]/10 rounded-r-md p-3 text-xs text-[#c9d1d9] flex gap-2.5 items-start">
-                      <span className="text-sm leading-none mt-0.5">⚠️</span>
-                      <div className="leading-relaxed">
-                        <strong className="text-[#f0f6fc] font-semibold">Important:</strong> Your repository must be <span className="text-[#d29922] font-semibold">public</span>. Private repositories are not supported yet.
+                    {/* GitHub Native Alert: Important */}
+                    <div className="flex items-start gap-3 p-3 rounded-[6px] bg-[#161b22] border border-[#30363d] text-xs">
+                      <AlertCircle className="w-4 h-4 text-[#d29922] shrink-0 mt-0.5" />
+                      <div className="text-[#8b949e] leading-relaxed">
+                        <strong className="text-[#f0f6fc] font-semibold mr-1.5">Important:</strong>
+                        <span>Your repository must be <span className="text-[#f0f6fc] font-medium">public</span>. Private repositories are not supported yet.</span>
                       </div>
                     </div>
 
-                    {/* GitHub Info Callout */}
-                    <div className="border-l-4 border-[#1f6feb] bg-[#388bfd]/10 rounded-r-md p-3 text-xs text-[#c9d1d9] flex gap-2.5 items-start">
-                      <span className="text-sm leading-none mt-0.5">💡</span>
-                      <div className="leading-relaxed">
-                        <strong className="text-[#f0f6fc] font-semibold">Pro Tip:</strong> Adding a <code className="bg-[#161b22] text-[#58a6ff] border border-[#30363d] px-1 py-0.5 rounded font-mono text-[11px]">Dockerfile</code> gives faster, predictable builds! If omitted, Deployly auto-detects your runtime.
+                    {/* GitHub Native Alert: Pro Tip */}
+                    <div className="flex items-start gap-3 p-3 rounded-[6px] bg-[#161b22] border border-[#30363d] text-xs">
+                      <Info className="w-4 h-4 text-[#58a6ff] shrink-0 mt-0.5" />
+                      <div className="text-[#8b949e] leading-relaxed">
+                        <strong className="text-[#f0f6fc] font-semibold mr-1.5">Pro Tip:</strong>
+                        <span>Adding a <code className="bg-[#0d1117] text-[#58a6ff] border border-[#30363d] px-1.5 py-0.5 rounded font-mono text-[11px]">Dockerfile</code> enables faster, deterministic builds. If omitted, Deployat auto-detects your runtime.</span>
                       </div>
                     </div>
                   </div>
