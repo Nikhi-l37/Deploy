@@ -524,8 +524,8 @@ async def delete_project(project_id: str, request: Request):
             try:
                 client = docker.from_env()
                 container = client.containers.get(project["container_id"])
-                container.stop(timeout=5)
-                container.remove()
+                container.stop(timeout=1)
+                container.remove(force=True)
             except Exception:
                 pass  # Container may already be stopped
         

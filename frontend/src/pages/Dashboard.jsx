@@ -36,6 +36,9 @@ export default function Dashboard({ session }) {
   // Toast & Modal Feedback States (Replacing browser alerts/confirms)
   const [toast, setToast] = useState(null);
   const [deleteConfirmProject, setDeleteConfirmProject] = useState(null);
+  const [isSavingEnv, setIsSavingEnv] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -229,6 +232,7 @@ export default function Dashboard({ session }) {
   };
 
   const executeDelete = async (projectId) => {
+    setIsDeleting(true);
     try {
       await api.delete(`/projects/${projectId}`);
       if (selectedProjectId === projectId) setSelectedProjectId(null);
@@ -237,10 +241,13 @@ export default function Dashboard({ session }) {
       showToast("Project deleted successfully", "info");
     } catch (err) {
       showToast('Failed to delete: ' + (err.response?.data?.detail || err.message), 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleSaveEnvVars = async () => {
+    setIsSavingEnv(true);
     try {
       const envDict = {};
       envVars.forEach(ev => {
@@ -253,10 +260,13 @@ export default function Dashboard({ session }) {
       showToast('Environment variables saved! Redeploy to apply changes.', 'success');
     } catch (err) {
       showToast('Failed to save env vars: ' + (err.response?.data?.detail || err.message), 'error');
+    } finally {
+      setIsSavingEnv(false);
     }
   };
 
   const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
     try {
       await api.put(`/projects/${selectedProjectId}/settings`, {
         root_directory: rootDir,
@@ -266,6 +276,8 @@ export default function Dashboard({ session }) {
       fetchProjects();
     } catch (err) {
       showToast('Failed to save settings: ' + (err.response?.data?.detail || err.message), 'error');
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -662,8 +674,12 @@ export default function Dashboard({ session }) {
                     >
                       <Plus className="w-3.5 h-3.5" /> Add Variable
                     </button>
-                    <button onClick={handleSaveEnvVars} className="btn btn-primary">
-                      <Save className="w-4 h-4" /> Save Changes
+                    <button onClick={handleSaveEnvVars} disabled={isSavingEnv} className="btn btn-primary">
+                      {isSavingEnv ? (
+                        <><RefreshCw className="w-4 h-4 animate-spin" /> Saving...</>
+                      ) : (
+                        <><Save className="w-4 h-4" /> Save Changes</>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -710,8 +726,12 @@ export default function Dashboard({ session }) {
                       </div>
 
                       <div className="pt-2">
-                        <button onClick={handleSaveSettings} className="btn btn-primary">
-                          <Save className="w-4 h-4" /> Save Settings
+                        <button onClick={handleSaveSettings} disabled={isSavingSettings} className="btn btn-primary">
+                          {isSavingSettings ? (
+                            <><RefreshCw className="w-4 h-4 animate-spin" /> Saving...</>
+                          ) : (
+                            <><Save className="w-4 h-4" /> Save Settings</>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -1005,6 +1025,7 @@ export default function Dashboard({ session }) {
             <div className="px-5 py-3.5 bg-[#0d1117] border-t border-[#30363d] flex justify-end gap-2.5">
               <button 
                 type="button"
+                disabled={isDeleting}
                 onClick={() => setDeleteConfirmProject(null)} 
                 className="btn btn-outline"
               >
@@ -1012,10 +1033,15 @@ export default function Dashboard({ session }) {
               </button>
               <button 
                 type="button"
+                disabled={isDeleting}
                 onClick={() => executeDelete(deleteConfirmProject.id)} 
                 className="btn btn-danger"
               >
-                Delete Project
+                {isDeleting ? (
+                  <><RefreshCw className="w-4 h-4 animate-spin" /> Deleting...</>
+                ) : (
+                  <><Trash2 className="w-4 h-4" /> Delete Project</>
+                )}
               </button>
             </div>
           </div>
