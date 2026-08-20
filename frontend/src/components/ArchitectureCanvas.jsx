@@ -74,10 +74,10 @@ export default function ArchitectureCanvas() {
         </div>
 
         {/* Segmented Controller (2 Tabs) */}
-        <div className="inline-flex items-center p-1 rounded-[8px] bg-[#161b22] border border-[#30363d] select-none gap-1.5 shadow-sm">
+        <div className="inline-flex items-center p-1 rounded-[8px] bg-[#010409] border border-[#21262d] select-none gap-1.5 shadow-sm">
           <button
             onClick={() => setActiveTab('user')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-[6px] text-xs font-semibold transition-all duration-150 cursor-pointer ${activeTab === 'user' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-[6px] text-xs font-semibold transition-all duration-150 cursor-pointer ${activeTab === 'user' ? 'bg-[#161b22] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
           >
             <Activity className="w-3.5 h-3.5 text-[#2ea44f]" />
             <span>1. User Flow</span>
@@ -85,7 +85,7 @@ export default function ArchitectureCanvas() {
 
           <button
             onClick={() => setActiveTab('engine')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-[6px] text-xs font-semibold transition-all duration-150 cursor-pointer ${activeTab === 'engine' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-[6px] text-xs font-semibold transition-all duration-150 cursor-pointer ${activeTab === 'engine' ? 'bg-[#161b22] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
           >
             <Cloud className="w-3.5 h-3.5 text-[#FF9900]" />
             <span>2. AWS Cloud Engine</span>
@@ -94,22 +94,22 @@ export default function ArchitectureCanvas() {
       </div>
 
       {/* Railway Dot-Grid Canvas Window */}
-      <div className="bg-[#080b10] border border-[#30363d] rounded-[10px] overflow-hidden shadow-2xl relative">
+      <div className="bg-[#000205] border border-[#21262d] rounded-[10px] overflow-hidden shadow-2xl relative">
 
         {/* Canvas Toolbar Header */}
-        <div className="bg-[#161b22]/95 backdrop-blur-md border-b border-[#30363d] px-4 py-2.5 flex items-center justify-between z-30 relative select-none">
-          <div className="flex items-center gap-1.5 bg-[#0d1117] border border-[#30363d] rounded-[6px] p-0.5">
-            <button className="p-1.5 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#21262d] transition-colors" title="Grid View">
+        <div className="bg-[#010409]/95 backdrop-blur-md border-b border-[#21262d] px-4 py-2.5 flex items-center justify-between z-30 relative select-none">
+          <div className="flex items-center gap-1.5 bg-[#0d1117] border border-[#21262d] rounded-[6px] p-0.5">
+            <button className="p-1.5 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#161b22] transition-colors" title="Grid View">
               <Grid className="w-3.5 h-3.5" />
             </button>
-            <div className="w-[1px] h-3 bg-[#30363d]"></div>
-            <button className="p-1.5 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#21262d] transition-colors" title="Zoom In">
+            <div className="w-[1px] h-3 bg-[#21262d]"></div>
+            <button className="p-1.5 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#161b22] transition-colors" title="Zoom In">
               <Plus className="w-3.5 h-3.5" />
             </button>
-            <button className="p-1.5 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#21262d] transition-colors" title="Zoom Out">
+            <button className="p-1.5 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#161b22] transition-colors" title="Zoom Out">
               <Minus className="w-3.5 h-3.5" />
             </button>
-            <button className="p-1.5 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#21262d] transition-colors" title="Fit to Screen">
+            <button className="p-1.5 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#161b22] transition-colors" title="Fit to Screen">
               <Maximize2 className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -515,7 +515,7 @@ export default function ArchitectureCanvas() {
         </div>
 
         {/* Canvas Bottom Status Bar */}
-        <div className="bg-[#161b22] border-t border-[#30363d] px-4 py-2.5 flex items-center justify-between text-[10.5px] font-mono text-[#484f58] select-none">
+        <div className="bg-[#010409] border-t border-[#21262d] px-4 py-2.5 flex items-center justify-between text-[10.5px] font-mono text-[#484f58] select-none">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
