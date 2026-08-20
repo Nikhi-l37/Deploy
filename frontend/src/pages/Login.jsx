@@ -242,9 +242,9 @@ export default function Login() {
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[#f0f6fc] leading-[1.12] sm:leading-[1.1]">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-[-0.035em] text-[#ffffff] leading-[1.15] sm:leading-[1.12]">
                 The fastest path from <br className="hidden sm:inline" />
-                <span className="text-[#2ea44f]">code</span> to <span className="text-[#f0f6fc]">production</span>.
+                <span className="text-[#3fb950]">code</span> to production.
               </h1>
 
               {/* Subtitle */}
