@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabase';
 import { 
   Activity, ShieldCheck, Zap, Globe, ArrowRight, 
-  ArrowLeft, Layers, Lock, GitBranch, Server, Cpu
+  ArrowLeft, Layers, Lock 
 } from 'lucide-react';
 import ArchitectureCanvas from '../components/ArchitectureCanvas';
 
@@ -401,7 +401,7 @@ export default function Login() {
             </div>
 
             {/* ========================================================== */}
-            {/* SYSTEM ARCHITECTURE CANVAS (3 MODES: DEV / ROUTE / AWS) */}
+            {/* SYSTEM ARCHITECTURE CANVAS (2 MODES: USER / AWS ENGINE)    */}
             {/* ========================================================== */}
             <ArchitectureCanvas />
 

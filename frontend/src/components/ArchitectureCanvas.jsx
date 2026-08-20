@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  Activity, Network, Server, Cpu, Globe, Database, 
-  Lock, HardDrive, Plus, Minus, Maximize2, RefreshCw, 
-  Grid, ShieldCheck, Zap, Cloud, Laptop, Layers, ArrowRight, 
-  FileCode, Terminal, Key, CheckCircle2, ArrowUp, ArrowDown, RefreshCcw
+  Activity, Globe, Database, Lock, Plus, Minus, 
+  Maximize2, RefreshCw, Grid, Cloud, FileCode, 
+  Terminal, ArrowUp 
 } from 'lucide-react';
 
 // =========================================================================
@@ -11,22 +10,6 @@ import {
 // =========================================================================
 
 export const BrandLogos = {
-  React: () => (
-    <svg className="w-4.5 h-4.5" viewBox="-11.5 -10.23174 23 20.46348">
-      <circle cx="0" cy="0" r="2.05" fill="#61dafb"/>
-      <g stroke="#61dafb" strokeWidth="1" fill="none">
-        <ellipse rx="11" ry="4.2"/>
-        <ellipse rx="11" ry="4.2" transform="rotate(60)"/>
-        <ellipse rx="11" ry="4.2" transform="rotate(120)"/>
-      </g>
-    </svg>
-  ),
-  Python: () => (
-    <svg className="w-4 h-4" viewBox="0 0 110 110">
-      <path fill="#387eb8" d="M54.5 5.5c-26.8 0-25.1 11.6-25.1 11.6l.03 12h25.6v3.6H19.5S5.5 31.2 5.5 58.2c0 27 12.2 26.1 12.2 26.1h7.3v-10.3s-.4-12.2 12-12.2h25.4s11.4.2 11.4-11.2V16.7S75.2 5.5 54.5 5.5zm-13.8 7.4c2.5 0 4.5 2 4.5 4.5s-2 4.5-4.5 4.5-4.5-2-4.5-4.5 2-4.5 4.5-4.5z"/>
-      <path fill="#ffe052" d="M55.5 104.5c26.8 0 25.1-11.6 25.1-11.6l-.03-12H55v-3.6h35.5s14 1.5 14-25.5c0-27-12.2-26.1-12.2-26.1h-7.3v10.3s.4 12.2-12 12.2H47.6s-11.4-.2-11.4 11.2v33.9s-1.4 11.2 19.3 11.2zm13.8-7.4c-2.5 0-4.5-2-4.5-4.5s2-4.5 4.5-4.5 4.5 2 4.5 4.5-2 4.5-4.5 4.5z"/>
-    </svg>
-  ),
   Docker: () => (
     <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none">
       <path d="M2 13.5c0-1.5 1-2.5 2.5-2.5H6v2H4.5c-.3 0-.5.2-.5.5v1c0 .3.2.5.5.5H8v2H4.5C3 17 2 15.5 2 13.5z" fill="#2496ED"/>

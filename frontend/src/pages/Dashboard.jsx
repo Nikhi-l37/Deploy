@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { 
   LogOut, Plus, Activity, Code, Globe, RefreshCw, Trash2, X, 
   Terminal, Settings, Database, Folder, Play, Save, GitBranch, 
-  Layers, AlertTriangle, ExternalLink, ShieldCheck, Check
+  Layers, AlertTriangle, ExternalLink, Check
 } from 'lucide-react';
 import axios from 'axios';
 
