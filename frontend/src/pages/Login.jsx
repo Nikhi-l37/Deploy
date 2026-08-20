@@ -121,11 +121,11 @@ export default function Login() {
       </header>
 
       {/* 2. MAIN CONTENT VIEW (Base Deep Black Canvas) */}
-      <main className="flex-1 flex flex-col items-center justify-start px-4 py-6 max-w-6xl mx-auto w-full">
-        <div className="w-full space-y-24 animate-fade-in text-center">
+      <main className="flex-1 flex flex-col items-center justify-start px-4 py-4 sm:py-6 max-w-6xl mx-auto w-full">
+        <div className="w-full space-y-10 sm:space-y-14 animate-fade-in text-center">
             
-            {/* Hero Section - Full Viewport Screen Showcase */}
-            <section className="min-h-[calc(100vh-140px)] flex flex-col items-center justify-center text-center py-10 sm:py-16 space-y-8 max-w-4xl mx-auto">
+            {/* Hero Section */}
+            <section className="flex flex-col items-center justify-center text-center pt-8 sm:pt-14 pb-2 space-y-6 sm:space-y-8 max-w-4xl mx-auto">
               {/* Badge */}
               <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#161b22] border border-[#30363d] text-xs sm:text-sm text-[#8b949e] font-mono shadow-sm">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#2ea44f] animate-pulse"></span>
@@ -146,7 +146,7 @@ export default function Login() {
               </p>
 
               {/* Action Buttons */}
-              <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
                 <button
                   onClick={handleGithubLogin}
                   disabled={isLoading}
@@ -169,7 +169,7 @@ export default function Login() {
               </div>
 
               {/* Scroll Cue indicator */}
-              <div className="pt-6 flex flex-col items-center gap-1.5 text-xs font-mono text-[#8b949e] opacity-70 animate-bounce">
+              <div className="pt-2 flex flex-col items-center gap-1 text-xs font-mono text-[#8b949e] opacity-70 animate-bounce">
                 <span>Explore Live Deployment & Architecture</span>
                 <span className="text-sm">↓</span>
               </div>
@@ -178,7 +178,7 @@ export default function Login() {
             {/* ========================================================== */}
             {/* LIVE DEPLOYMENT TERMINAL SIMULATION (Elevated Container)    */}
             {/* ========================================================== */}
-            <div className="max-w-5xl mx-auto pt-8 w-full">
+            <div className="max-w-5xl mx-auto w-full">
               {/* Terminal Header Label */}
               <div className="text-left mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
