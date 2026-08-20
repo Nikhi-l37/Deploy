@@ -234,7 +234,7 @@ export default function ArchitectureCanvas() {
                       </div>
                       <div>
                         <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Our Platform</h3>
-                        <span className="text-[10.5px] text-[#bc8cff] font-mono">Build Engine</span>
+                        <span className="text-[10.5px] text-[#8b949e]">Build Engine</span>
                       </div>
                     </div>
                     <span className="w-2.5 h-2.5 rounded-full bg-[#bc8cff] animate-pulse"></span>
@@ -254,7 +254,7 @@ export default function ArchitectureCanvas() {
                     </div>
                     <div>
                       <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#f85149] transition-colors leading-tight">Environment Keys</h3>
-                      <span className="text-[10.5px] text-[#f85149]">.env Secrets Injection</span>
+                      <span className="text-[10.5px] text-[#8b949e]">.env Secrets Injection</span>
                     </div>
                   </div>
                   <p className="text-[10.5px] font-mono text-[#f85149] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">API_KEY=••••••••</p>
