@@ -3,7 +3,7 @@ import {
   Activity, Network, Server, Cpu, Globe, Database, 
   Lock, HardDrive, Plus, Minus, Maximize2, RefreshCw, 
   Grid, ShieldCheck, Zap, Cloud, Laptop, Layers, ArrowRight, 
-  FileCode, Terminal, Key, CheckCircle2, ArrowUp
+  FileCode, Terminal, Key, CheckCircle2, ArrowUp, ArrowDown, RefreshCcw
 } from 'lucide-react';
 
 // =========================================================================
@@ -75,6 +75,7 @@ export const BrandLogos = {
 };
 
 export default function ArchitectureCanvas() {
+  // 2 Clean Architecture Tabs: 'user' (User Flow) | 'engine' (AWS Cloud Engine Pipeline)
   const [activeTab, setActiveTab] = useState('user');
 
   return (
@@ -92,33 +93,26 @@ export default function ArchitectureCanvas() {
             How Deployat Works
           </h2>
           <p className="text-xs text-[#8b949e] mt-1">
-            Explore the full journey: user code, GitHub webhooks, environment keys, and live URLs.
+            Explore developer workflows and the internal AWS cloud compute pipeline.
           </p>
         </div>
 
-        <div className="inline-flex items-center p-1 rounded-[8px] bg-[#161b22] border border-[#30363d] select-none flex-wrap gap-1">
+        {/* Segmented Controller (2 Tabs) */}
+        <div className="inline-flex items-center p-1 rounded-[8px] bg-[#161b22] border border-[#30363d] select-none gap-1">
           <button
             onClick={() => setActiveTab('user')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${activeTab === 'user' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${activeTab === 'user' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
           >
             <Activity className="w-3.5 h-3.5 text-[#2ea44f]" />
             <span>1. User Flow</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('routing')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${activeTab === 'routing' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
-          >
-            <Network className="w-3.5 h-3.5 text-[#58a6ff]" />
-            <span>2. Live Request Flow</span>
-          </button>
-
-          <button
             onClick={() => setActiveTab('engine')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${activeTab === 'engine' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${activeTab === 'engine' ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm' : 'text-[#8b949e] hover:text-[#f0f6fc] border border-transparent'}`}
           >
             <Cloud className="w-3.5 h-3.5 text-[#FF9900]" />
-            <span>3. AWS Cloud Engine</span>
+            <span>2. AWS Cloud Engine</span>
           </button>
         </div>
       </div>
@@ -147,16 +141,15 @@ export default function ArchitectureCanvas() {
           <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-[#8b949e]">
             <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
             <span>
-              {activeTab === 'user' && 'User Flow · Code ➔ GitHub ➔ Our Platform ➔ .env Keys ➔ Live Internet'}
-              {activeTab === 'routing' && 'End-User Routing · Gateway ➔ Container ➔ DB'}
-              {activeTab === 'engine' && 'AWS Cloud Core · EC2 cgroups + Supabase Auth'}
+              {activeTab === 'user' && 'User Experience Flow · Code ➔ GitHub ➔ Our Platform ➔ .env Keys ➔ Live Internet'}
+              {activeTab === 'engine' && 'AWS Cloud Pipeline · Ingestion ➔ Secrets ➔ EC2 Sandbox ➔ State Registry ➔ Watchdog'}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 text-[11px] font-mono text-[#8b949e] px-2 py-1 rounded bg-[#0d1117] border border-[#30363d]">
               <RefreshCw className="w-3 h-3 text-[#2ea44f] animate-spin" style={{ animationDuration: '5s' }} />
-              <span>Live Mesh</span>
+              <span>Live Pipeline</span>
             </div>
             <div className="flex items-center gap-1 text-[11px] font-medium text-[#f0f6fc] px-2.5 py-1 rounded bg-[#238636] hover:bg-[#2ea043] border border-[rgba(240,246,252,0.1)] transition-colors cursor-pointer">
               <Plus className="w-3 h-3" />
@@ -189,28 +182,28 @@ export default function ArchitectureCanvas() {
                   </filter>
                 </defs>
 
-                {/* Wire 1: User Code (Bottom-Left) ➔ GitHub (Top-Left) (Vertical Up) */}
+                {/* Wire 1: User Code (Bottom-Left) ➔ GitHub (Top-Left) */}
                 <path d="M 125 300 L 125 185" fill="none" stroke="#21262d" strokeWidth="2.5" />
                 <path d="M 125 300 L 125 185" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
                 <circle r="4" fill="#58a6ff" filter="url(#glow-cyan-dev)">
                   <animateMotion dur="2.0s" repeatCount="indefinite" path="M 125 300 L 125 185" />
                 </circle>
 
-                {/* Wire 2: GitHub ➔ Our Platform (Horizontal) */}
+                {/* Wire 2: GitHub ➔ Our Platform */}
                 <path d="M 215 125 L 265 125" fill="none" stroke="#21262d" strokeWidth="2.5" />
                 <path d="M 215 125 L 265 125" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
                 <circle r="4" fill="#2ea44f" filter="url(#glow-green-dev)">
                   <animateMotion dur="2.2s" repeatCount="indefinite" path="M 215 125 L 265 125" />
                 </circle>
 
-                {/* Wire 3: Our Platform ➔ Adding Environment Variables (Horizontal) */}
+                {/* Wire 3: Our Platform ➔ Adding Environment Variables */}
                 <path d="M 455 125 L 495 125" fill="none" stroke="#21262d" strokeWidth="2.5" />
                 <path d="M 455 125 L 495 125" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
                 <circle r="4" fill="#bc8cff" filter="url(#glow-purple-dev)">
                   <animateMotion dur="2.2s" repeatCount="indefinite" path="M 455 125 L 495 125" />
                 </circle>
 
-                {/* Wire 4: Environment Variables ➔ Live on Internet (Horizontal) */}
+                {/* Wire 4: Environment Variables ➔ Live on Internet */}
                 <path d="M 685 125 L 725 125" fill="none" stroke="#21262d" strokeWidth="2.5" />
                 <path d="M 685 125 L 725 125" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
                 <circle r="4" fill="#2ea44f" filter="url(#glow-green-dev)">
@@ -360,100 +353,9 @@ export default function ArchitectureCanvas() {
             </div>
           )}
 
-          {/* VIEW 2: LIVE REQUEST ROUTING */}
-          {activeTab === 'routing' && (
-            <div className="w-full h-full relative animate-fade-in">
-              <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
-                <defs>
-                  <filter id="glow-cyan-route" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
-                </defs>
-                <path d="M 230 260 C 285 260, 285 120, 340 120 L 530 120 C 585 120, 585 380, 660 380" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 230 260 C 285 260, 285 120, 340 120 L 530 120 C 585 120, 585 380, 660 380" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
-                <circle r="4" fill="#58a6ff" filter="url(#glow-cyan-route)">
-                  <animateMotion dur="3.0s" repeatCount="indefinite" path="M 230 260 C 285 260, 285 120, 340 120 L 530 120 C 585 120, 585 380, 660 380" />
-                </circle>
-              </svg>
-
-              {/* Node 1: End-User Browser */}
-              <div className="absolute left-6 sm:left-10 top-[200px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#58a6ff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#58a6ff]">
-                    <Laptop className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">End-User Browser</h3>
-                    <span className="text-[10px] text-[#8b949e]">Client Request</span>
-                  </div>
-                </div>
-                <p className="text-[10px] font-mono text-[#58a6ff] truncate">GET /api/products</p>
-                <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#2ea44f]">● HTTPS Request</span>
-                </div>
-              </div>
-
-              {/* Node 2: Deployat Edge Gateway */}
-              <div className="absolute left-[35%] sm:left-[37%] top-[70px] w-[195px] sm:w-[210px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#009639] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
-                    <BrandLogos.Nginx />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">Edge Gateway (Nginx)</h3>
-                    <span className="text-[10px] text-[#8b949e]">Reverse Proxy</span>
-                  </div>
-                </div>
-                <p className="text-[10px] font-mono text-[#8b949e] truncate">Discovers active port</p>
-                <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#2ea44f]">✓ Match Hostname</span>
-                  <span className="text-[#484f58]">:49203</span>
-                </div>
-              </div>
-
-              {/* Node 3: Docker Container on AWS */}
-              <div className="absolute left-[35%] sm:left-[37%] top-[330px] w-[195px] sm:w-[210px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#2496ED] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
-                      <BrandLogos.Docker />
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#2496ED] transition-colors leading-tight">App Container</h3>
-                      <span className="text-[10px] text-[#8b949e]">Docker on AWS</span>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">128MB</span>
-                </div>
-                <p className="text-[10px] font-mono text-[#8b949e] truncate">FastAPI / Node execution</p>
-                <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#2ea44f]">✓ Sandboxed cgroup</span>
-                  <span className="text-[#484f58]">25% CPU</span>
-                </div>
-              </div>
-
-              {/* Node 4: PostgreSQL Database */}
-              <div className="absolute right-6 sm:right-10 top-[330px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#336791] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
-                    <BrandLogos.Postgres />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">PostgreSQL DB</h3>
-                    <span className="text-[10px] text-[#8b949e]">Supabase Database</span>
-                  </div>
-                </div>
-                <p className="text-[10px] font-mono text-[#8b949e] truncate">SELECT * FROM products</p>
-                <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#2ea44f]">✓ Private query</span>
-                  <span className="text-[#484f58]">12ms</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* VIEW 3: PLATFORM ENGINE & CLOUD */}
+          {/* ================================================================= */}
+          {/* VIEW 2: AWS CLOUD ENGINE (DIRECTIONAL 5-STAGE PIPELINE)           */}
+          {/* ================================================================= */}
           {activeTab === 'engine' && (
             <div className="w-full h-full relative animate-fade-in">
               <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
@@ -462,123 +364,166 @@ export default function ArchitectureCanvas() {
                     <feGaussianBlur stdDeviation="3" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
-                  <filter id="glow-green-supa" x="-20%" y="-20%" width="140%" height="140%">
+                  <filter id="glow-green-engine" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  <filter id="glow-cyan-engine" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  <filter id="glow-purple-engine" x="-20%" y="-20%" width="140%" height="140%">
                     <feGaussianBlur stdDeviation="3" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
                 </defs>
-                <path d="M 230 110 C 285 110, 285 240, 340 240" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 230 110 C 285 110, 285 240, 340 240" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
-                <circle r="4" fill="#3ECF8E" filter="url(#glow-green-supa)">
-                  <animateMotion dur="2.6s" repeatCount="indefinite" path="M 230 110 C 285 110, 285 240, 340 240" />
+
+                {/* Wire 1: Stage 1 (GitHub Trigger) ➔ Stage 3 (AWS Compute Host) */}
+                <path d="M 215 110 C 275 110, 275 220, 335 220" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                <path d="M 215 110 C 275 110, 275 220, 335 220" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
+                <circle r="4" fill="#58a6ff" filter="url(#glow-cyan-engine)">
+                  <animateMotion dur="2.4s" repeatCount="indefinite" path="M 215 110 C 275 110, 275 220, 335 220" />
                 </circle>
-                <path d="M 230 380 C 285 380, 285 280, 340 280" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 230 380 C 285 380, 285 280, 340 280" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
-                <circle r="4" fill="#ffffff">
-                  <animateMotion dur="3.0s" repeatCount="indefinite" path="M 230 380 C 285 380, 285 280, 340 280" />
+
+                {/* Wire 2: Stage 2 (Supabase Control & Secrets) ➔ Stage 3 (AWS Compute Host) */}
+                <path d="M 215 380 C 275 380, 275 270, 335 270" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                <path d="M 215 380 C 275 380, 275 270, 335 270" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
+                <circle r="4" fill="#3ECF8E" filter="url(#glow-green-engine)">
+                  <animateMotion dur="2.4s" repeatCount="indefinite" path="M 215 380 C 275 380, 275 270, 335 270" />
                 </circle>
-                <path d="M 550 240 C 605 240, 605 110, 660 110" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 550 240 C 605 240, 605 110, 660 110" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
+
+                {/* Wire 3: Stage 3 (AWS Compute Host) ➔ Stage 4 (State Registry & Routing Mesh) */}
+                <path d="M 555 220 C 615 220, 615 110, 675 110" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                <path d="M 555 220 C 615 220, 615 110, 675 110" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
                 <circle r="4" fill="#FF9900" filter="url(#glow-orange-engine)">
-                  <animateMotion dur="2.4s" repeatCount="indefinite" path="M 550 240 C 605 240, 605 110, 660 110" />
+                  <animateMotion dur="2.3s" repeatCount="indefinite" path="M 555 220 C 615 220, 615 110, 675 110" />
                 </circle>
-                <path d="M 550 280 C 605 280, 605 380, 660 380" fill="none" stroke="#21262d" strokeWidth="2" />
-                <path d="M 550 280 C 605 280, 605 380, 660 380" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
-                <circle r="4" fill="#bc8cff">
-                  <animateMotion dur="2.8s" repeatCount="indefinite" path="M 550 280 C 605 280, 605 380, 660 380" />
+
+                {/* Wire 4: Stage 3 (AWS Compute Host) ➔ Stage 5 (Resource Optimizer / Watchdog Loop) */}
+                <path d="M 555 270 C 615 270, 615 380, 675 380" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                <path d="M 555 270 C 615 270, 615 380, 675 380" fill="none" stroke="#30363d" strokeWidth="1.5" strokeDasharray="4 4" />
+                <circle r="4" fill="#bc8cff" filter="url(#glow-purple-engine)">
+                  <animateMotion dur="2.7s" repeatCount="indefinite" path="M 555 270 C 615 270, 615 380, 675 380" />
                 </circle>
               </svg>
 
-              {/* Node 1: Supabase Auth & User DB */}
-              <div className="absolute left-6 sm:left-10 top-[60px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#3ECF8E] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
-                    <BrandLogos.Supabase />
+              {/* STAGE 1: INGESTION & TRIGGER (Top-Left) */}
+              <div className="absolute left-4 sm:left-6 top-[55px] w-[180px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#58a6ff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#f0f6fc]">
+                      <BrandLogos.GitHub />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">Stage 1: Ingestion</h3>
+                      <span className="text-[10px] text-[#8b949e]">GitHub Webhooks</span>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#3ECF8E] transition-colors leading-tight">Supabase DB</h3>
-                    <span className="text-[10px] text-[#8b949e]">Auth & .env Secrets</span>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">01</span>
+                </div>
+                <p className="text-[10px] font-mono text-[#8b949e] truncate">HMAC-SHA256 validated</p>
+                <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                  <span className="text-[#58a6ff]">✓ Push & PR Triggers</span>
+                </div>
+              </div>
+
+              {/* STAGE 2: CONTROL PLANE & SECURITY (Bottom-Left) */}
+              <div className="absolute left-4 sm:left-6 top-[325px] w-[180px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#3ECF8E] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1">
+                      <BrandLogos.Supabase />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#3ECF8E] transition-colors leading-tight">Stage 2: Control Plane</h3>
+                      <span className="text-[10px] text-[#8b949e]">Supabase Secrets</span>
+                    </div>
                   </div>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">02</span>
                 </div>
                 <p className="text-[10px] font-mono text-[#8b949e] truncate">Fernet AES-128 keys</p>
                 <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#3ECF8E]">✓ User Auth & Tokens</span>
+                  <span className="text-[#3ECF8E]">🔒 User Auth & Env State</span>
                 </div>
               </div>
 
-              {/* Node 2: GitHub Webhooks */}
-              <div className="absolute left-6 sm:left-10 top-[330px] w-[185px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#8b949e] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#f0f6fc]">
-                    <BrandLogos.GitHub />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">GitHub Webhooks</h3>
-                    <span className="text-[10px] text-[#8b949e]">CI/CD Intake</span>
-                  </div>
-                </div>
-                <p className="text-[10px] font-mono text-[#8b949e] truncate">Push & PR triggers</p>
-                <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#2ea44f]">✓ HMAC SHA-256</span>
-                </div>
-              </div>
-
-              {/* Node 3: AWS Cloud Container Host */}
-              <div className="absolute left-[35%] sm:left-[37%] top-[180px] w-[205px] sm:w-[220px] bg-[#161b22] border-2 border-[#FF9900]/60 hover:border-[#FF9900] rounded-[8px] p-4 space-y-3 z-10 shadow-xl cursor-pointer group transition-all">
-                <div className="flex items-center justify-between">
+              {/* STAGE 3: COMPUTE & SANDBOX ENGINE (HERO / FOCAL ANCHOR CARD - CENTER) */}
+              <div className="absolute left-[34%] sm:left-[36%] top-[165px] w-[215px] sm:w-[230px] bg-[#161b22] border-2 border-[#FF9900]/70 hover:border-[#FF9900] rounded-[10px] p-4 space-y-3 z-20 shadow-2xl cursor-pointer group transition-all">
+                <div className="flex items-center justify-between border-b border-[#30363d]/80 pb-2.5">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#FF9900]/40 flex items-center justify-center p-1">
                       <BrandLogos.AWS />
                     </div>
                     <div>
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-[#FF9900] font-bold block">Stage 03 · Core</span>
                       <h3 className="text-xs font-bold text-[#f0f6fc]">AWS EC2 Host</h3>
-                      <span className="text-[10px] text-[#FF9900] font-mono">Docker Engine</span>
                     </div>
                   </div>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">cgroups v2</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#2ea44f] animate-pulse"></span>
                 </div>
-                <p className="text-[10px] text-[#8b949e] leading-relaxed">
-                  Builds and runs isolated Docker containers with 128MB RAM caps and 25% CPU throttle.
-                </p>
-                <div className="text-[10px] font-mono text-[#8b949e] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] flex items-center justify-between">
-                  <span>Containers Host</span>
-                  <span className="text-[#2ea44f]">online</span>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[10px] font-mono bg-[#0d1117] px-2.5 py-1.5 rounded border border-[#30363d]">
+                    <span className="text-[#8b949e]">Docker Engine</span>
+                    <span className="text-[#2496ED] font-semibold">cgroups v2</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 text-[9px] font-mono text-center">
+                    <div className="bg-[#21262d] px-2 py-1 rounded border border-[#30363d] text-[#f0f6fc]">
+                      <span className="text-[#8b949e] block text-[8px]">MEM CAP</span>
+                      <span>128 MB</span>
+                    </div>
+                    <div className="bg-[#21262d] px-2 py-1 rounded border border-[#30363d] text-[#f0f6fc]">
+                      <span className="text-[#8b949e] block text-[8px]">CPU LIMIT</span>
+                      <span>25% Cap</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] font-mono text-[#8b949e] pt-1">
+                  <span className="text-[#2ea44f]">✓ Isolated Sandbox</span>
+                  <span className="text-[#484f58]">Multi-Stage</span>
                 </div>
               </div>
 
-              {/* Node 4: Container State Registry */}
-              <div className="absolute right-6 sm:right-10 top-[60px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#58a6ff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#58a6ff]">
-                    <Database className="w-3.5 h-3.5" />
+              {/* STAGE 4: LIVE MESH & STATE REGISTRY (Top-Right) */}
+              <div className="absolute right-4 sm:right-6 top-[55px] w-[180px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#58a6ff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#58a6ff]">
+                      <Database className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">Stage 4: State Mesh</h3>
+                      <span className="text-[10px] text-[#8b949e]">Routing Gateway</span>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">State Registry</h3>
-                    <span className="text-[10px] text-[#8b949e]">Supabase Projects</span>
-                  </div>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">04</span>
                 </div>
                 <p className="text-[10px] font-mono text-[#8b949e] truncate">status: RUNNING / SLEEPING</p>
                 <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                   <span className="text-[#2ea44f]">✓ Port Mapping</span>
-                  <span className="text-[#484f58]">:49203</span>
+                  <span className="text-[#58a6ff]">:49203</span>
                 </div>
               </div>
 
-              {/* Node 5: Auto-Sleep Watchdog */}
-              <div className="absolute right-6 sm:right-10 top-[330px] w-[185px] sm:w-[200px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#bc8cff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#bc8cff]">
-                    <Activity className="w-3.5 h-3.5" />
+              {/* STAGE 5: RESOURCE OPTIMIZER / WATCHDOG (Bottom-Right) */}
+              <div className="absolute right-4 sm:right-6 top-[325px] w-[180px] sm:w-[195px] bg-[#161b22]/95 backdrop-blur border border-[#30363d] hover:border-[#bc8cff] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#bc8cff]">
+                      <Activity className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Stage 5: Watchdog</h3>
+                      <span className="text-[10px] text-[#8b949e]">Resource Optimizer</span>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Sleep Watchdog</h3>
-                    <span className="text-[10px] text-[#8b949e]">Memory Saver</span>
-                  </div>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">05</span>
                 </div>
-                <p className="text-[10px] font-mono text-[#bc8cff] truncate">Idle ➔ Sleep ➔ Instant Wake</p>
+                <p className="text-[10px] font-mono text-[#bc8cff] truncate">0MB RAM when idle</p>
                 <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                  <span className="text-[#2ea44f]">✓ Cost optimizer</span>
-                  <span className="text-[#484f58]">0MB idle</span>
+                  <span className="text-[#2ea44f]">⚡ Instant Wake</span>
+                  <span className="text-[#484f58]">&lt;1.0s</span>
                 </div>
               </div>
             </div>
@@ -591,13 +536,13 @@ export default function ArchitectureCanvas() {
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
-              <span className="text-[#8b949e]">AWS EC2 Host + Supabase Cloud</span>
+              <span className="text-[#8b949e]">AWS EC2 Container Host + Supabase Control Plane</span>
             </span>
             <span className="hidden sm:inline">|</span>
-            <span className="hidden sm:inline text-[#8b949e]">Isolated cgroups v2 sandbox with automated Nginx reverse proxy</span>
+            <span className="hidden sm:inline text-[#8b949e]">Sequential directional pipeline · Zero DevOps configuration</span>
           </div>
           <div className="flex items-center gap-3">
-            <span>RAM: 128MB Cap</span>
+            <span>Sandbox: 128MB Cap</span>
             <span>SSL: Active ✓</span>
           </div>
         </div>
