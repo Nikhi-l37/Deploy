@@ -4,17 +4,18 @@
 
 @layer base {
   *, ::before, ::after {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: "Mona Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   }
 
   body {
     @apply bg-[#010409] text-[#c9d1d9] min-h-screen antialiased overflow-x-hidden;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    letter-spacing: -0.01em;
+    font-family: "Mona Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    letter-spacing: -0.015em;
   }
 
   code, kbd, samp, pre, .font-mono, input.font-mono {
-    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    font-family: "Monaspace Neon", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    font-feature-settings: "calt" 1, "liga" 1;
   }
 
   /* Custom scrollbar for GitHub dark look */
