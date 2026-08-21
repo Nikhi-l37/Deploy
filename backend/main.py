@@ -14,8 +14,8 @@ from auth import get_current_user, get_user_id_from_supabase
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Deploy",
-    description="Mini Platform-as-a-Service — Deploy backend projects with one click.",
+    title="Deployat PaaS",
+    description="Mini Platform-as-a-Service — Deploy projects with one click.",
     version="1.0.0"
 )
 
@@ -788,13 +788,14 @@ async def save_project_env(project_id: str, body: EnvVarsUpdate, request: Reques
 # ---------- SETTINGS API (Authenticated + User-Scoped) ----------
 
 class ProjectSettings(BaseModel):
+    name: Optional[str] = None
     root_directory: Optional[str] = "/"
     start_command: Optional[str] = ""
 
 
 @app.put("/projects/{project_id}/settings")
 async def update_project_settings(project_id: str, settings: ProjectSettings, request: Request):
-    """Update root_directory and start_command for a project (user must own it)."""
+    """Update name, root_directory and start_command for a project (user must own it)."""
     from database import supabase
     
     try:
@@ -810,8 +811,20 @@ async def update_project_settings(project_id: str, settings: ProjectSettings, re
             "root_directory": settings.root_directory,
             "start_command": settings.start_command
         }
-        res = supabase.table("projects").update(payload).eq("id", project_id).execute()
-        return {"status": "success", "data": res.data[0]}
+        if settings.name is not None and settings.name.strip():
+            payload["name"] = settings.name.strip()
+            
+        try:
+            res = supabase.table("projects").update(payload).eq("id", project_id).execute()
+        except Exception as err:
+            # Fallback if name column is not present in existing database schema
+            if "name" in str(err).lower():
+                payload.pop("name", None)
+                res = supabase.table("projects").update(payload).eq("id", project_id).execute()
+            else:
+                raise err
+                
+        return {"status": "success", "data": res.data[0] if res.data else {}}
     except HTTPException:
         raise
     except Exception as e:

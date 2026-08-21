@@ -5,7 +5,7 @@ Loads all environment variables and constants.
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 # ---------- Supabase ----------
 SUPABASE_URL = os.getenv("SUPABASE_URL")

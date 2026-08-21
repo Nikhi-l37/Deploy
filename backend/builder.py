@@ -26,16 +26,33 @@ def push_log(project_id: str, message: str):
     
     channel = f"logs:{project_id}"
     log_msg = f"[{time.strftime('%H:%M:%S')}] {safe_message}"
-    
-    # 1. Publish to live websocket listeners
-    redis_client.publish(channel, log_msg)
-    
-    # 2. Append to permanent logs in DB
-    supabase.table("deploy_logs").insert({
-        "project_id": project_id,
-        "log_text": log_msg
-    }).execute()
     print(log_msg)
+    
+    # 1. Publish to live websocket listeners with retry on Windows socket block
+    try:
+        redis_client.publish(channel, log_msg)
+    except Exception:
+        try:
+            time.sleep(0.02)
+            redis_client.publish(channel, log_msg)
+        except Exception:
+            pass
+    
+    # 2. Append to permanent logs in DB with retry
+    try:
+        supabase.table("deploy_logs").insert({
+            "project_id": project_id,
+            "log_text": log_msg
+        }).execute()
+    except Exception:
+        try:
+            time.sleep(0.02)
+            supabase.table("deploy_logs").insert({
+                "project_id": project_id,
+                "log_text": log_msg
+            }).execute()
+        except Exception:
+            pass
 
 def update_status(project_id: str, status: str, extra_data: dict = None):
     """Updates the project status in Supabase."""
@@ -272,8 +289,8 @@ def run_pipeline(project_id: str):
         push_log(project_id, "Building Docker image. This may take a minute...")
         image_name = f"{safe_name}:latest"
         
-        # Use direct docker CLI subprocess for 100% reliable real-time log streaming without socket buffer errors
-        cmd = ["docker", "build", "-t", image_name, build_path]
+        # Use direct docker CLI subprocess with --progress=plain for non-interactive line-by-line build logs
+        cmd = ["docker", "build", "--progress=plain", "-t", image_name, build_path]
         for k, v in build_args.items():
             cmd.extend(["--build-arg", f"{k}={v}"])
             
@@ -286,11 +303,15 @@ def run_pipeline(project_id: str):
             errors='replace',
             bufsize=1
         )
-        for line in iter(process.stdout.readline, ''):
-            clean_line = line.strip()
-            if clean_line:
-                push_log(project_id, f"[BUILD] {clean_line}")
-        process.stdout.close()
+        try:
+            for line in process.stdout:
+                clean_line = line.strip()
+                if clean_line:
+                    push_log(project_id, f"[BUILD] {clean_line}")
+        finally:
+            if process.stdout:
+                process.stdout.close()
+                
         return_code = process.wait()
         if return_code != 0:
             raise Exception(f"Docker build failed with exit code {return_code}")
