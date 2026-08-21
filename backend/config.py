@@ -5,7 +5,7 @@ Loads all environment variables and constants.
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 # ---------- Supabase ----------
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -41,7 +41,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 HOST_URL = os.getenv("HOST_URL", "http://localhost")
 
 # ---------- Watchdog ----------
-WATCHDOG_IDLE_TIMEOUT = int(os.getenv("WATCHDOG_IDLE_TIMEOUT", 300))  # 5 minutes
+WATCHDOG_IDLE_TIMEOUT = int(os.getenv("WATCHDOG_IDLE_TIMEOUT", 120))  # 2 minutes (for testing)
 WATCHDOG_POLL_INTERVAL = int(os.getenv("WATCHDOG_POLL_INTERVAL", 30))
 
 # ---------- Nginx ----------

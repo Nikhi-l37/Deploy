@@ -14,8 +14,8 @@ from auth import get_current_user, get_user_id_from_supabase
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Deploy",
-    description="Mini Platform-as-a-Service — Deploy backend projects with one click.",
+    title="Deployat PaaS",
+    description="Mini Platform-as-a-Service — Deploy projects with one click.",
     version="1.0.0"
 )
 
@@ -62,10 +62,22 @@ async def watchdog_task():
                 project_id = project["id"]
                 container_name = f"deploy-{project_id[:8]}"
                 
+                # Frontend projects (Nginx static apps) consume ~1MB RAM and should stay 100% online
+                if project.get("project_type") == "frontend":
+                    try:
+                        container = client.containers.get(container_name)
+                        if container.status != "running":
+                            container.start()
+                    except Exception:
+                        pass
+                    continue
+                
                 # Verify container is actually running
                 try:
                     container = client.containers.get(container_name)
                     if container.status != "running":
+                        # If container exited or stopped, sync status to SLEEPING
+                        supabase.table("projects").update({"status": "SLEEPING"}).eq("id", project_id).execute()
                         continue
                 except Exception:
                     continue
@@ -95,9 +107,19 @@ async def watchdog_task():
             
         await asyncio.sleep(config.WATCHDOG_POLL_INTERVAL)
 
+import threading
+import builder
+
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(watchdog_task())
+    # Auto-start builder queue worker thread so deploys process automatically
+    try:
+        worker_thread = threading.Thread(target=builder.start_worker, daemon=True)
+        worker_thread.start()
+        print("[Startup] Builder Worker background daemon thread started.")
+    except Exception as e:
+        print(f"[Startup] Error starting builder worker thread: {e}")
 
 
 # ---------- WAKE-ON-DEMAND GATEWAY ----------
@@ -132,14 +154,23 @@ async def gateway(project_id: str):
             # Wait for the app inside the container to be ready
             port = project.get("port", 8001)
             import socket
+            ready = False
             for attempt in range(10):
                 await asyncio.sleep(1)
+                try:
+                    container.reload()
+                    if container.status != "running":
+                        raise Exception("Container exited immediately after startup (check logs for runtime crash)")
+                except docker.errors.NotFound:
+                    raise Exception("Container not found")
+                
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.settimeout(1)
                     result = sock.connect_ex(('127.0.0.1', port))
                     sock.close()
                     if result == 0:
+                        ready = True
                         break
                 except:
                     pass
@@ -149,7 +180,8 @@ async def gateway(project_id: str):
             return {"status": "woken up"}
         except Exception as e:
             print(f"Gateway error waking container: {e}")
-            raise HTTPException(status_code=500, detail="Failed to wake container")
+            supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
+            raise HTTPException(status_code=500, detail=f"Failed to wake container: {str(e)}")
             
     else:
         # App is QUEUED, BUILDING, or FAILED. Block traffic.
@@ -161,7 +193,7 @@ async def gateway(project_id: str):
 from fastapi.responses import HTMLResponse
 
 @app.get("/wake-page/{project_id}", response_class=HTMLResponse)
-async def wake_page(project_id: str):
+async def wake_page(project_id: str, request: Request):
     """
     Serves a beautiful 'Waking up your server...' page.
     The page auto-calls /gateway/{project_id} to boot the container,
@@ -173,14 +205,8 @@ async def wake_page(project_id: str):
     
     project = res.data[0]
     port = project.get("port", 8001)
-    
-    # Redirect to subdomain if configured, else fallback to port
-    if project.get("subdomain") and config.DOMAIN_NAME != "deploy.local":
-        app_url = f"https://{project['subdomain']}.{config.DOMAIN_NAME}"
-    else:
-        app_url = f"{config.HOST_URL}:{port}"
-        
-    project_name = project.get("github_url", "").split("/")[-1].replace(".git", "") or "Your App"
+    subdomain = project.get("subdomain") or ""
+    project_name = project.get("name") or project.get("github_url", "").split("/")[-1].replace(".git", "") or "Your App"
     
     html = f"""
     <!DOCTYPE html>
@@ -380,8 +406,15 @@ async def wake_page(project_id: str):
         </div>
         
         <script>
-            const GATEWAY_URL = "{config.API_BASE_URL}/gateway/{project_id}";
-            const APP_URL = "{app_url}";
+            const GATEWAY_URL = "/gateway/{project_id}";
+            
+            // Dynamically resolve application target URL based on active host
+            const isIp = /^(\d{{1,3}}\.){{3}}\d{{1,3}}$/.test(window.location.hostname);
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || isIp;
+            let APP_URL = window.location.protocol + "//" + window.location.hostname + ":{port}";
+            if ("{subdomain}" && !isLocal && window.location.hostname.includes('.')) {{
+                APP_URL = window.location.protocol + "//{subdomain}." + window.location.hostname.replace(/^www\./, '');
+            }}
             
             const step1 = document.getElementById("step1");
             const step2 = document.getElementById("step2");
@@ -425,10 +458,9 @@ async def wake_page(project_id: str):
                     }}
                 }} catch (err) {{
                     console.error("Wake error:", err);
-                    statusText.textContent = "Retrying...";
-                    
-                    // Retry after 3 seconds
-                    setTimeout(wakeUp, 3000);
+                    statusText.textContent = "Error: " + (err.message || "Failed to wake server");
+                    errorMsg.style.display = "block";
+                    errorMsg.textContent = err.message || "Something went wrong. Please check container logs.";
                 }}
             }}
             
@@ -520,14 +552,26 @@ async def delete_project(project_id: str, request: Request):
             raise HTTPException(status_code=403, detail="You don't own this project")
         
         # 4. Stop and remove the Docker container if it exists
-        if project.get("container_id"):
+        try:
+            client = docker.from_env()
+            container_name = f"deploy-{project_id[:8]}"
+            # Try by container_id first
+            if project.get("container_id"):
+                try:
+                    container = client.containers.get(project["container_id"])
+                    container.stop(timeout=1)
+                    container.remove(force=True)
+                except Exception:
+                    pass
+            # Fallback try by name
             try:
-                client = docker.from_env()
-                container = client.containers.get(project["container_id"])
-                container.stop(timeout=5)
-                container.remove()
+                container = client.containers.get(container_name)
+                container.stop(timeout=1)
+                container.remove(force=True)
             except Exception:
-                pass  # Container may already be stopped
+                pass
+        except Exception:
+            pass
         
         # 5. Free the port in port_registry (always try, even for FAILED projects)
         supabase.table("port_registry").update({
@@ -579,6 +623,51 @@ async def delete_project(project_id: str, request: Request):
         raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@app.post("/projects/{project_id}/restart")
+async def restart_project(project_id: str, request: Request):
+    """Restart a container without rebuilding. Much faster than redeploy."""
+    user = await get_current_user(request)
+    user_id = await get_user_id_from_supabase(user)
+    
+    try:
+        res = supabase.table("projects").select("*").eq("id", project_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        project = res.data[0]
+        if project.get("user_id") != user_id:
+            raise HTTPException(status_code=403, detail="You don't own this project")
+        
+        if not project.get("container_id"):
+            raise HTTPException(status_code=400, detail="No container to restart. Deploy first.")
+        
+        client = docker.from_env()
+        container_name = f"deploy-{project_id[:8]}"
+        
+        try:
+            container = client.containers.get(container_name)
+            container.restart(timeout=5)
+            
+            # Wait for it to come back up
+            time.sleep(3)
+            container.reload()
+            
+            if container.status == "running":
+                supabase.table("projects").update({"status": "RUNNING"}).eq("id", project_id).execute()
+                redis_client.set(f"last_active:{project_id}", time.time())
+                return {"status": "success", "message": "Container restarted successfully!"}
+            else:
+                supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
+                raise HTTPException(status_code=500, detail="Container failed to restart")
+                
+        except docker.errors.NotFound:
+            raise HTTPException(status_code=404, detail="Container not found. Try redeploying instead.")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/projects/{project_id}/logs")
@@ -715,13 +804,14 @@ async def save_project_env(project_id: str, body: EnvVarsUpdate, request: Reques
 # ---------- SETTINGS API (Authenticated + User-Scoped) ----------
 
 class ProjectSettings(BaseModel):
+    name: Optional[str] = None
     root_directory: Optional[str] = "/"
     start_command: Optional[str] = ""
 
 
 @app.put("/projects/{project_id}/settings")
 async def update_project_settings(project_id: str, settings: ProjectSettings, request: Request):
-    """Update root_directory and start_command for a project (user must own it)."""
+    """Update name, root_directory and start_command for a project (user must own it)."""
     from database import supabase
     
     try:
@@ -737,8 +827,20 @@ async def update_project_settings(project_id: str, settings: ProjectSettings, re
             "root_directory": settings.root_directory,
             "start_command": settings.start_command
         }
-        res = supabase.table("projects").update(payload).eq("id", project_id).execute()
-        return {"status": "success", "data": res.data[0]}
+        if settings.name is not None and settings.name.strip():
+            payload["name"] = settings.name.strip()
+            
+        try:
+            res = supabase.table("projects").update(payload).eq("id", project_id).execute()
+        except Exception as err:
+            # Fallback if name column is not present in existing database schema
+            if "name" in str(err).lower():
+                payload.pop("name", None)
+                res = supabase.table("projects").update(payload).eq("id", project_id).execute()
+            else:
+                raise err
+                
+        return {"status": "success", "data": res.data[0] if res.data else {}}
     except HTTPException:
         raise
     except Exception as e:

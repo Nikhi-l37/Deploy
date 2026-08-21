@@ -26,16 +26,33 @@ def push_log(project_id: str, message: str):
     
     channel = f"logs:{project_id}"
     log_msg = f"[{time.strftime('%H:%M:%S')}] {safe_message}"
-    
-    # 1. Publish to live websocket listeners
-    redis_client.publish(channel, log_msg)
-    
-    # 2. Append to permanent logs in DB
-    supabase.table("deploy_logs").insert({
-        "project_id": project_id,
-        "log_text": log_msg
-    }).execute()
     print(log_msg)
+    
+    # 1. Publish to live websocket listeners with retry on Windows socket block
+    try:
+        redis_client.publish(channel, log_msg)
+    except Exception:
+        try:
+            time.sleep(0.02)
+            redis_client.publish(channel, log_msg)
+        except Exception:
+            pass
+    
+    # 2. Append to permanent logs in DB with retry
+    try:
+        supabase.table("deploy_logs").insert({
+            "project_id": project_id,
+            "log_text": log_msg
+        }).execute()
+    except Exception:
+        try:
+            time.sleep(0.02)
+            supabase.table("deploy_logs").insert({
+                "project_id": project_id,
+                "log_text": log_msg
+            }).execute()
+        except Exception:
+            pass
 
 def update_status(project_id: str, status: str, extra_data: dict = None):
     """Updates the project status in Supabase."""
@@ -194,12 +211,34 @@ CMD ["sh", "-c", "if [ -f main.py ]; then python main.py; elif [ -f app.py ]; th
                             break
                     content = "\n".join(lines)
         else:
-            content = """
+            has_server = os.path.exists(os.path.join(repo_path, "server", "package.json"))
+            has_client = os.path.exists(os.path.join(repo_path, "client", "package.json"))
+            
+            if has_server:
+                content = """
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+COPY server/package*.json ./server/
+"""
+                if has_client:
+                    content += "COPY client/package*.json ./client/\n"
+                content += """
+RUN if grep -q '"build"' package.json; then (npm run build || (npm install && npm install --prefix server)); else (npm install && npm install --prefix server); fi
+COPY . .
+EXPOSE 8080
+ENV PORT=8080
+CMD ["npm", "start"]
+"""
+            else:
+                content = """
 FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+EXPOSE 8080
+ENV PORT=8080
 CMD ["npm", "start"]
 """
     with open(df_path, "w") as f:
@@ -272,15 +311,32 @@ def run_pipeline(project_id: str):
         push_log(project_id, "Building Docker image. This may take a minute...")
         image_name = f"{safe_name}:latest"
         
-        # We use the low-level API to stream logs
-        build_logs = docker_client.api.build(path=build_path, tag=image_name, decode=True, buildargs=build_args)
-        for chunk in build_logs:
-            if 'stream' in chunk:
-                line = chunk['stream'].strip()
-                if line:
-                    push_log(project_id, f"[BUILD] {line}")
-            elif 'error' in chunk:
-                raise Exception(f"Docker Build Error: {chunk['error']}")
+        # Use direct docker CLI subprocess with --progress=plain for non-interactive line-by-line build logs
+        cmd = ["docker", "build", "--progress=plain", "-t", image_name, build_path]
+        for k, v in build_args.items():
+            cmd.extend(["--build-arg", f"{k}={v}"])
+            
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            bufsize=1
+        )
+        try:
+            for line in process.stdout:
+                clean_line = line.strip()
+                if clean_line:
+                    push_log(project_id, f"[BUILD] {clean_line}")
+        finally:
+            if process.stdout:
+                process.stdout.close()
+                
+        return_code = process.wait()
+        if return_code != 0:
+            raise Exception(f"Docker build failed with exit code {return_code}")
 
         # 5. Clean up old container if it exists
         if project.get("container_id"):
@@ -352,14 +408,14 @@ def run_pipeline(project_id: str):
         # Auto-cleanup failed containers and images
         container_name = f"deploy-{project_id[:8]}"
         try:
-            container = client.containers.get(container_name)
+            container = docker_client.containers.get(container_name)
             container.remove(force=True)
             push_log(project_id, "🧹 Cleaned up failed container.")
         except Exception:
             pass
         
         try:
-            client.images.remove(f"deploy-{project_id[:8]}", force=True)
+            docker_client.images.remove(f"deploy-{project_id[:8]}", force=True)
             push_log(project_id, "🧹 Cleaned up failed image.")
         except Exception:
             pass

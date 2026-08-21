@@ -124,6 +124,7 @@ async def manual_deploy(request: Request):
             root_directory = data.get("root_directory")
             start_command = data.get("start_command")
             env_vars = data.get("env_vars")
+            project_type = data.get("project_type", "backend")  # backend, frontend, fullstack
             
             # Auto-generate subdomain from repo name
             import re
@@ -143,14 +144,22 @@ async def manual_deploy(request: Request):
                 "github_url": github_url,
                 "user_id": user_id,
                 "status": "QUEUED",
-                "subdomain": subdomain
+                "subdomain": subdomain,
+                "project_type": project_type
             }
             if root_directory:
                 project_data["root_directory"] = root_directory
             if start_command:
                 project_data["start_command"] = start_command
             
-            res = supabase.table("projects").insert(project_data).execute()
+            try:
+                res = supabase.table("projects").insert(project_data).execute()
+            except Exception as insert_err:
+                if "project_type" in str(insert_err):
+                    project_data.pop("project_type", None)
+                    res = supabase.table("projects").insert(project_data).execute()
+                else:
+                    raise insert_err
             project_id = res.data[0]["id"]
             
             # Encrypt and save environment variables if provided
