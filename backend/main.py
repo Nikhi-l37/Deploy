@@ -62,16 +62,22 @@ async def watchdog_task():
                 project_id = project["id"]
                 container_name = f"deploy-{project_id[:8]}"
                 
-                # Skip frontend projects — static sites use nginx and consume
-                # almost zero resources, so sleeping them is pointless
+                # Frontend projects (Nginx static apps) consume ~1MB RAM and should stay 100% online
                 if project.get("project_type") == "frontend":
-                    print(f"[Watchdog] Skipping {project_id[:8]} — frontend project, no sleep needed.")
+                    try:
+                        container = client.containers.get(container_name)
+                        if container.status != "running":
+                            container.start()
+                    except Exception:
+                        pass
                     continue
                 
                 # Verify container is actually running
                 try:
                     container = client.containers.get(container_name)
                     if container.status != "running":
+                        # If container exited or stopped, sync status to SLEEPING
+                        supabase.table("projects").update({"status": "SLEEPING"}).eq("id", project_id).execute()
                         continue
                 except Exception:
                     continue
@@ -148,14 +154,23 @@ async def gateway(project_id: str):
             # Wait for the app inside the container to be ready
             port = project.get("port", 8001)
             import socket
+            ready = False
             for attempt in range(10):
                 await asyncio.sleep(1)
+                try:
+                    container.reload()
+                    if container.status != "running":
+                        raise Exception("Container exited immediately after startup (check logs for runtime crash)")
+                except docker.errors.NotFound:
+                    raise Exception("Container not found")
+                
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.settimeout(1)
                     result = sock.connect_ex(('127.0.0.1', port))
                     sock.close()
                     if result == 0:
+                        ready = True
                         break
                 except:
                     pass
@@ -165,7 +180,8 @@ async def gateway(project_id: str):
             return {"status": "woken up"}
         except Exception as e:
             print(f"Gateway error waking container: {e}")
-            raise HTTPException(status_code=500, detail="Failed to wake container")
+            supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
+            raise HTTPException(status_code=500, detail=f"Failed to wake container: {str(e)}")
             
     else:
         # App is QUEUED, BUILDING, or FAILED. Block traffic.
@@ -177,7 +193,7 @@ async def gateway(project_id: str):
 from fastapi.responses import HTMLResponse
 
 @app.get("/wake-page/{project_id}", response_class=HTMLResponse)
-async def wake_page(project_id: str):
+async def wake_page(project_id: str, request: Request):
     """
     Serves a beautiful 'Waking up your server...' page.
     The page auto-calls /gateway/{project_id} to boot the container,
@@ -189,14 +205,8 @@ async def wake_page(project_id: str):
     
     project = res.data[0]
     port = project.get("port", 8001)
-    
-    # Redirect to subdomain if configured, else fallback to port
-    if project.get("subdomain") and config.DOMAIN_NAME != "deploy.local":
-        app_url = f"https://{project['subdomain']}.{config.DOMAIN_NAME}"
-    else:
-        app_url = f"{config.HOST_URL}:{port}"
-        
-    project_name = project.get("github_url", "").split("/")[-1].replace(".git", "") or "Your App"
+    subdomain = project.get("subdomain") or ""
+    project_name = project.get("name") or project.get("github_url", "").split("/")[-1].replace(".git", "") or "Your App"
     
     html = f"""
     <!DOCTYPE html>
@@ -396,8 +406,15 @@ async def wake_page(project_id: str):
         </div>
         
         <script>
-            const GATEWAY_URL = "{config.API_BASE_URL}/gateway/{project_id}";
-            const APP_URL = "{app_url}";
+            const GATEWAY_URL = "/gateway/{project_id}";
+            
+            // Dynamically resolve application target URL based on active host
+            const isIp = /^(\d{{1,3}}\.){{3}}\d{{1,3}}$/.test(window.location.hostname);
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || isIp;
+            let APP_URL = window.location.protocol + "//" + window.location.hostname + ":{port}";
+            if ("{subdomain}" && !isLocal && window.location.hostname.includes('.')) {{
+                APP_URL = window.location.protocol + "//{subdomain}." + window.location.hostname.replace(/^www\./, '');
+            }}
             
             const step1 = document.getElementById("step1");
             const step2 = document.getElementById("step2");
@@ -441,10 +458,9 @@ async def wake_page(project_id: str):
                     }}
                 }} catch (err) {{
                     console.error("Wake error:", err);
-                    statusText.textContent = "Retrying...";
-                    
-                    // Retry after 3 seconds
-                    setTimeout(wakeUp, 3000);
+                    statusText.textContent = "Error: " + (err.message || "Failed to wake server");
+                    errorMsg.style.display = "block";
+                    errorMsg.textContent = err.message || "Something went wrong. Please check container logs.";
                 }}
             }}
             

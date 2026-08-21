@@ -4,6 +4,7 @@ import {
   Activity, ShieldCheck, Zap, Globe, ArrowRight, 
   ArrowLeft, Layers, Lock 
 } from 'lucide-react';
+import DeployatLogo from '../components/common/DeployatLogo';
 import ArchitectureCanvas from '../components/ArchitectureCanvas';
 
 // Terminal deployment simulation lines with clean developer technical descriptions
@@ -86,9 +87,7 @@ export default function Login() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Logo & Badge */}
           <div className="flex items-center gap-2.5 select-none">
-            <div className="w-8 h-8 rounded-[6px] bg-[#238636] flex items-center justify-center text-white shadow-sm">
-              <Activity className="w-4 h-4 text-white" />
-            </div>
+            <DeployatLogo className="w-8 h-8" />
             <div className="flex items-center gap-2">
               <span className="text-base font-semibold text-[#f0f6fc] tracking-tight">Deployat</span>
               <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#0d1117] text-[#8b949e] border border-[#30363d]">

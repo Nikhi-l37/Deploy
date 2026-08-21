@@ -211,12 +211,34 @@ CMD ["sh", "-c", "if [ -f main.py ]; then python main.py; elif [ -f app.py ]; th
                             break
                     content = "\n".join(lines)
         else:
-            content = """
+            has_server = os.path.exists(os.path.join(repo_path, "server", "package.json"))
+            has_client = os.path.exists(os.path.join(repo_path, "client", "package.json"))
+            
+            if has_server:
+                content = """
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+COPY server/package*.json ./server/
+"""
+                if has_client:
+                    content += "COPY client/package*.json ./client/\n"
+                content += """
+RUN if grep -q '"build"' package.json; then (npm run build || (npm install && npm install --prefix server)); else (npm install && npm install --prefix server); fi
+COPY . .
+EXPOSE 8080
+ENV PORT=8080
+CMD ["npm", "start"]
+"""
+            else:
+                content = """
 FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+EXPOSE 8080
+ENV PORT=8080
 CMD ["npm", "start"]
 """
     with open(df_path, "w") as f:
