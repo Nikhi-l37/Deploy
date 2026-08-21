@@ -62,6 +62,12 @@ async def watchdog_task():
                 project_id = project["id"]
                 container_name = f"deploy-{project_id[:8]}"
                 
+                # Skip frontend projects — static sites use nginx and consume
+                # almost zero resources, so sleeping them is pointless
+                if project.get("project_type") == "frontend":
+                    print(f"[Watchdog] Skipping {project_id[:8]} — frontend project, no sleep needed.")
+                    continue
+                
                 # Verify container is actually running
                 try:
                     container = client.containers.get(container_name)
@@ -530,14 +536,26 @@ async def delete_project(project_id: str, request: Request):
             raise HTTPException(status_code=403, detail="You don't own this project")
         
         # 4. Stop and remove the Docker container if it exists
-        if project.get("container_id"):
+        try:
+            client = docker.from_env()
+            container_name = f"deploy-{project_id[:8]}"
+            # Try by container_id first
+            if project.get("container_id"):
+                try:
+                    container = client.containers.get(project["container_id"])
+                    container.stop(timeout=1)
+                    container.remove(force=True)
+                except Exception:
+                    pass
+            # Fallback try by name
             try:
-                client = docker.from_env()
-                container = client.containers.get(project["container_id"])
+                container = client.containers.get(container_name)
                 container.stop(timeout=1)
                 container.remove(force=True)
             except Exception:
-                pass  # Container may already be stopped
+                pass
+        except Exception:
+            pass
         
         # 5. Free the port in port_registry (always try, even for FAILED projects)
         supabase.table("port_registry").update({
@@ -589,6 +607,51 @@ async def delete_project(project_id: str, request: Request):
         raise
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@app.post("/projects/{project_id}/restart")
+async def restart_project(project_id: str, request: Request):
+    """Restart a container without rebuilding. Much faster than redeploy."""
+    user = await get_current_user(request)
+    user_id = await get_user_id_from_supabase(user)
+    
+    try:
+        res = supabase.table("projects").select("*").eq("id", project_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        project = res.data[0]
+        if project.get("user_id") != user_id:
+            raise HTTPException(status_code=403, detail="You don't own this project")
+        
+        if not project.get("container_id"):
+            raise HTTPException(status_code=400, detail="No container to restart. Deploy first.")
+        
+        client = docker.from_env()
+        container_name = f"deploy-{project_id[:8]}"
+        
+        try:
+            container = client.containers.get(container_name)
+            container.restart(timeout=5)
+            
+            # Wait for it to come back up
+            time.sleep(3)
+            container.reload()
+            
+            if container.status == "running":
+                supabase.table("projects").update({"status": "RUNNING"}).eq("id", project_id).execute()
+                redis_client.set(f"last_active:{project_id}", time.time())
+                return {"status": "success", "message": "Container restarted successfully!"}
+            else:
+                supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
+                raise HTTPException(status_code=500, detail="Container failed to restart")
+                
+        except docker.errors.NotFound:
+            raise HTTPException(status_code=404, detail="Container not found. Try redeploying instead.")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/projects/{project_id}/logs")

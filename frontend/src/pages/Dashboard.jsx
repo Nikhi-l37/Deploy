@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { 
   LogOut, Plus, Activity, Code, Globe, RefreshCw, Trash2, X, 
   Terminal, Settings, Database, Folder, Play, Save, GitBranch, 
-  Layers, AlertTriangle, AlertCircle, Info, ExternalLink, Check, Copy
+  Layers, AlertTriangle, AlertCircle, Info, ExternalLink, Check, Copy, RotateCcw
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -18,6 +18,7 @@ export default function Dashboard({ session }) {
   const [newEnvVars, setNewEnvVars] = useState([{ key: '', value: '' }]);
   const [newRootDir, setNewRootDir] = useState('');
   const [newStartCmd, setNewStartCmd] = useState('');
+  const [newProjectType, setNewProjectType] = useState('backend');
   
   // Selected Project State
   const [selectedProjectId, setSelectedProjectId] = useState(null);
@@ -36,6 +37,7 @@ export default function Dashboard({ session }) {
   // Toast & Modal Feedback States (Replacing browser alerts/confirms)
   const [toast, setToast] = useState(null);
   const [deleteConfirmProject, setDeleteConfirmProject] = useState(null);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [isSavingEnv, setIsSavingEnv] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -63,6 +65,24 @@ export default function Dashboard({ session }) {
 
   const user = session.user;
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+
+  const isValidGithubUrl = (url) => {
+    if (!url || !url.trim()) return false;
+    const trimmed = url.trim().replace(/\.git$/, '').replace(/\/$/, '');
+    const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+    return githubRegex.test(trimmed);
+  };
+
+  const repoDetails = useMemo(() => {
+    if (!githubUrl || !isValidGithubUrl(githubUrl)) return null;
+    const clean = githubUrl.trim().replace(/\.git$/, '').replace(/\/$/, '');
+    const parts = clean.split('/');
+    return {
+      owner: parts[parts.length - 2],
+      name: parts[parts.length - 1],
+      subdomain: parts[parts.length - 1].toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 30)
+    };
+  }, [githubUrl]);
 
   const getAppUrl = (project) => {
     const hostname = window.location.hostname;
@@ -195,7 +215,7 @@ export default function Dashboard({ session }) {
     
     setIsSubmitting(true);
     try {
-      const payload = { github_url: githubUrl };
+      const payload = { github_url: githubUrl, project_type: newProjectType };
       if (newRootDir.trim()) payload.root_directory = newRootDir.trim();
       if (newStartCmd.trim()) payload.start_command = newStartCmd.trim();
       
@@ -206,6 +226,7 @@ export default function Dashboard({ session }) {
       setGithubUrl('');
       setNewRootDir('');
       setNewStartCmd('');
+      setNewProjectType('backend');
       setNewEnvVars([{ key: '', value: '' }]);
       setDeployStep(1);
       setShowModal(false);
@@ -241,14 +262,26 @@ export default function Dashboard({ session }) {
     }
   };
 
+  const handleRestart = async (projectId) => {
+    try {
+      showToast("Restarting container...", "info");
+      await api.post(`/projects/${projectId}/restart`);
+      fetchProjects();
+      showToast("Container restarted successfully!", "success");
+    } catch (err) {
+      showToast('Failed to restart: ' + (err.response?.data?.detail || err.message), 'error');
+    }
+  };
+
   const executeDelete = async (projectId) => {
     setIsDeleting(true);
+    showToast("Deleting project and cleaning up containers...", "info");
     try {
       await api.delete(`/projects/${projectId}`);
       if (selectedProjectId === projectId) setSelectedProjectId(null);
       setDeleteConfirmProject(null);
       fetchProjects();
-      showToast("Project deleted successfully", "info");
+      showToast("Project deleted successfully!", "success");
     } catch (err) {
       showToast('Failed to delete: ' + (err.response?.data?.detail || err.message), 'error');
     } finally {
@@ -293,11 +326,15 @@ export default function Dashboard({ session }) {
 
   const getLogColor = (text) => {
     if (!text) return 'text-[#8b949e]';
-    if (text.includes('FAILED') || text.includes('Error') || text.includes('error') || text.includes('CRASH')) return 'text-[#f85149]';
-    if (text.includes('successful') || text.includes('live') || text.includes('RUNNING') || text.includes('[APP]')) return 'text-[#3fb950]';
-    if (text.includes('Detected') || text.includes('BUILDING') || text.includes('Waiting') || text.includes('Stopping')) return 'text-[#d29922]';
-    if (text.includes('[BUILD]')) return 'text-[#58a6ff]';
-    if (text.includes('Starting') || text.includes('Clone') || text.includes('Cloning') || text.includes('Auto-generated')) return 'text-[#79c0ff]';
+    // Only highlight actual errors in red
+    if (text.includes('FAILED') || text.includes('Error:') || text.includes('error:') || text.includes('CRASH') || text.includes('Deploy failed:')) {
+      return 'text-[#f85149] font-medium';
+    }
+    // Highlight final successful deployment in green
+    if (text.includes('Deploy successful') || text.includes('now live') || text.includes('is live')) {
+      return 'text-[#3fb950] font-semibold';
+    }
+    // Clean, crisp, standard terminal text for all build, npm, and system logs
     return 'text-[#c9d1d9]';
   };
 
@@ -463,33 +500,16 @@ export default function Dashboard({ session }) {
                               <Play className="w-3.5 h-3.5 fill-current" /> Wake
                             </button>
                           ) : (
-                            <>
-                              <button 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  if (project.status !== 'BUILDING') {
-                                    handleManualDeploy(project.id); 
-                                  }
-                                }} 
-                                disabled={project.status === 'BUILDING'}
-                                className="p-2 bg-[#21262d] border border-[#30363d] rounded-md text-[#c9d1d9] hover:text-white hover:bg-[#30363d] disabled:opacity-50 transition-colors cursor-pointer"
-                                title="Redeploy"
-                              >
-                                <RefreshCw className={`w-4 h-4 ${project.status === 'BUILDING' ? 'animate-spin text-[#58a6ff]' : ''}`} />
-                              </button>
-                              {(project.status === 'FAILED' || project.status === 'QUEUED') && (
-                                <button 
-                                  onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    setDeleteConfirmProject(project); 
-                                  }} 
-                                  className="p-2 bg-[#da3633]/15 border border-[#da3633]/40 rounded-md text-[#f85149] hover:bg-[#da3633]/30 transition-colors cursor-pointer"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
+                            <button 
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setDeleteConfirmProject(project); 
+                              }} 
+                              className="p-2 bg-[#21262d] border border-[#30363d] rounded-md text-[#8b949e] hover:text-[#f85149] hover:bg-[#da3633]/15 hover:border-[#da3633]/30 transition-colors cursor-pointer"
+                              title="Delete Project"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           )}
                         </div>
                       </td>
@@ -525,13 +545,24 @@ export default function Dashboard({ session }) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                {selectedProject.status === 'RUNNING' && (
+                  <button 
+                    onClick={() => handleRestart(selectedProject.id)}
+                    className="btn btn-outline text-xs sm:text-sm font-semibold px-3.5 py-2 flex items-center gap-2 cursor-pointer shadow-sm"
+                    title="Restart container without rebuild"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-[#8b949e]" />
+                    Restart
+                  </button>
+                )}
                 <button 
                   onClick={() => handleManualDeploy(selectedProject.id)}
                   disabled={selectedProject.status === 'BUILDING'}
-                  className="btn btn-primary text-sm font-semibold px-4.5 py-2.5 flex items-center gap-2"
+                  className="btn btn-primary text-xs sm:text-sm font-semibold px-4 py-2 flex items-center gap-2 cursor-pointer shadow-sm"
+                  title="Full rebuild and redeploy"
                 >
-                  <RefreshCw className={`w-4 h-4 ${selectedProject.status === 'BUILDING' ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 ${selectedProject.status === 'BUILDING' ? 'animate-spin' : ''}`} />
                   Redeploy
                 </button>
               </div>
@@ -816,7 +847,7 @@ export default function Dashboard({ session }) {
                     {deployStep === 1 ? 'Deploy New Project' : 'Configure Project'}
                   </h3>
                   <p className="text-xs text-[#8b949e]">
-                    {deployStep === 1 ? 'Connect your GitHub repository' : 'Set build parameters and environment variables'}
+                    {deployStep === 1 ? 'Import and deploy a Git repository' : 'Set build parameters and environment variables'}
                   </p>
                 </div>
               </div>
@@ -836,7 +867,7 @@ export default function Dashboard({ session }) {
             {/* Modal Step 1 */}
             {deployStep === 1 ? (
               <div>
-                <div className="p-6 bg-[#0d1117] space-y-4">
+                <div className="p-6 bg-[#0d1117] space-y-4 min-h-[400px]">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
                       <Code className="w-4 h-4 text-[#58a6ff]" /> GitHub Repository URL
@@ -847,29 +878,88 @@ export default function Dashboard({ session }) {
                       placeholder="https://github.com/username/repository"
                       value={githubUrl}
                       onChange={(e) => setGithubUrl(e.target.value)}
-                      className="input-field font-mono text-sm py-2.5 px-3.5"
+                      className={`input-field font-mono text-sm py-2.5 px-3.5 transition-colors ${
+                        githubUrl.trim() && !isValidGithubUrl(githubUrl)
+                          ? 'border-[#da3633] focus:border-[#da3633]'
+                          : githubUrl.trim() && isValidGithubUrl(githubUrl)
+                          ? 'border-[#238636] focus:border-[#238636]'
+                          : 'border-[#30363d]'
+                      }`}
                     />
-                    <p className="text-xs text-[#8b949e]">Must be a public repository containing a Node.js or Python application.</p>
+                    {githubUrl.trim() && !isValidGithubUrl(githubUrl) ? (
+                      <p className="text-xs text-[#f85149] flex items-center gap-1.5 animate-fade-in">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        Please enter a valid GitHub repository URL (e.g. https://github.com/owner/repo)
+                      </p>
+                    ) : repoDetails ? (
+                      <div className="flex items-center gap-2 pt-0.5 animate-fade-in">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#238636]/15 border border-[#238636]/40 text-xs font-mono text-[#3fb950] font-semibold">
+                          <GitBranch className="w-3.5 h-3.5" /> {repoDetails.owner} / {repoDetails.name}
+                        </span>
+                        <span className="text-[11px] text-[#8b949e]">Public Repository</span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[#8b949e]">Supports Node.js, Python, React, Vite, Next.js, or custom Dockerfiles.</p>
+                    )}
                   </div>
 
-                  <div className="space-y-3 pt-2">
+                  {/* Project Type Selector */}
+                  <div className="space-y-2.5">
+                    <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-[#bc8cff]" /> Project Type
+                    </label>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {[
+                        { value: 'backend', label: 'Backend', icon: '⚙️', desc: 'API / Server' },
+                        { value: 'frontend', label: 'Frontend', icon: '🖥️', desc: 'Static Site' },
+                        { value: 'fullstack', label: 'Full-Stack', icon: '🔗', desc: 'Both' },
+                      ].map((type) => (
+                        <button
+                          key={type.value}
+                          type="button"
+                          onClick={() => setNewProjectType(type.value)}
+                          className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${
+                            newProjectType === type.value
+                              ? 'bg-[#238636]/15 border-[#238636]/60 text-[#f0f6fc]'
+                              : 'bg-[#0d1117] border-[#30363d] text-[#8b949e] hover:border-[#58a6ff]/40 hover:text-[#c9d1d9]'
+                          }`}
+                        >
+                          <div className="text-lg mb-1">{type.icon}</div>
+                          <div className="text-xs font-bold">{type.label}</div>
+                          <div className="text-[10px] opacity-70 mt-0.5">{type.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5 pt-1">
                     {/* GitHub Native Alert: Important */}
-                    <div className="flex items-start gap-3 p-3.5 rounded-lg bg-[#161b22] border border-[#30363d] text-sm">
-                      <AlertCircle className="w-4.5 h-4.5 text-[#d29922] shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#161b22] border border-[#30363d] text-xs">
+                      <AlertCircle className="w-4 h-4 text-[#d29922] shrink-0 mt-0.5" />
                       <div className="text-[#8b949e] leading-relaxed">
                         <strong className="text-[#f0f6fc] font-semibold mr-1.5">Important:</strong>
                         <span>Your repository must be <span className="text-[#f0f6fc] font-medium">public</span>. Private repositories are not supported yet.</span>
                       </div>
                     </div>
 
-                    {/* GitHub Native Alert: Pro Tip */}
-                    <div className="flex items-start gap-3 p-3.5 rounded-lg bg-[#161b22] border border-[#30363d] text-sm">
-                      <Info className="w-4.5 h-4.5 text-[#58a6ff] shrink-0 mt-0.5" />
-                      <div className="text-[#8b949e] leading-relaxed">
-                        <strong className="text-[#f0f6fc] font-semibold mr-1.5">Pro Tip:</strong>
-                        <span>Adding a <code className="bg-[#0d1117] text-[#58a6ff] border border-[#30363d] px-1.5 py-0.5 rounded font-mono text-xs">Dockerfile</code> enables faster, deterministic builds. If omitted, Deployat auto-detects your runtime.</span>
+                    {/* Contextual Adaptive Tip */}
+                    {newProjectType === 'fullstack' ? (
+                      <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#161b22] border border-[#d29922]/30 text-xs animate-fade-in">
+                        <AlertTriangle className="w-4 h-4 text-[#d29922] shrink-0 mt-0.5" />
+                        <div className="text-[#8b949e] leading-relaxed">
+                          <strong className="text-[#f0f6fc] font-semibold mr-1.5">Full-Stack Tip:</strong>
+                          <span>Deploy frontend & backend as 2 services using <code className="bg-[#0d1117] text-[#58a6ff] border border-[#30363d] px-1 py-0.5 rounded font-mono text-[11px]">/frontend</code> and <code className="bg-[#0d1117] text-[#58a6ff] border border-[#30363d] px-1 py-0.5 rounded font-mono text-[11px]">/backend</code> root dirs.</span>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#161b22] border border-[#30363d] text-xs animate-fade-in">
+                        <Info className="w-4 h-4 text-[#58a6ff] shrink-0 mt-0.5" />
+                        <div className="text-[#8b949e] leading-relaxed">
+                          <strong className="text-[#f0f6fc] font-semibold mr-1.5">Pro Tip:</strong>
+                          <span>Adding a <code className="bg-[#0d1117] text-[#58a6ff] border border-[#30363d] px-1 py-0.5 rounded font-mono text-[11px]">Dockerfile</code> enables deterministic builds. If omitted, runtime is auto-detected.</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -883,7 +973,7 @@ export default function Dashboard({ session }) {
                   </button>
                   <button 
                     type="button" 
-                    disabled={!githubUrl.trim()} 
+                    disabled={!isValidGithubUrl(githubUrl)} 
                     onClick={() => setDeployStep(2)} 
                     className="btn btn-primary text-sm font-semibold px-5 py-2"
                   >
@@ -894,47 +984,87 @@ export default function Dashboard({ session }) {
             ) : (
               /* Modal Step 2 */
               <form onSubmit={handleCreateProject}>
-                <div className="p-6 bg-[#0d1117] space-y-4 max-h-[60vh] overflow-y-auto">
+                <div className="p-6 bg-[#0d1117] space-y-4 min-h-[400px] max-h-[60vh] overflow-y-auto">
+                  {/* Subdomain Destination Card */}
+                  {repoDetails && (
+                    <div className="p-3 rounded-lg bg-[#161b22] border border-[#30363d] flex items-center justify-between shadow-sm animate-fade-in">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-md bg-[#58a6ff]/10 border border-[#58a6ff]/30 flex items-center justify-center text-[#58a6ff]">
+                          <Globe className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <div className="text-[11px] text-[#8b949e]">Target Subdomain</div>
+                          <div className="text-xs font-mono font-bold text-[#f0f6fc]">
+                            {repoDetails.subdomain}.{window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : 'deployat.me'}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] uppercase font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#21262d] text-[#58a6ff] border border-[#30363d]">
+                        {newProjectType}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Root Directory */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
-                      <Folder className="w-4 h-4 text-[#d29922]" /> Root Directory
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. backend (leave empty for root /)"
-                      value={newRootDir}
-                      onChange={(e) => setNewRootDir(e.target.value)}
-                      className="input-field font-mono text-sm py-2.5 px-3.5"
-                    />
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
+                        <Folder className="w-4 h-4 text-[#d29922]" /> Root Directory
+                      </label>
+                      <span className="text-[11px] text-[#8b949e]">Optional</span>
+                    </div>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 font-mono text-sm text-[#6e7681]">/</span>
+                      <input
+                        type="text"
+                        placeholder="backend (leave empty for repository root)"
+                        value={newRootDir.replace(/^\/+/, '')}
+                        onChange={(e) => setNewRootDir(e.target.value.replace(/^\/+/, ''))}
+                        className="input-field font-mono text-sm py-2 pl-7 pr-3.5"
+                      />
+                    </div>
                     <p className="text-xs text-[#8b949e]">Subfolder containing your application code if not at root.</p>
                   </div>
 
-                  {/* Start Command */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
-                      <Play className="w-4 h-4 text-[#3fb950]" /> Start Command
-                    </label>
+                  {/* Start / Build Command */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
+                        <Play className="w-4 h-4 text-[#3fb950]" />
+                        {newProjectType === 'frontend' ? 'Build & Output Command' : 'Start Command'}
+                      </label>
+                      <span className="text-[11px] text-[#8b949e]">Optional</span>
+                    </div>
                     <input
                       type="text"
-                      placeholder="e.g. npm start (auto-detected if empty)"
+                      placeholder={
+                        newProjectType === 'frontend'
+                          ? "npm run build (auto-detects dist/build output)"
+                          : "e.g. npm start (auto-detected if empty)"
+                      }
                       value={newStartCmd}
                       onChange={(e) => setNewStartCmd(e.target.value)}
-                      className="input-field font-mono text-sm py-2.5 px-3.5"
+                      className="input-field font-mono text-sm py-2 px-3.5"
                     />
-                    <p className="text-xs text-[#8b949e]">Command used to start your container.</p>
+                    <p className="text-xs text-[#8b949e]">
+                      {newProjectType === 'frontend'
+                        ? "Frontend apps (React, Vite, Next) are compiled and served via Nginx Alpine."
+                        : "Command used to execute and start your backend container process."}
+                    </p>
                   </div>
 
                   {/* Environment Variables */}
-                  <div className="space-y-2.5 pt-2">
-                    <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
-                      <Database className="w-4 h-4 text-[#bc8cff]" /> Environment Variables
-                    </label>
-                    <p className="text-xs text-[#8b949e]">Inject encrypted API keys, secrets, or configuration values.</p>
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
+                        <Database className="w-4 h-4 text-[#bc8cff]" /> Environment Variables
+                      </label>
+                      <span className="text-[11px] text-[#8b949e]">Encrypted Fernet AES</span>
+                    </div>
                     
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                       {newEnvVars.map((env, i) => (
-                        <div key={i} className="flex gap-2.5 items-center">
+                        <div key={i} className="flex gap-2 items-center">
                           <input
                             type="text"
                             placeholder="KEY"
@@ -944,7 +1074,7 @@ export default function Dashboard({ session }) {
                               updated[i].key = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
                               setNewEnvVars(updated);
                             }}
-                            className="input-field flex-1 font-mono text-sm py-2 px-3"
+                            className="input-field flex-1 font-mono text-xs py-2 px-3"
                           />
                           <input
                             type="password"
@@ -955,7 +1085,7 @@ export default function Dashboard({ session }) {
                               updated[i].value = e.target.value;
                               setNewEnvVars(updated);
                             }}
-                            className="input-field flex-1 font-mono text-sm py-2 px-3"
+                            className="input-field flex-1 font-mono text-xs py-2 px-3"
                           />
                           <button 
                             type="button" 
@@ -963,7 +1093,7 @@ export default function Dashboard({ session }) {
                               const updated = newEnvVars.filter((_, idx) => idx !== i);
                               setNewEnvVars(updated.length ? updated : [{ key: '', value: '' }]);
                             }} 
-                            className="text-[#8b949e] hover:text-[#f85149] p-2 rounded hover:bg-[#30363d] transition-colors cursor-pointer"
+                            className="text-[#8b949e] hover:text-[#f85149] p-1.5 rounded hover:bg-[#30363d] transition-colors cursor-pointer"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -974,9 +1104,9 @@ export default function Dashboard({ session }) {
                     <button 
                       type="button" 
                       onClick={() => setNewEnvVars([...newEnvVars, { key: '', value: '' }])}
-                      className="text-sm text-[#58a6ff] hover:text-[#79c0ff] font-semibold flex items-center gap-1.5 mt-1 cursor-pointer"
+                      className="text-xs text-[#58a6ff] hover:text-[#79c0ff] font-semibold flex items-center gap-1.5 mt-1 cursor-pointer"
                     >
-                      <Plus className="w-4 h-4" /> Add Variable
+                      <Plus className="w-3.5 h-3.5" /> Add Variable
                     </button>
                   </div>
                 </div>
@@ -1009,75 +1139,119 @@ export default function Dashboard({ session }) {
 
       {/* Sleek Floating GitHub-style Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-fade-in flex items-center gap-3 bg-[#161b22] border border-[#30363d] text-[#f0f6fc] text-sm px-4.5 py-3.5 rounded-lg shadow-2xl backdrop-blur-md">
+        <div className="fixed bottom-6 right-6 z-50 animate-fade-in flex items-center gap-3 bg-[#161b22]/95 backdrop-blur-xl border border-[#30363d] text-[#f0f6fc] px-4 py-3 rounded-xl shadow-[0_12px_32px_rgba(0,0,0,0.6),0_2px_6px_rgba(0,0,0,0.4)] min-w-[280px] max-w-[400px]">
           {toast.type === 'success' && (
-            <div className="w-5 h-5 rounded-full bg-[#238636]/20 border border-[#238636] flex items-center justify-center text-[#3fb950] shrink-0">
+            <div className="w-6 h-6 rounded-full bg-[#238636]/15 border border-[#238636]/30 flex items-center justify-center text-[#3fb950] shrink-0">
               <Check className="w-3.5 h-3.5" />
             </div>
           )}
           {toast.type === 'error' && (
-            <div className="w-5 h-5 rounded-full bg-[#da3633]/20 border border-[#da3633] flex items-center justify-center text-[#f85149] shrink-0">
+            <div className="w-6 h-6 rounded-full bg-[#da3633]/15 border border-[#da3633]/30 flex items-center justify-center text-[#f85149] shrink-0">
               <AlertCircle className="w-3.5 h-3.5" />
             </div>
           )}
           {toast.type === 'info' && (
-            <div className="w-5 h-5 rounded-full bg-[#388bfd]/20 border border-[#388bfd] flex items-center justify-center text-[#58a6ff] shrink-0">
-              <Info className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 rounded-full bg-[#388bfd]/15 border border-[#388bfd]/30 flex items-center justify-center text-[#58a6ff] shrink-0">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             </div>
           )}
-          <div className="font-medium pr-2">{toast.message}</div>
+          <div className="flex-1 text-[13px] font-medium text-[#f0f6fc] leading-snug">
+            {toast.message}
+          </div>
           <button 
             onClick={() => setToast(null)} 
-            className="text-[#8b949e] hover:text-[#f0f6fc] p-1 rounded hover:bg-[#21262d] transition-colors ml-auto cursor-pointer"
+            className="text-[#6e7681] hover:text-[#f0f6fc] p-1 rounded-md hover:bg-[#21262d] transition-colors ml-1 cursor-pointer shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Delete Confirmation Modal (Replacing native browser confirm) */}
-      {deleteConfirmProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="p-6 space-y-3.5">
-              <div className="flex items-center gap-3 text-[#f85149]">
-                <div className="w-10 h-10 rounded-full bg-[#da3633]/15 border border-[#da3633]/30 flex items-center justify-center">
-                  <Trash2 className="w-5 h-5 text-[#f85149]" />
+      {/* GitHub Danger Zone Style Delete Confirmation Modal */}
+      {deleteConfirmProject && (() => {
+        const targetProjectName = deleteConfirmProject.name || deleteConfirmProject.github_url?.split('/').pop().replace('.git', '') || '';
+        const isMatched = deleteConfirmInput.trim().toLowerCase() === targetProjectName.toLowerCase();
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#010409]/80 backdrop-blur-sm p-4 animate-fade-in font-sans">
+            <div 
+              className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8),0_16px_32px_rgba(1,4,9,0.85)] max-w-lg w-full overflow-hidden flex flex-col"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-md bg-[#da3633]/15 border border-[#da3633]/40 flex items-center justify-center text-[#f85149]">
+                    <AlertTriangle className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#f0f6fc] tracking-tight">Delete {targetProjectName}</h3>
+                    <p className="text-xs text-[#8b949e]">Danger zone confirmation</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-[#f0f6fc]">Delete Project</h3>
-                  <p className="text-xs text-[#8b949e]">This action cannot be undone.</p>
+                <button 
+                  onClick={() => { setDeleteConfirmProject(null); setDeleteConfirmInput(''); }}
+                  className="text-[#8b949e] hover:text-[#f0f6fc] hover:bg-[#30363d] p-1.5 rounded-md transition-colors cursor-pointer"
+                >
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 bg-[#0d1117] space-y-4">
+                <div className="p-3.5 rounded-lg bg-[#da3633]/10 border border-[#da3633]/30 text-xs text-[#f85149] leading-relaxed">
+                  <strong>Warning:</strong> This action cannot be undone. This will permanently delete the <strong>{targetProjectName}</strong> deployment, remove the Docker container and image, erase all logs, and free the assigned port.
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <label className="text-xs sm:text-sm text-[#c9d1d9] block">
+                    Please type <span className="font-mono font-bold text-[#f0f6fc] bg-[#161b22] px-2 py-0.5 rounded border border-[#30363d] select-all">{targetProjectName}</span> to confirm:
+                  </label>
+                  <input 
+                    type="text"
+                    autoFocus
+                    placeholder={`Type "${targetProjectName}" here`}
+                    value={deleteConfirmInput}
+                    onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                    className="input-field font-mono text-sm py-2.5 px-3.5 border-[#30363d] focus:border-[#da3633] transition-colors"
+                  />
                 </div>
               </div>
-              <p className="text-sm text-[#c9d1d9] leading-relaxed pt-1">
-                Are you sure you want to delete <strong className="text-[#f0f6fc]">{deleteConfirmProject.name || deleteConfirmProject.github_url?.split('/').pop().replace('.git', '')}</strong> and stop all running containers?
-              </p>
-            </div>
-            <div className="px-6 py-4 bg-[#0d1117] border-t border-[#30363d] flex justify-end gap-3">
-              <button 
-                type="button"
-                disabled={isDeleting}
-                onClick={() => setDeleteConfirmProject(null)} 
-                className="btn btn-outline text-sm font-medium px-4 py-2"
-              >
-                Cancel
-              </button>
-              <button 
-                type="button"
-                disabled={isDeleting}
-                onClick={() => executeDelete(deleteConfirmProject.id)} 
-                className="btn btn-danger text-sm font-semibold px-5 py-2"
-              >
-                {isDeleting ? (
-                  <><RefreshCw className="w-4 h-4 animate-spin" /> Deleting...</>
-                ) : (
-                  <><Trash2 className="w-4 h-4" /> Delete Project</>
-                )}
-              </button>
+
+              {/* Footer */}
+              <div className="px-6 py-4 bg-[#161b22] border-t border-[#30363d] flex justify-end gap-3">
+                <button 
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => { setDeleteConfirmProject(null); setDeleteConfirmInput(''); }} 
+                  className="btn btn-outline text-sm font-medium px-4 py-2"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  disabled={isDeleting || !isMatched}
+                  onClick={() => {
+                    executeDelete(deleteConfirmProject.id);
+                    setDeleteConfirmInput('');
+                  }} 
+                  className={`btn text-sm font-semibold px-4 py-2 flex items-center gap-2 transition-all cursor-pointer ${
+                    isMatched
+                      ? 'bg-[#da3633] text-white border-[rgba(240,246,252,0.1)] hover:bg-[#b62324] shadow-md'
+                      : 'bg-[#21262d] border-[#30363d] text-[#6e7681] opacity-60 cursor-not-allowed'
+                  }`}
+                >
+                  {isDeleting ? (
+                    <><RefreshCw className="w-4 h-4 animate-spin" /> Deleting...</>
+                  ) : (
+                    <><Trash2 className="w-4 h-4" /> Delete</>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

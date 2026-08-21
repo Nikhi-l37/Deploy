@@ -365,14 +365,14 @@ def run_pipeline(project_id: str):
         # Auto-cleanup failed containers and images
         container_name = f"deploy-{project_id[:8]}"
         try:
-            container = client.containers.get(container_name)
+            container = docker_client.containers.get(container_name)
             container.remove(force=True)
             push_log(project_id, "🧹 Cleaned up failed container.")
         except Exception:
             pass
         
         try:
-            client.images.remove(f"deploy-{project_id[:8]}", force=True)
+            docker_client.images.remove(f"deploy-{project_id[:8]}", force=True)
             push_log(project_id, "🧹 Cleaned up failed image.")
         except Exception:
             pass
