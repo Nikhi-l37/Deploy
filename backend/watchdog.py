@@ -59,6 +59,23 @@ def _watchdog_poll():
             except Exception:
                 continue
             
+            # Check Docker network activity (catches direct port access that bypasses gateway)
+            try:
+                stats = container.stats(stream=False)
+                networks = stats.get("networks", {})
+                current_rx = sum(net.get("rx_bytes", 0) for net in networks.values())
+                
+                last_bytes_key = f"last_bytes:{project_id}"
+                prev_rx_str = redis_client.get(last_bytes_key)
+                redis_client.set(last_bytes_key, str(current_rx))
+                
+                if prev_rx_str and current_rx > int(prev_rx_str):
+                    # Container has received new network traffic — it's active!
+                    redis_client.set(f"last_active:{project_id}", current_time)
+                    continue
+            except Exception:
+                pass  # If stats fail, fall through to Redis last_active check
+            
             # Check Redis last_active timestamp
             last_active_str = redis_client.get(f"last_active:{project_id}")
             if not last_active_str:

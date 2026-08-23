@@ -388,6 +388,7 @@ export default function DeployModal({
                       onChange={(e) => setFsFrontendCmd(e.target.value)}
                       className="input-field font-mono text-xs py-2 px-3"
                     />
+                    <p className="text-[10px] text-[#8b949e]">Leave empty — auto-detected. Built files are served via Nginx.</p>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">

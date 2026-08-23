@@ -333,7 +333,7 @@ export default function Dashboard({ session }) {
     if (!selectedProjectId) return;
     setIsSavingSettings(true);
     try {
-      await api.put(`/projects/${selectedProjectId}/settings`, {
+      await api.patch(`/projects/${selectedProjectId}`, {
         name: settingsData.name ? settingsData.name.trim() : undefined,
         root_directory: settingsData.root_directory ? settingsData.root_directory.trim() : '/',
         start_command: settingsData.start_command ? settingsData.start_command.trim() : ''
