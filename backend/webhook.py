@@ -111,8 +111,8 @@ async def manual_deploy(request: Request):
             github_url = normalize_github_url(github_url)
         
         if github_url:
-            # Check 1-app-per-user limit
-            existing = supabase.table("projects").select("id", count="exact").eq(
+            # Check app limit and project type combinations
+            existing = supabase.table("projects").select("id, project_type", count="exact").eq(
                 "user_id", user_id
             ).neq("status", "STOPPED").neq("status", "FAILED").execute()
             
@@ -122,11 +122,32 @@ async def manual_deploy(request: Request):
                     detail=f"Free plan limited to {config.MAX_APPS_PER_USER} active project(s). Delete an existing project first."
                 )
             
+            # Validate project type combinations
+            existing_types = [p.get("project_type", "backend") for p in existing.data]
+            project_type = data.get("project_type", "backend")
+            
+            if existing.count == 1:
+                existing_type = existing_types[0]
+                if existing_type == "fullstack":
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Your fullstack project uses both app slots. Delete it first to deploy a new project."
+                    )
+                if project_type == "fullstack":
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"Cannot deploy fullstack — you already have a {existing_type} project. Delete it first, or deploy a {'frontend' if existing_type == 'backend' else 'backend'} instead."
+                    )
+                if project_type == existing_type:
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"You already have a {existing_type} project. You can deploy a {'frontend' if existing_type == 'backend' else 'backend'} instead."
+                    )
+            
             # Extract optional fields
             root_directory = data.get("root_directory")
             start_command = data.get("start_command")
             env_vars = data.get("env_vars")
-            project_type = data.get("project_type", "backend")  # backend, frontend, fullstack
             
             # Auto-generate subdomain from repo name
             import re

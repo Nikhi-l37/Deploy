@@ -30,11 +30,13 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     If container is SLEEPING -> wakes container up in 2-3s, waits for port, and forwards the request transparently!
     """
     clean_id = project_id.replace("deploy-", "")
-    res = supabase.table("projects").select("*").ilike("id", f"{clean_id}%").execute()
-    if not res.data:
+    # UUID columns don't support ilike — match by prefix in Python
+    all_res = supabase.table("projects").select("*").execute()
+    matching = [p for p in all_res.data if p["id"].startswith(clean_id)]
+    if not matching:
         raise HTTPException(status_code=404, detail="Project not found")
         
-    project = res.data[0]
+    project = matching[0]
     status = project.get("status")
     port = project.get("port")
     
@@ -50,20 +52,27 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
         try:
             container = client_docker.containers.get(container_name)
             container.start()
+            # Restore restart policy AFTER starting (update() only works on running containers)
+            try:
+                container.update(restart_policy={"Name": "unless-stopped"})
+            except Exception:
+                pass  # Non-critical — container is already running
             
-            # Wait for container port to be ready
-            import socket
-            for _ in range(15):
+            # Wait for the app to actually respond (not just TCP port open)
+            app_ready = False
+            for attempt in range(20):  # Up to 20 * 0.5s = 10 seconds
                 await asyncio.sleep(0.5)
                 try:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    sock.settimeout(0.5)
-                    result = sock.connect_ex(('127.0.0.1', port))
-                    sock.close()
-                    if result == 0:
+                    async with httpx.AsyncClient(timeout=2.0) as check_client:
+                        health_res = await check_client.get(f"http://127.0.0.1:{port}/")
+                        # Any response (even 404) means the app is ready
+                        app_ready = True
                         break
                 except Exception:
                     pass
+            
+            if not app_ready:
+                print(f"[Auto-Wake Proxy] Container started but app not responding after 10s")
             
             supabase.table("projects").update({"status": "RUNNING"}).eq("id", real_id).execute()
             redis_client.set(f"last_active:{real_id}", time.time())
@@ -80,33 +89,39 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     excluded_headers = {"host", "content-length", "accept-encoding", "connection"}
     forward_headers = {k: v for k, v in request.headers.items() if k.lower() not in excluded_headers}
     
-    try:
-        async with httpx.AsyncClient(timeout=20.0) as http_client:
-            proxy_res = await http_client.request(
-                method=request.method,
-                url=target_url,
-                headers=forward_headers,
-                content=body if body else None,
-                follow_redirects=False
+    # Retry the proxy request (container may still be warming up)
+    last_error = None
+    for retry in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as http_client:
+                proxy_res = await http_client.request(
+                    method=request.method,
+                    url=target_url,
+                    headers=forward_headers,
+                    content=body if body else None,
+                    follow_redirects=False
+                )
+            redis_client.set(f"last_active:{real_id}", time.time())
+            
+            res_headers = {}
+            for k, v in proxy_res.headers.items():
+                if k.lower() not in {"content-encoding", "transfer-encoding", "content-length"}:
+                    res_headers[k] = v
+            
+            return Response(
+                content=proxy_res.content,
+                status_code=proxy_res.status_code,
+                headers=res_headers,
+                media_type=proxy_res.headers.get("content-type")
             )
-        redis_client.set(f"last_active:{real_id}", time.time())
-        
-        res_headers = {}
-        for k, v in proxy_res.headers.items():
-            if k.lower() not in {"content-encoding", "transfer-encoding", "content-length"}:
-                res_headers[k] = v
-        
-        return Response(
-            content=proxy_res.content,
-            status_code=proxy_res.status_code,
-            headers=res_headers,
-            media_type=proxy_res.headers.get("content-type")
-        )
-    except httpx.ConnectError:
-        raise HTTPException(status_code=502, detail="Application is starting or port is unreachable")
-    except Exception as e:
-        print(f"[Auto-Wake Proxy] Exception forwarding request: {e}")
-        raise HTTPException(status_code=500, detail=f"Proxy error: {str(e)}")
+        except httpx.ConnectError as e:
+            last_error = e
+            await asyncio.sleep(1)  # Wait 1s before retry
+        except Exception as e:
+            print(f"[Auto-Wake Proxy] Exception forwarding request: {e}")
+            raise HTTPException(status_code=500, detail=f"Proxy error: {str(e)}")
+    
+    raise HTTPException(status_code=502, detail="Application is starting or port is unreachable. Try again in a few seconds.")
 
 
 # ---------- GATEWAY & WAKE SCREEN ----------
@@ -131,6 +146,11 @@ async def gateway(project_id: str):
             container_name = f"deploy-{project_id[:8]}"
             container = client.containers.get(container_name)
             container.start()
+            # Restore restart policy AFTER starting (update() only works on running containers)
+            try:
+                container.update(restart_policy={"Name": "unless-stopped"})
+            except Exception:
+                pass
             
             port = project.get("port", 8001)
             import socket

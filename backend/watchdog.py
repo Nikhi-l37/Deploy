@@ -72,6 +72,8 @@ def _watchdog_poll():
                 print(f"[Watchdog] Project {project_id[:8]} idle for {int(diff)}s (Threshold: {config.WATCHDOG_IDLE_TIMEOUT}s). Putting to sleep.")
                 try:
                     container = docker_client.containers.get(container_name)
+                    # Disable restart policy BEFORE stopping, so Docker doesn't auto-restart it
+                    container.update(restart_policy={"Name": "no"})
                     container.stop(timeout=5)
                 except Exception as e:
                     print(f"[Watchdog] Error stopping container {container_name}: {e}")

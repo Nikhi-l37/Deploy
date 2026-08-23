@@ -32,9 +32,9 @@ PORT_RANGE_START = int(os.getenv("PORT_RANGE_START", 8001))
 PORT_RANGE_END = int(os.getenv("PORT_RANGE_END", 8010))
 
 # ---------- Docker Resource Limits ----------
-CONTAINER_MEM_LIMIT = "128m"
+CONTAINER_MEM_LIMIT = os.getenv("CONTAINER_MEM_LIMIT", "200m")
 CONTAINER_CPU_PERIOD = 100000
-CONTAINER_CPU_QUOTA = 25000  # 25% of 1 CPU
+CONTAINER_CPU_QUOTA = int(os.getenv("CONTAINER_CPU_QUOTA", 50000))  # 50% of 1 CPU
 
 # ---------- URLs ----------
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")

@@ -14,7 +14,8 @@ export default function OverviewTab({
   handleManualDeploy,
   handleCopyDeploymentId,
   copiedId,
-  user
+  user,
+  resourceStats
 }) {
   const [copiedUrl, setCopiedUrl] = useState(false);
 
@@ -109,7 +110,7 @@ export default function OverviewTab({
               </a>
               <span className="inline-flex items-center gap-1.5 text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded-md border border-[#30363d]">
                 <Cpu className="w-3.5 h-3.5 text-[#58a6ff]" />
-                512 MB RAM
+                {resourceStats?.container_mem_limit_mb || 200} MB RAM
               </span>
               <span className="inline-flex items-center gap-1.5 text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded-md border border-[#30363d]">
                 <Clock className="w-3.5 h-3.5 text-[#bc8cff]" />
@@ -175,10 +176,36 @@ export default function OverviewTab({
             <div className="text-xs font-medium text-[#8b949e]">
               Memory & Tier
             </div>
-            <div className="font-mono text-sm font-semibold text-[#f0f6fc] flex items-center gap-1.5">
-              <span>512 MB</span>
-              <span className="text-[11px] text-[#8b949e] font-sans font-normal">(Free Tier)</span>
-            </div>
+            {(() => {
+              const containerName = `deploy-${selectedProject.id.substring(0, 8)}`;
+              const stats = resourceStats?.data?.find(s => s.container_name === containerName);
+              const memLimit = resourceStats?.container_mem_limit_mb || 200;
+              const memUsage = stats?.mem_usage_mb || 0;
+              const memPercent = memLimit > 0 ? Math.min(100, Math.round((memUsage / memLimit) * 100)) : 0;
+              return (
+                <div className="space-y-1.5">
+                  <div className="font-mono text-sm font-semibold text-[#f0f6fc] flex items-center gap-1.5">
+                    <span>{memLimit} MB</span>
+                    <span className="text-[11px] text-[#8b949e] font-sans font-normal">(Free Tier)</span>
+                  </div>
+                  {selectedProject.status === 'RUNNING' && (
+                    <div className="space-y-1">
+                      <div className="w-full h-1.5 bg-[#21262d] rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            memPercent > 85 ? 'bg-[#f85149]' : memPercent > 60 ? 'bg-[#d29922]' : 'bg-[#3fb950]'
+                          }`}
+                          style={{ width: `${memPercent}%` }}
+                        />
+                      </div>
+                      <div className="text-[10px] text-[#8b949e] font-mono">
+                        {memUsage} / {memLimit} MB ({memPercent}%)
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Item 2: Status */}
