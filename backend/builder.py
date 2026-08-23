@@ -370,25 +370,42 @@ def run_pipeline(project_id: str):
         # Default PORT env var for the app inside the container
         if "PORT" not in env_vars:
             env_vars["PORT"] = "8080" # Most node/python apps expect this if not set
-            
+        
+        # Auto-detect container port from Dockerfile EXPOSE statement
+        container_port = env_vars["PORT"]
+        dockerfile_path = os.path.join(build_path, "Dockerfile")
+        if os.path.exists(dockerfile_path):
+            try:
+                with open(dockerfile_path) as df:
+                    for line in df:
+                        line = line.strip()
+                        if line.upper().startswith("EXPOSE"):
+                            exposed = line.split()[1] if len(line.split()) > 1 else None
+                            if exposed and exposed.isdigit():
+                                container_port = exposed
+                                push_log(project_id, f"Detected EXPOSE {container_port} from Dockerfile")
+                                break
+            except Exception:
+                pass
+
         # 7. Run the new container
         push_log(project_id, f"Starting container on port {port}...")
         
         run_kwargs = {
             "image": image_name,
             "detach": True,
-            "ports": {f"{env_vars['PORT']}/tcp": port},
+            "ports": {f"{container_port}/tcp": port},
             "environment": env_vars,
-            "mem_limit": config.CONTAINER_MEM_LIMIT,
+            "mem_limit": config.CONTAINER_MEM_LIMIT_FRONTEND if project.get("project_type") == "frontend" else config.CONTAINER_MEM_LIMIT_BACKEND,
             "cpu_period": config.CONTAINER_CPU_PERIOD,
             "cpu_quota": config.CONTAINER_CPU_QUOTA,
             "name": safe_name,
             "restart_policy": {"Name": "unless-stopped"}
         }
         
-        # Override start command if provided
+        # Override start command if provided (only for backend — frontend uses Dockerfile CMD)
         start_cmd = project.get("start_command")
-        if start_cmd and start_cmd.strip():
+        if start_cmd and start_cmd.strip() and project.get("project_type") != "frontend":
             run_kwargs["command"] = start_cmd.strip()
             
         container = docker_client.containers.run(**run_kwargs)
@@ -396,25 +413,45 @@ def run_pipeline(project_id: str):
         # 8. Health Check
         push_log(project_id, "Waiting 5 seconds for health check...")
         time.sleep(5)
-        container.reload()
         
-        if container.status != "running":
-            logs = container.logs().decode('utf-8')
-            push_log(project_id, f"CRASH LOGS:\n{logs}")
-            raise Exception("Container crashed immediately after starting.")
+        # Retry container reload in case of temporary Windows socket/Docker pipe hiccup
+        status = "unknown"
+        for _ in range(3):
+            try:
+                container.reload()
+                status = container.status
+                break
+            except Exception:
+                time.sleep(1)
+        
+        if status != "running":
+            logs = ""
+            try:
+                logs = container.logs().decode('utf-8', errors='replace')
+            except Exception:
+                pass
+            if logs:
+                push_log(project_id, f"CRASH LOGS:\n{logs}")
+            raise Exception("Container crashed immediately after starting or could not be verified.")
 
         # 9. Success!
         update_status(project_id, "RUNNING", {
             "container_id": container.id,
             "port": port
         })
-        # Initialize last_active so the watchdog gives it 60 seconds of grace period
-        redis_client.set(f"last_active:{project_id}", time.time())
+        # Initialize last_active so the watchdog gives it grace period
+        try:
+            redis_client.set(f"last_active:{project_id}", time.time())
+        except Exception:
+            pass
         push_log(project_id, "🚀 Deploy successful! App is now live.")
         
         # 10. Update Nginx Load Balancer
-        import nginx_config
-        nginx_config.generate_nginx_config()
+        try:
+            import nginx_config
+            nginx_config.generate_nginx_config()
+        except Exception as ng_err:
+            print(f"[Nginx] Config update error: {ng_err}")
 
     except Exception as e:
         update_status(project_id, "FAILED")

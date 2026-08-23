@@ -110,7 +110,7 @@ export default function OverviewTab({
               </a>
               <span className="inline-flex items-center gap-1.5 text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded-md border border-[#30363d]">
                 <Cpu className="w-3.5 h-3.5 text-[#58a6ff]" />
-                {resourceStats?.container_mem_limit_mb || 200} MB RAM
+                {(selectedProject?.project_type === 'frontend' ? resourceStats?.mem_limit_frontend_mb : resourceStats?.mem_limit_backend_mb) || 256} MB RAM
               </span>
               <span className="inline-flex items-center gap-1.5 text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded-md border border-[#30363d]">
                 <Clock className="w-3.5 h-3.5 text-[#bc8cff]" />
@@ -179,7 +179,7 @@ export default function OverviewTab({
             {(() => {
               const containerName = `deploy-${selectedProject.id.substring(0, 8)}`;
               const stats = resourceStats?.data?.find(s => s.container_name === containerName);
-              const memLimit = resourceStats?.container_mem_limit_mb || 200;
+              const memLimit = (selectedProject?.project_type === 'frontend' ? resourceStats?.mem_limit_frontend_mb : resourceStats?.mem_limit_backend_mb) || 256;
               const memUsage = stats?.mem_usage_mb || 0;
               const memPercent = memLimit > 0 ? Math.min(100, Math.round((memUsage / memLimit) * 100)) : 0;
               return (

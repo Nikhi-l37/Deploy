@@ -41,11 +41,11 @@ def test_db():
 
 # ---------- Resource Monitoring ----------
 docker_client = docker.from_env()
-_resource_cache = {"data": [], "server_mem_mb": 2048, "timestamp": 0}
+_resource_cache = {"data": [], "timestamp": 0}
 _cache_lock = threading.Lock()
 
 def _refresh_resource_cache():
-    """Refresh container resource stats (called at most every 30s)."""
+    """Refresh container resource stats. Runs outside the lock to avoid deadlock."""
     try:
         containers = docker_client.containers.list(all=True, filters={"name": "deploy-"})
         stats = []
@@ -75,6 +75,7 @@ def _refresh_resource_cache():
             except Exception:
                 continue
         
+        # Only lock when writing the cache (quick operation)
         with _cache_lock:
             _resource_cache["data"] = stats
             _resource_cache["timestamp"] = time.time()
@@ -84,13 +85,23 @@ def _refresh_resource_cache():
 @router.get("/system/resources")
 def get_resources():
     """Returns per-container memory/storage usage. Cached for 30s."""
+    # Check if cache is stale (quick lock, no blocking work inside)
+    needs_refresh = False
     with _cache_lock:
         if time.time() - _resource_cache["timestamp"] > 30:
-            _refresh_resource_cache()
+            needs_refresh = True
+    
+    # Refresh OUTSIDE the lock to avoid deadlock and blocking
+    if needs_refresh:
+        _refresh_resource_cache()
+    
+    with _cache_lock:
+        cached_data = list(_resource_cache["data"])
     
     return {
         "status": "success",
-        "data": _resource_cache["data"],
-        "container_mem_limit_mb": int(config.CONTAINER_MEM_LIMIT.replace('m', '').replace('g', '')),
+        "data": cached_data,
+        "mem_limit_backend_mb": int(config.CONTAINER_MEM_LIMIT_BACKEND.replace('m', '').replace('g', '')),
+        "mem_limit_frontend_mb": int(config.CONTAINER_MEM_LIMIT_FRONTEND.replace('m', '').replace('g', '')),
         "max_apps_per_user": config.MAX_APPS_PER_USER,
     }
