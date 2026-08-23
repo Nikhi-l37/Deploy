@@ -11,8 +11,11 @@ import docker
 import requests
 import subprocess
 from cryptography.fernet import Fernet
+import threading
 import config
 from database import supabase
+
+shutdown_event = threading.Event()
 
 # Initialize services
 redis_client = redis.Redis.from_url(config.REDIS_URL, decode_responses=True)
@@ -63,15 +66,19 @@ def update_status(project_id: str, status: str, extra_data: dict = None):
     push_log(project_id, f"==> Status updated to {status}")
 
 def get_free_port(project_id: str) -> int:
-    """Finds a free port and assigns it to the project."""
-    res = supabase.table("port_registry").select("port").eq("in_use", False).limit(1).execute()
-    if not res.data:
-        raise Exception("No free ports available on the platform.")
-    
-    port = res.data[0]["port"]
-    # Mark as in use
-    supabase.table("port_registry").update({"in_use": True, "project_id": project_id}).eq("port", port).execute()
-    return port
+    """Finds a free port and assigns it to the project, using a Redis lock to prevent race conditions."""
+    lock = redis_client.lock("lock:port_allocation", timeout=10)
+    if not lock.acquire(blocking=True, blocking_timeout=5):
+        raise Exception("Could not acquire port allocation lock. Try again.")
+    try:
+        res = supabase.table("port_registry").select("port").eq("in_use", False).limit(1).execute()
+        if not res.data:
+            raise Exception("No free ports available on the platform.")
+        port = res.data[0]["port"]
+        supabase.table("port_registry").update({"in_use": True, "project_id": project_id}).eq("port", port).execute()
+        return port
+    finally:
+        lock.release()
 
 def decrypt_env_vars(project_id: str) -> dict:
     """Fetches and decrypts environment variables for the project."""
@@ -338,18 +345,26 @@ def run_pipeline(project_id: str):
         if return_code != 0:
             raise Exception(f"Docker build failed with exit code {return_code}")
 
-        # 5. Clean up old container if it exists
-        if project.get("container_id"):
-            try:
-                old_container = docker_client.containers.get(project["container_id"])
-                push_log(project_id, "Stopping old version...")
-                old_container.stop(timeout=2)
-                old_container.remove(force=True)
-            except Exception:
-                pass # Container might already be gone
+        # 5. Clean up old container by NAME (not container_id, which may be stale)
+        try:
+            old_container = docker_client.containers.get(safe_name)
+            push_log(project_id, "Stopping old version...")
+            old_container.stop(timeout=2)
+            old_container.remove(force=True)
+        except docker.errors.NotFound:
+            pass  # No old container exists
+        except Exception:
+            pass  # Container might already be gone
 
         # 6. Prepare Runtime (Ports & Env Vars)
-        port = project.get("port") or get_free_port(project_id)
+        port = project.get("port")
+        if port:
+            # Validate the port is still reserved for this project
+            port_check = supabase.table("port_registry").select("project_id").eq("port", port).execute()
+            if not port_check.data or port_check.data[0].get("project_id") != project_id:
+                port = get_free_port(project_id)
+        else:
+            port = get_free_port(project_id)
         # env_vars already decrypted earlier
         
         # Default PORT env var for the app inside the container
@@ -430,18 +445,19 @@ def run_pipeline(project_id: str):
 def start_worker():
     """Infinite loop that pulls jobs from Redis and builds them sequentially."""
     print("Builder Worker Started! Waiting for jobs in the queue...")
-    while True:
+    while not shutdown_event.is_set():
         try:
             # Use a non-blocking pop with a short sleep to avoid Windows socket timeout issues
             project_id = redis_client.lpop("build_queue")
             if not project_id:
-                time.sleep(2)
+                shutdown_event.wait(timeout=2)
                 continue
             print(f"Picked up job for project: {project_id}")
             run_pipeline(project_id)
         except Exception as e:
             print(f"Worker Error: {str(e)}")
-            time.sleep(5) # Prevent tight crash loops
+            shutdown_event.wait(timeout=5)  # Prevent tight crash loops
+    print("Builder Worker shutting down gracefully.")
 
 if __name__ == "__main__":
     start_worker()

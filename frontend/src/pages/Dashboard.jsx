@@ -106,6 +106,7 @@ export default function Dashboard({ session }) {
           setProjectName(fetched[0].name || fetched[0].github_url.split('/').pop().replace('.git', ''));
           setRootDir(fetched[0].root_directory || '/');
           setStartCmd(fetched[0].start_command || '');
+          fetchEnvVars(fetched[0].id);
         }
       }
     } catch (err) {
@@ -158,7 +159,19 @@ export default function Dashboard({ session }) {
   }, [selectedProjectId, activeTab]);
 
   useEffect(() => {
-    if (logsContainerRef.current && !userHasScrolledUp.current) {
+    if (selectedProjectId) {
+      if (activeTab === 'env') {
+        fetchEnvVars(selectedProjectId);
+      } else if (activeTab === 'logs') {
+        fetchLogs(selectedProjectId);
+      }
+    }
+  }, [selectedProjectId, activeTab]);
+
+  // Auto-scroll to bottom ONLY during active real-time builds
+  useEffect(() => {
+    const isBuilding = selectedProject?.status === 'BUILDING';
+    if (isBuilding && logsContainerRef.current && !userHasScrolledUp.current) {
       const el = logsContainerRef.current;
       isProgrammaticScroll.current = true;
       el.scrollTop = el.scrollHeight;
@@ -166,7 +179,7 @@ export default function Dashboard({ session }) {
         isProgrammaticScroll.current = false;
       });
     }
-  }, [logs]);
+  }, [logs, selectedProject?.status]);
 
   const handleLogsScroll = () => {
     if (isProgrammaticScroll.current) return;
@@ -452,8 +465,9 @@ export default function Dashboard({ session }) {
             />
           )}
 
-          {activeTab === 'env' && (
+          {activeTab === 'env' && selectedProject && (
             <EnvironmentTab 
+              key={selectedProject.id}
               selectedProject={selectedProject}
               envVars={envVars}
               setEnvVars={setEnvVars}

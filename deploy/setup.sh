@@ -143,11 +143,11 @@ ENVEOF
 
 echo "✅ Backend configured"
 
-# Update nginx_config.py for production
-sed -i 's|NGINX_CONF_PATH = os.path.join(os.path.dirname(__file__), "nginx", "deploy.conf")|NGINX_CONF_PATH = "/etc/nginx/conf.d/deploy.conf"|' nginx_config.py
-sed -i 's|\[MOCK\] os.system.*|Reloading Nginx..."); os.system("sudo systemctl reload nginx")|' nginx_config.py
+# Configure Nginx path and domain via environment variables (config.py reads these)
+echo "NGINX_CONF_PATH=/etc/nginx/conf.d/deploy.conf" >> .env
+echo "DOMAIN_NAME=deployat.me" >> .env
 
-echo "✅ nginx_config.py updated for production"
+echo "✅ Nginx config paths set via environment variables"
 
 echo ""
 echo "=========================================="
@@ -165,10 +165,11 @@ ENVEOF
 # Update BACKEND_URL to use the EC2 public IP
 sed -i "s|const BACKEND_URL = 'http://localhost:8000'|const BACKEND_URL = 'http://${PUBLIC_IP}:8000'|" src/pages/Dashboard.jsx
 
-# Update wake-up page URLs in main.py
+# Configure API and Host URLs via environment variables
 cd /home/ubuntu/deployly/backend
-sed -i "s|http://localhost:8000/gateway/|http://${PUBLIC_IP}:8000/gateway/|g" main.py
-sed -i "s|http://localhost:8000/wake-page/|http://${PUBLIC_IP}:8000/wake-page/|g" main.py
+echo "API_BASE_URL=http://${PUBLIC_IP}:8000" >> .env
+echo "HOST_URL=http://${PUBLIC_IP}" >> .env
+echo "ALLOWED_ORIGINS=http://${PUBLIC_IP}" >> .env
 
 # Build the frontend
 cd /home/ubuntu/deployly/frontend

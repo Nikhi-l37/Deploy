@@ -27,6 +27,7 @@ def generate_nginx_config():
         # We use the subdomain field or fallback to first 8 characters of the ID
         subdomain_name = project.get("subdomain") or project_id[:8]
         subdomain = f"{subdomain_name}.{DOMAIN_NAME}"
+        wake_fallback_url = f"/wake-page/{project_id}"
         
         server_block = f"""
 # HTTP -> redirect to HTTPS
@@ -56,10 +57,22 @@ server {{
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         
+        # Timeouts for wake-on-demand (container may need time to start)
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 30s;
+        proxy_send_timeout 10s;
+        
         # WebSocket support (important for real-time Node.js apps)
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+        
+        # If the container is still starting, show a friendly error instead of 502
+        error_page 502 504 @wake_fallback;
+    }}
+    
+    location @wake_fallback {{
+        return 302 {wake_fallback_url};
     }}
     
     location = /wake {{
