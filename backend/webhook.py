@@ -79,7 +79,7 @@ async def github_webhook(
     project_id = project["id"]
     
     # 5. Check the platform-wide active apps limit before queueing
-    active_apps_query = supabase.table("projects").select("id", count="exact").in_("status", ["RUNNING", "BUILDING"]).execute()
+    active_apps_query = supabase.table("projects").select("id", count="exact").in_("status", ["RUNNING", "BUILDING", "SLEEPING"]).execute()
     
     if active_apps_query.count >= config.MAX_RUNNING_CONTAINERS:
         # We update the status to FAILED and warn the user
@@ -107,10 +107,12 @@ async def manual_deploy(request: Request):
         data = await request.json()
         project_id = data.get("project_id")
         github_url = data.get("github_url")
+        if github_url:
+            github_url = normalize_github_url(github_url)
         
         if github_url:
-            # Check 1-app-per-user limit
-            existing = supabase.table("projects").select("id", count="exact").eq(
+            # Check app limit and project type combinations
+            existing = supabase.table("projects").select("id, project_type", count="exact").eq(
                 "user_id", user_id
             ).neq("status", "STOPPED").neq("status", "FAILED").execute()
             
@@ -120,11 +122,32 @@ async def manual_deploy(request: Request):
                     detail=f"Free plan limited to {config.MAX_APPS_PER_USER} active project(s). Delete an existing project first."
                 )
             
+            # Validate project type combinations
+            existing_types = [p.get("project_type", "backend") for p in existing.data]
+            project_type = data.get("project_type", "backend")
+            
+            if existing.count == 1:
+                existing_type = existing_types[0]
+                if existing_type == "fullstack":
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Your fullstack project uses both app slots. Delete it first to deploy a new project."
+                    )
+                if project_type == "fullstack":
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"Cannot deploy fullstack — you already have a {existing_type} project. Delete it first, or deploy a {'frontend' if existing_type == 'backend' else 'backend'} instead."
+                    )
+                if project_type == existing_type:
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"You already have a {existing_type} project. You can deploy a {'frontend' if existing_type == 'backend' else 'backend'} instead."
+                    )
+            
             # Extract optional fields
             root_directory = data.get("root_directory")
             start_command = data.get("start_command")
             env_vars = data.get("env_vars")
-            project_type = data.get("project_type", "backend")  # backend, frontend, fullstack
             
             # Auto-generate subdomain from repo name
             import re
@@ -134,8 +157,8 @@ async def manual_deploy(request: Request):
             subdomain = re.sub(r'[^a-z0-9-]', '-', repo_name.lower()).strip('-')[:30]
 
             # Ensure uniqueness
-            existing = supabase.table('projects').select('subdomain').eq('subdomain', subdomain).execute()
-            if existing.data:
+            subdomain_check = supabase.table('projects').select('subdomain').eq('subdomain', subdomain).execute()
+            if subdomain_check.data:
                 import uuid
                 subdomain = f"{subdomain}-{str(uuid.uuid4())[:4]}"
 
@@ -160,19 +183,38 @@ async def manual_deploy(request: Request):
                     res = supabase.table("projects").insert(project_data).execute()
                 else:
                     raise insert_err
+            if not res.data:
+                raise HTTPException(status_code=500, detail="Failed to create project in database")
             project_id = res.data[0]["id"]
             
             # Encrypt and save environment variables if provided
             if env_vars:
                 f = Fernet(config.FERNET_KEY)
-                for ev in env_vars:
-                    if ev.get('key') and ev.get('value'):
-                        encrypted = f.encrypt(ev['value'].encode()).decode()
-                        supabase.table('env_vars').insert({
-                            'project_id': project_id,
-                            'key_name': ev['key'],
-                            'value_enc': encrypted
-                        }).execute()
+                inserts = []
+                if isinstance(env_vars, list):
+                    for ev in env_vars:
+                        k = ev.get('key', '').strip() if isinstance(ev, dict) else ''
+                        v = ev.get('value', '').strip() if isinstance(ev, dict) else ''
+                        if k and v:
+                            encrypted = f.encrypt(v.encode()).decode()
+                            inserts.append({
+                                'project_id': project_id,
+                                'key_name': k,
+                                'value_enc': encrypted
+                            })
+                elif isinstance(env_vars, dict):
+                    for k, v in env_vars.items():
+                        k_clean = str(k).strip()
+                        v_clean = str(v).strip()
+                        if k_clean and v_clean:
+                            encrypted = f.encrypt(v_clean.encode()).decode()
+                            inserts.append({
+                                'project_id': project_id,
+                                'key_name': k_clean,
+                                'value_enc': encrypted
+                            })
+                if inserts:
+                    supabase.table('env_vars').insert(inserts).execute()
         
         elif project_id:
             # Verify project exists AND belongs to this user

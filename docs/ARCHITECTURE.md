@@ -109,6 +109,7 @@ A project transitions through these explicit states:
 * `QUEUED`: Pushed to Redis queue, waiting for the builder worker.
 * `BUILDING`: Worker is actively cloning, building, or configuring the container.
 * `RUNNING`: Container successfully started and health check passed.
+* `SLEEPING`: Container auto-paused by the watchdog daemon after exceeding the idle timeout. Automatically woken on the next incoming request via the gateway.
 * `FAILED`: Deployment encountered an error, or the platform reached maximum capacity.
 * `STOPPED`: When manually stopped (future) or prior to deletion.
 

@@ -58,6 +58,7 @@ export default function Dashboard({ session }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLogs, setCopiedLogs] = useState(false);
+  const [resourceStats, setResourceStats] = useState(null);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -106,6 +107,7 @@ export default function Dashboard({ session }) {
           setProjectName(fetched[0].name || fetched[0].github_url.split('/').pop().replace('.git', ''));
           setRootDir(fetched[0].root_directory || '/');
           setStartCmd(fetched[0].start_command || '');
+          fetchEnvVars(fetched[0].id);
         }
       }
     } catch (err) {
@@ -146,19 +148,46 @@ export default function Dashboard({ session }) {
     }
   };
 
+  // Fetch Resource Stats
+  const fetchResources = async () => {
+    try {
+      const res = await api.get('/system/resources');
+      if (res.data.status === 'success') {
+        setResourceStats(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch resources:', err);
+    }
+  };
+
   useEffect(() => {
     fetchProjects(true);
+    fetchResources();
     const interval = setInterval(() => {
       fetchProjects(false);
       if (selectedProjectId && activeTab === 'logs') {
         fetchLogs(selectedProjectId);
       }
     }, 3000);
-    return () => clearInterval(interval);
+    // Refresh resource stats every 30s (separate from project polling)
+    const resourceInterval = setInterval(fetchResources, 30000);
+    return () => { clearInterval(interval); clearInterval(resourceInterval); };
   }, [selectedProjectId, activeTab]);
 
   useEffect(() => {
-    if (logsContainerRef.current && !userHasScrolledUp.current) {
+    if (selectedProjectId) {
+      if (activeTab === 'env') {
+        fetchEnvVars(selectedProjectId);
+      } else if (activeTab === 'logs') {
+        fetchLogs(selectedProjectId);
+      }
+    }
+  }, [selectedProjectId, activeTab]);
+
+  // Auto-scroll to bottom ONLY during active real-time builds
+  useEffect(() => {
+    const isBuilding = selectedProject?.status === 'BUILDING';
+    if (isBuilding && logsContainerRef.current && !userHasScrolledUp.current) {
       const el = logsContainerRef.current;
       isProgrammaticScroll.current = true;
       el.scrollTop = el.scrollHeight;
@@ -166,7 +195,7 @@ export default function Dashboard({ session }) {
         isProgrammaticScroll.current = false;
       });
     }
-  }, [logs]);
+  }, [logs, selectedProject?.status]);
 
   const handleLogsScroll = () => {
     if (isProgrammaticScroll.current) return;
@@ -196,7 +225,7 @@ export default function Dashboard({ session }) {
     await supabase.auth.signOut();
   };
 
-  const handleCreateProject = async (e) => {
+  const handleCreateProject = async (e, fullstackData = null) => {
     e.preventDefault();
     if (projects.length >= 2) {
       showToast("You have reached the maximum number of allowed apps (2).", "error");
@@ -205,14 +234,42 @@ export default function Dashboard({ session }) {
     
     setIsSubmitting(true);
     try {
-      const payload = { github_url: githubUrl, project_type: newProjectType };
-      if (newRootDir.trim()) payload.root_directory = newRootDir.trim();
-      if (newStartCmd.trim()) payload.start_command = newStartCmd.trim();
+      if (fullstackData && fullstackData.isFullstack) {
+        // Fullstack: deploy backend + frontend as 2 separate projects
+        const { backend, frontend } = fullstackData;
+        
+        // Deploy backend
+        const backendPayload = { github_url: githubUrl, project_type: 'backend' };
+        if (backend.rootDir.trim()) backendPayload.root_directory = backend.rootDir.trim();
+        if (backend.startCmd.trim()) backendPayload.start_command = backend.startCmd.trim();
+        const validBackendEnv = backend.envVars.filter(ev => ev.key.trim() && ev.value.trim());
+        if (validBackendEnv.length > 0) backendPayload.env_vars = validBackendEnv;
+        
+        await api.post('/webhook/manual', backendPayload);
+        
+        // Deploy frontend
+        const frontendPayload = { github_url: githubUrl, project_type: 'frontend' };
+        if (frontend.rootDir.trim()) frontendPayload.root_directory = frontend.rootDir.trim();
+        if (frontend.startCmd.trim()) frontendPayload.start_command = frontend.startCmd.trim();
+        const validFrontendEnv = frontend.envVars.filter(ev => ev.key.trim() && ev.value.trim());
+        if (validFrontendEnv.length > 0) frontendPayload.env_vars = validFrontendEnv;
+        
+        await api.post('/webhook/manual', frontendPayload);
+        
+        showToast("Full-stack project deployed! Backend + Frontend services created.", "success");
+      } else {
+        // Single service deploy (backend or frontend)
+        const payload = { github_url: githubUrl, project_type: newProjectType };
+        if (newRootDir.trim()) payload.root_directory = newRootDir.trim();
+        if (newStartCmd.trim()) payload.start_command = newStartCmd.trim();
+        
+        const validEnvVars = newEnvVars.filter(ev => ev.key.trim() && ev.value.trim());
+        if (validEnvVars.length > 0) payload.env_vars = validEnvVars;
+        
+        await api.post('/webhook/manual', payload);
+        showToast("Project created successfully!", "success");
+      }
       
-      const validEnvVars = newEnvVars.filter(ev => ev.key.trim() && ev.value.trim());
-      if (validEnvVars.length > 0) payload.env_vars = validEnvVars;
-      
-      await api.post('/webhook/manual', payload);
       setGithubUrl('');
       setNewRootDir('');
       setNewStartCmd('');
@@ -220,7 +277,6 @@ export default function Dashboard({ session }) {
       setNewEnvVars([{ key: '', value: '' }]);
       setDeployStep(1);
       setShowModal(false);
-      showToast("Project created successfully!", "success");
       fetchProjects();
       setActiveTab('projects');
     } catch (err) {
@@ -419,6 +475,7 @@ export default function Dashboard({ session }) {
               handleCopyDeploymentId={handleCopyDeploymentId}
               copiedId={copiedId}
               user={user}
+              resourceStats={resourceStats}
             />
           )}
 
@@ -452,8 +509,9 @@ export default function Dashboard({ session }) {
             />
           )}
 
-          {activeTab === 'env' && (
+          {activeTab === 'env' && selectedProject && (
             <EnvironmentTab 
+              key={selectedProject.id}
               selectedProject={selectedProject}
               envVars={envVars}
               setEnvVars={setEnvVars}
@@ -493,6 +551,7 @@ export default function Dashboard({ session }) {
         setNewEnvVars={setNewEnvVars}
         handleCreateProject={handleCreateProject}
         isSubmitting={isSubmitting}
+        projects={projects}
       />
 
       <DeleteModal 

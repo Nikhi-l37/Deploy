@@ -1,5 +1,5 @@
-import React from 'react';
-import { Layers, Plus, GitBranch, RefreshCw, ExternalLink, Play, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Layers, Plus, GitBranch, RefreshCw, ExternalLink, Play, Trash2, Copy, Check } from 'lucide-react';
 import { BACKEND_URL } from '../../utils/constants';
 
 export default function ProjectsTab({
@@ -13,6 +13,16 @@ export default function ProjectsTab({
   setDeployStep,
   setShowModal
 }) {
+  const [copiedProjectId, setCopiedProjectId] = useState(null);
+
+  const handleCopyProjectUrl = (e, project) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = getAppUrl(project);
+    navigator.clipboard.writeText(url);
+    setCopiedProjectId(project.id);
+    setTimeout(() => setCopiedProjectId(null), 2000);
+  };
   return (
     <div className="space-y-5 animate-fade-in max-w-6xl">
       <div className="flex items-center justify-between">
@@ -93,27 +103,51 @@ export default function ProjectsTab({
                   </td>
                   <td className="py-4 px-5 font-mono text-xs font-medium">
                     {project.status === 'RUNNING' && project.port ? (
-                      <a 
-                        href={getAppUrl(project)} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="text-[#58a6ff] hover:text-[#79c0ff] hover:underline inline-flex items-center gap-1.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <span>{getAppUrl(project).replace(/^https?:\/\//, '')}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <div className="flex items-center gap-1.5">
+                        <a 
+                          href={getAppUrl(project)} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="text-[#58a6ff] hover:text-[#79c0ff] hover:underline inline-flex items-center gap-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span>{getAppUrl(project).replace(/^https?:\/\//, '')}</span>
+                        </a>
+                        <button
+                          onClick={(e) => handleCopyProjectUrl(e, project)}
+                          className="p-1 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#21262d] transition-colors cursor-pointer"
+                          title="Copy full URL"
+                        >
+                          {copiedProjectId === project.id ? (
+                            <Check className="w-3 h-3 text-[#3fb950]" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
                     ) : project.status === 'SLEEPING' && project.port ? (
-                      <a 
-                        href={`${BACKEND_URL}/wake-page/${project.id}`} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="text-[#bc8cff] hover:text-[#d2a8ff] hover:underline inline-flex items-center gap-1.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <span>{getAppUrl(project).replace(/^https?:\/\//, '')}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <div className="flex items-center gap-1.5">
+                        <a 
+                          href={`${BACKEND_URL}/wake-page/${project.id}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="text-[#bc8cff] hover:text-[#d2a8ff] hover:underline inline-flex items-center gap-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span>{getAppUrl(project).replace(/^https?:\/\//, '')}</span>
+                        </a>
+                        <button
+                          onClick={(e) => handleCopyProjectUrl(e, project)}
+                          className="p-1 text-[#8b949e] hover:text-[#f0f6fc] rounded hover:bg-[#21262d] transition-colors cursor-pointer"
+                          title="Copy full URL"
+                        >
+                          {copiedProjectId === project.id ? (
+                            <Check className="w-3 h-3 text-[#3fb950]" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-[#484f58] font-mono">-</span>
                     )}

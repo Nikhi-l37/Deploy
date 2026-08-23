@@ -16,24 +16,40 @@ export default function LogsTab({
 }) {
   if (!selectedProject) return null;
 
+  // Parses [15:19:11] [BUILD] ... into structured columns
+  const parseLogLine = (logText) => {
+    if (!logText) return { timestamp: null, tag: null, message: '' };
+    const match = logText.match(/^\[(\d{2}:\d{2}:\d{2})\]\s*(?:\[([A-Z_]+)\]\s*)?(.*)$/);
+    if (match) {
+      return {
+        timestamp: match[1],
+        tag: match[2] || null,
+        message: match[3] || ''
+      };
+    }
+    return { timestamp: null, tag: null, message: logText };
+  };
+
+  const isRunning = selectedProject.status === 'RUNNING';
+  const isBuilding = selectedProject.status === 'BUILDING';
+
   return (
     <div className="space-y-4 animate-fade-in max-w-6xl">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      
+      {/* 1. HEADER & SESSION SELECTOR */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#f0f6fc] tracking-tight flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-[#3fb950]" />
+            <Terminal className="w-5 h-5 text-[#58a6ff]" />
             Logs
           </h2>
-          <p className="text-xs text-[#8b949e] mt-0.5">Streaming build and runtime container logs in real time.</p>
+          <p className="text-xs text-[#8b949e] mt-0.5">Streaming build output and runtime container logs in real time.</p>
         </div>
 
-        {/* 3 Recent Log Sessions Selector Tabs */}
+        {/* Minimalist Session Switcher */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] font-bold text-[#8b949e] uppercase tracking-wider mr-1 hidden sm:inline">
-            History:
-          </span>
           {logSessions.length === 0 ? (
-            <div className="text-xs font-mono text-[#8b949e] italic px-2.5 py-1 rounded bg-[#161b22] border border-[#30363d]">
+            <div className="text-xs font-mono text-[#8b949e] italic px-3 py-1.5 rounded-lg bg-[#161b22] border border-[#30363d]">
               No build history
             </div>
           ) : (
@@ -41,80 +57,109 @@ export default function LogsTab({
               <button
                 key={session.id}
                 onClick={() => setSelectedLogSessionIndex(idx)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer border ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer border ${
                   selectedLogSessionIndex === idx
-                    ? 'bg-[#21262d] text-[#f0f6fc] border-[#2ea043] shadow-sm'
+                    ? 'bg-[#21262d] text-[#f0f6fc] border-[#58a6ff]'
                     : 'bg-[#161b22] text-[#8b949e] border-[#30363d] hover:text-[#c9d1d9] hover:bg-[#21262d]'
                 }`}
               >
-                <span className={`w-2 h-2 rounded-full ${
+                <span className={`w-1.5 h-1.5 rounded-full ${
                   session.isLatest ? 'bg-[#3fb950]' : session.hasFailed ? 'bg-[#f85149]' : 'bg-[#8b949e]'
                 }`} />
                 <span>{session.title}</span>
-                {session.isLatest && (
-                  <span className="text-[9px] uppercase font-bold text-[#3fb950] bg-[#238636]/15 px-1.5 py-0.2 rounded border border-[#238636]/30">
-                    Active
-                  </span>
-                )}
               </button>
             ))
           )}
         </div>
       </div>
 
-      <div className="flex flex-col bg-[#010409] border border-[#30363d] rounded-xl overflow-hidden font-mono shadow-2xl h-[calc(100vh-210px)] min-h-[520px]">
-        {/* Terminal Header */}
+      {/* 2. MODERN TERMINAL LOG STREAM */}
+      <div className="flex flex-col bg-[#0d1117] border border-[#30363d] rounded-xl overflow-hidden shadow-sm h-[calc(100vh-220px)] min-h-[520px]">
+        
+        {/* Sleek Terminal Toolbar */}
         <div className="bg-[#161b22] border-b border-[#30363d] px-4 py-2.5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-3 h-3 rounded-full bg-[#f85149]"></div>
-            <div className="w-3 h-3 rounded-full bg-[#d29922]"></div>
-            <div className="w-3 h-3 rounded-full bg-[#3fb950]"></div>
-            <span className="ml-2 text-xs text-[#8b949e]">
-              tty1 • {getProjectDisplayName(selectedProject)}
-              {logSessions.length > 0 && ` [Session ${logSessions[selectedLogSessionIndex]?.buildNumber || 1}]`}
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-mono font-semibold text-[#f0f6fc] flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${isBuilding ? 'bg-[#58a6ff] animate-ping' : isRunning ? 'bg-[#3fb950]' : 'bg-[#8b949e]'}`} />
+              {getProjectDisplayName(selectedProject)}
+              <span className="text-[#8b949e] font-normal font-sans">
+                ({displayedLogs.length} lines)
+              </span>
             </span>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2">
             {displayedLogs.length > 0 && (
               <button
                 onClick={handleCopyLogs}
-                className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#c9d1d9] hover:text-white text-xs font-mono transition-colors cursor-pointer"
-                title="Copy session logs to clipboard"
+                className="px-2.5 py-1 text-xs font-mono text-[#8b949e] hover:text-[#f0f6fc] rounded bg-[#0d1117] hover:bg-[#21262d] border border-[#30363d] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                title="Copy all logs"
               >
                 {copiedLogs ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-[#3fb950]" />
-                    <span className="text-[#3fb950] font-semibold">Copied!</span>
+                    <span className="text-[#3fb950]">Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5 text-[#8b949e]" />
-                    <span>Copy Logs</span>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy</span>
                   </>
                 )}
               </button>
             )}
-            <span className="text-xs text-[#484f58]">UTF-8</span>
           </div>
         </div>
 
-        {/* Terminal Scroll Body */}
+        {/* Structured Column Log Rows */}
         <div 
           ref={logsContainerRef} 
           onScroll={handleLogsScroll} 
-          className="flex-1 p-5 overflow-y-auto space-y-1.5 font-mono text-[13px] sm:text-[13.5px] leading-[1.8]"
+          className="flex-1 p-3 sm:p-4 overflow-y-auto font-mono text-xs sm:text-[13px] leading-relaxed select-text divide-y divide-[#161b22]"
         >
           {displayedLogs.length === 0 ? (
-            <p className="text-[#8b949e] italic text-sm">No logs recorded for this session yet.</p>
+            <div className="flex items-center justify-center h-full text-[#8b949e] italic text-xs">
+              No logs available for this session.
+            </div>
           ) : (
-            displayedLogs.map((log) => (
-              <div key={log.id} className={getLogColor(log.log_text)}>
-                {log.log_text}
-              </div>
-            ))
+            displayedLogs.map((log, index) => {
+              const { timestamp, tag, message } = parseLogLine(log.log_text);
+              const text = log.log_text || '';
+              const isError = text.includes('Error:') || text.includes('FAILED') || text.includes('CRASH');
+
+              return (
+                <div 
+                  key={log.id || index}
+                  className={`flex items-start gap-3 py-1 px-2 rounded hover:bg-[#161b22] transition-colors ${
+                    isError ? 'bg-[#da3633]/10 text-[#f85149]' : ''
+                  }`}
+                >
+                  {/* Timestamp Column */}
+                  {timestamp && (
+                    <span className="text-[#6e7681] text-[11px] shrink-0 font-mono pt-0.5 select-none w-16">
+                      {timestamp}
+                    </span>
+                  )}
+
+                  {/* Stage Tag Badge */}
+                  {tag && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider shrink-0 px-1.5 py-0.2 rounded bg-[#21262d] text-[#58a6ff] border border-[#30363d] select-none">
+                      {tag}
+                    </span>
+                  )}
+
+                  {/* Log Content Message */}
+                  <div className={`flex-1 break-all ${getLogColor(text)}`}>
+                    {message || text}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
+
       </div>
+
     </div>
   );
 }

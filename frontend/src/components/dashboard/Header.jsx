@@ -18,27 +18,15 @@ export default function Header({
             <span className="font-bold text-[#f0f6fc] text-base">All Projects</span>
           </div>
         ) : selectedProject ? (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 font-mono text-sm">
-              <span 
-                className="text-[#8b949e] hover:text-[#c9d1d9] cursor-pointer transition-colors"
-                onClick={() => setActiveTab('projects')}
-              >
-                Projects
-              </span>
-              <span className="text-[#484f58]">/</span>
-              <span className="font-bold text-[#f0f6fc] text-base">{getProjectDisplayName(selectedProject)}</span>
-            </div>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold border ${getStatusBadge(selectedProject.status)}`}>
-              {selectedProject.status === 'BUILDING' && <RefreshCw className="w-3 h-3 animate-spin" />}
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                selectedProject.status === 'RUNNING' ? 'bg-[#3fb950] animate-pulse' :
-                selectedProject.status === 'FAILED' ? 'bg-[#f85149]' :
-                selectedProject.status === 'BUILDING' ? 'bg-[#58a6ff]' :
-                selectedProject.status === 'SLEEPING' ? 'bg-[#bc8cff]' : 'bg-[#d29922]'
-              }`} />
-              {selectedProject.status}
+          <div className="flex items-center gap-2 font-mono text-sm">
+            <span 
+              className="text-[#8b949e] hover:text-[#c9d1d9] cursor-pointer transition-colors"
+              onClick={() => setActiveTab('projects')}
+            >
+              Projects
             </span>
+            <span className="text-[#484f58]">/</span>
+            <span className="font-bold text-[#f0f6fc] text-base">{getProjectDisplayName(selectedProject)}</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 font-mono text-sm">

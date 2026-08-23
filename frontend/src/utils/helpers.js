@@ -24,8 +24,14 @@ export const getLogColor = (text) => {
   if (text.includes('FAILED') || text.includes('Error:') || text.includes('error:') || text.includes('CRASH') || text.includes('Deploy failed:')) {
     return 'text-[#f85149] font-medium';
   }
-  if (text.includes('Deploy successful') || text.includes('now live') || text.includes('is live')) {
+  if (text.includes('warn') || text.includes('WARN') || text.includes('warning') || text.includes('Deprecated') || text.includes('deprecated')) {
+    return 'text-[#d29922]';
+  }
+  if (text.includes('Deploy successful') || text.includes('now live') || text.includes('is live') || text.includes('DONE')) {
     return 'text-[#3fb950] font-semibold';
+  }
+  if (text.includes('[BUILD]')) {
+    return 'text-[#79c0ff]';
   }
   return 'text-[#c9d1d9]';
 };
