@@ -14,6 +14,8 @@ from cryptography.fernet import Fernet
 import threading
 import config
 from database import supabase
+from detectors import detect_language, detect_framework
+from dockerfile_gen import generate_dockerfile
 
 shutdown_event = threading.Event()
 
@@ -89,174 +91,77 @@ def decrypt_env_vars(project_id: str) -> dict:
         env_dict[ev["key_name"]] = decrypted
     return env_dict
 
-def detect_framework(root_path):
-    """Detect if a Node.js project is a frontend framework or backend server.
-    Returns: 'vite', 'cra', 'nextjs', 'static-spa', or None (for backend/unknown)"""
-    import json
-    
-    # Check for framework config files
-    for f in os.listdir(root_path):
-        if f.startswith('vite.config'):
-            return 'vite'
-        if f.startswith('next.config'):
-            return 'nextjs'
-    
-    # Check package.json dependencies
-    pkg_path = os.path.join(root_path, 'package.json')
-    if os.path.exists(pkg_path):
-        try:
-            with open(pkg_path) as f:
-                pkg = json.load(f)
-            deps = {**pkg.get('dependencies', {}), **pkg.get('devDependencies', {})}
-            
-            # Check for specific frameworks
-            if 'vite' in deps:
-                return 'vite'
-            if 'next' in deps:
-                return 'nextjs'
-            if 'react-scripts' in deps:
-                return 'cra'
-            
-            # Check if it's a backend (has server frameworks)
-            backend_indicators = ['express', 'fastify', 'koa', 'hapi', '@nestjs/core', 'mongoose', 'pg', 'sequelize', 'prisma']
-            if any(ind in deps for ind in backend_indicators):
-                return None  # It's a backend
-            
-            # Has a build script but no backend indicators = likely frontend
-            scripts = pkg.get('scripts', {})
-            if 'build' in scripts and not any(ind in deps for ind in backend_indicators):
-                return 'static-spa'
-        except (json.JSONDecodeError, IOError):
-            pass
-    
-    return None  # Unknown or backend
-
-def generate_frontend_dockerfile(framework, root_path):
-    """Generate a multi-stage Dockerfile for frontend apps."""
-    import json
-    
-    # Determine output directory
-    output_dir = 'dist'  # Default for Vite
-    if framework == 'cra':
-        output_dir = 'build'
-    elif framework == 'nextjs':
-        # Next.js standalone mode
-        return """FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-FROM node:20-alpine
-WORKDIR /app
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-EXPOSE 8080
-ENV PORT=8080
-CMD ["node", "server.js"]
-"""
-    
-    # Static SPA: Vite, CRA, generic
-    return f"""FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=builder /app/{output_dir} /usr/share/nginx/html
-RUN echo 'server {{ listen 8080; root /usr/share/nginx/html; location / {{ try_files $uri $uri/ /index.html; }} }}' > /etc/nginx/conf.d/default.conf
-RUN rm /etc/nginx/conf.d/default.conf.bak 2>/dev/null; true
-EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
-"""
-
-def detect_language(repo_path: str) -> str:
-    """Detects the language of the cloned repo."""
-    if os.path.exists(os.path.join(repo_path, "Dockerfile")):
-        return "dockerfile"
-    elif os.path.exists(os.path.join(repo_path, "requirements.txt")):
-        return "python"
-    elif os.path.exists(os.path.join(repo_path, "package.json")):
-        return "node"
-    else:
-        raise Exception("Unsupported project: Missing Dockerfile, requirements.txt, or package.json")
-
-def generate_dockerfile(project_id: str, repo_path: str, language: str, env_vars: dict = None, build_args: dict = None):
-    """Generates a Dockerfile if the project doesn't have one."""
-    df_path = os.path.join(repo_path, "Dockerfile")
-    
-    if language == "python":
-        content = """
-FROM python:3.9-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-# Try to find a main.py or app.py
-CMD ["sh", "-c", "if [ -f main.py ]; then python main.py; elif [ -f app.py ]; then python app.py; else echo 'No main.py or app.py found' && exit 1; fi"]
-"""
-    elif language == "node":
-        framework = detect_framework(repo_path)
-        if framework:
-            push_log(project_id, f"Detected frontend framework: {framework}")
-            content = generate_frontend_dockerfile(framework, repo_path)
-            if env_vars and build_args is not None:
-                arg_lines = []
-                for k, v in env_vars.items():
-                    if k.startswith(('VITE_', 'REACT_APP_', 'NEXT_PUBLIC_')):
-                        arg_lines.append(f"ARG {k}")
-                        build_args[k] = v
-                if arg_lines:
-                    lines = content.splitlines()
-                    for i, line in enumerate(lines):
-                        if line.startswith("FROM "):
-                            lines = lines[:i+1] + arg_lines + lines[i+1:]
-                            break
-                    content = "\n".join(lines)
-        else:
-            has_server = os.path.exists(os.path.join(repo_path, "server", "package.json"))
-            has_client = os.path.exists(os.path.join(repo_path, "client", "package.json"))
-            
-            if has_server:
-                content = """
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-COPY server/package*.json ./server/
-"""
-                if has_client:
-                    content += "COPY client/package*.json ./client/\n"
-                content += """
-RUN if grep -q '"build"' package.json; then (npm run build || (npm install && npm install --prefix server)); else (npm install && npm install --prefix server); fi
-COPY . .
-EXPOSE 8080
-ENV PORT=8080
-CMD ["npm", "start"]
-"""
-            else:
-                content = """
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 8080
-ENV PORT=8080
-CMD ["npm", "start"]
-"""
-    with open(df_path, "w") as f:
-        f.write(content.strip())
-    push_log(project_id, f"Auto-generated {language} Dockerfile")
-
 def force_remove_readonly(func, path, excinfo):
     """Helper to unlock read-only files on Windows so shutil.rmtree can delete .git folders."""
     import stat
     os.chmod(path, stat.S_IWRITE)
     func(path)
+
+
+# =============================================================================
+# ENTRYPOINT.SH — Frontend Nginx with smart API proxy (for fullstack)
+# GET requests → SPA (index.html)
+# POST/PUT/DELETE/PATCH → proxy to backend (API calls)
+# =============================================================================
+
+FRONTEND_ENTRYPOINT = """#!/bin/sh
+if [ -n "$VITE_API_URL" ]; then
+  echo "Smart API proxy enabled -> $VITE_API_URL"
+  cat > /etc/nginx/conf.d/default.conf << 'CONFEOF'
+server {
+  listen 8080;
+  root /usr/share/nginx/html;
+
+  # Static assets - cache aggressively
+  location /assets/ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+  }
+
+  # Serve static files if they exist, otherwise go to @app
+  location / {
+    try_files $uri $uri/ @app;
+  }
+
+  # Smart routing: GET -> SPA, non-GET -> backend API
+  location @app {
+    # Non-GET requests (POST, PUT, DELETE, PATCH) are API calls -> proxy to backend
+    error_page 418 = @backend;
+    if ($request_method != GET) {
+        return 418;
+    }
+    # GET request to unknown path -> SPA route -> serve index.html
+    rewrite ^ /index.html last;
+  }
+
+  location @backend {
+    # Resolve at request time (not startup) using Docker's internal DNS
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $backend_url VITE_API_URL_PLACEHOLDER;
+    proxy_pass $backend_url;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_connect_timeout 10s;
+    proxy_read_timeout 30s;
+  }
+}
+CONFEOF
+  sed -i "s|VITE_API_URL_PLACEHOLDER|$VITE_API_URL|g" /etc/nginx/conf.d/default.conf
+else
+  echo 'server { listen 8080; root /usr/share/nginx/html; location /assets/ { expires 1y; add_header Cache-Control "public, immutable"; } location / { try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+fi
+exec nginx -g "daemon off;"
+"""
+
+
+# =============================================================================
+# DEPLOY PIPELINE — The main build & run orchestrator
+# =============================================================================
 
 def run_pipeline(project_id: str):
     """Runs the full deployment pipeline for a single project."""
@@ -284,13 +189,16 @@ def run_pipeline(project_id: str):
     push_log(project_id, f"Starting build for {github_url}")
 
     try:
-        # 2. Clone the repository
-        # (For private repos, we would inject the user's github_access_token into the URL here)
+        # 2. Clone the repository (shallow clone for speed)
         if os.path.exists(repo_path):
             shutil.rmtree(repo_path, onerror=force_remove_readonly)
             
         push_log(project_id, "Cloning repository...")
-        result = subprocess.run(["git", "clone", github_url, repo_path], capture_output=True, text=True, timeout=120)
+        branch = project.get("branch") or "main"
+        result = subprocess.run(["git", "clone", "--depth", "1", "-b", branch, github_url, repo_path], capture_output=True, text=True, timeout=120)
+        if result.returncode != 0:
+            # Retry without -b flag in case the branch doesn't exist (use default branch)
+            result = subprocess.run(["git", "clone", "--depth", "1", github_url, repo_path], capture_output=True, text=True, timeout=120)
         if result.returncode != 0:
             raise Exception(f"Git clone failed: {result.stderr}")
         
@@ -311,14 +219,35 @@ def run_pipeline(project_id: str):
         env_vars = decrypt_env_vars(project_id)
         build_args = {}
         
+        # Auto-inject VITE_API_URL for fullstack frontend projects
+        # If this is a frontend and no VITE_API_URL is set, find the backend from same user+repo
+        if project.get("project_type") == "frontend" and "VITE_API_URL" not in env_vars:
+            _auto_link_backend(project_id, project, env_vars)
+        
         if lang != "dockerfile":
-            generate_dockerfile(project_id, build_path, lang, env_vars, build_args)
+            generate_dockerfile(project_id, build_path, lang, env_vars, build_args, push_log)
+
+        # Auto-generate .dockerignore to speed up builds and reduce image size
+        dockerignore_path = os.path.join(build_path, ".dockerignore")
+        if not os.path.exists(dockerignore_path):
+            with open(dockerignore_path, "w") as f:
+                f.write("node_modules\n.git\n.env\n*.log\ndist\nbuild\n.next\n__pycache__\n*.pyc\n.venv\nvenv\n")
+
+        # Write entrypoint.sh for frontend apps (enables runtime API proxying via VITE_API_URL)
+        entrypoint_path = os.path.join(build_path, ".deployly-entrypoint.sh")
+        if lang == "node" and detect_framework(build_path) and not os.path.exists(entrypoint_path):
+            with open(entrypoint_path, "w", newline="\n") as f:
+                f.write(FRONTEND_ENTRYPOINT)
+            push_log(project_id, "Created entrypoint.sh for frontend API proxying")
+
+        # Log build args for debugging VITE_ injection
+        if build_args:
+            push_log(project_id, f"Build args detected: {list(build_args.keys())}")
 
         # 4. Build Docker Image
         push_log(project_id, "Building Docker image. This may take a minute...")
         image_name = f"{safe_name}:latest"
         
-        # Use direct docker CLI subprocess with --progress=plain for non-interactive line-by-line build logs
         cmd = ["docker", "build", "--progress=plain", "-t", image_name, build_path]
         for k, v in build_args.items():
             cmd.extend(["--build-arg", f"{k}={v}"])
@@ -332,18 +261,31 @@ def run_pipeline(project_id: str):
             errors='replace',
             bufsize=1
         )
+        last_log_time = 0
         try:
             for line in process.stdout:
                 clean_line = line.strip()
                 if clean_line:
+                    # Throttle: ensure at least 50ms between log lines to prevent socket exhaustion on Windows
+                    now = time.time()
+                    if now - last_log_time < 0.05:
+                        time.sleep(0.05)
                     push_log(project_id, f"[BUILD] {clean_line}")
+                    last_log_time = time.time()
         finally:
             if process.stdout:
                 process.stdout.close()
                 
-        return_code = process.wait()
+        try:
+            return_code = process.wait(timeout=600)  # 10 minute build timeout
+        except subprocess.TimeoutExpired:
+            process.kill()
+            raise Exception("Docker build timed out after 10 minutes. Check for infinite loops in build scripts.")
         if return_code != 0:
             raise Exception(f"Docker build failed with exit code {return_code}")
+        
+        # Brief cooldown to let Windows sockets recover after rapid build log streaming
+        time.sleep(2)
 
         # 5. Clean up old container by NAME (not container_id, which may be stale)
         try:
@@ -352,26 +294,26 @@ def run_pipeline(project_id: str):
             old_container.stop(timeout=2)
             old_container.remove(force=True)
         except docker.errors.NotFound:
-            pass  # No old container exists
+            pass
         except Exception:
-            pass  # Container might already be gone
+            pass
 
         # 6. Prepare Runtime (Ports & Env Vars)
         port = project.get("port")
         if port:
-            # Validate the port is still reserved for this project
             port_check = supabase.table("port_registry").select("project_id").eq("port", port).execute()
             if not port_check.data or port_check.data[0].get("project_id") != project_id:
                 port = get_free_port(project_id)
         else:
             port = get_free_port(project_id)
-        # env_vars already decrypted earlier
         
         # Default PORT env var for the app inside the container
-        if "PORT" not in env_vars:
-            env_vars["PORT"] = "8080" # Most node/python apps expect this if not set
+        user_set_port = "PORT" in env_vars
+        if not user_set_port:
+            env_vars["PORT"] = "8080"
         
         # Auto-detect container port from Dockerfile EXPOSE statement
+        # User-provided PORT env var takes priority over EXPOSE
         container_port = env_vars["PORT"]
         dockerfile_path = os.path.join(build_path, "Dockerfile")
         if os.path.exists(dockerfile_path):
@@ -382,14 +324,24 @@ def run_pipeline(project_id: str):
                         if line.upper().startswith("EXPOSE"):
                             exposed = line.split()[1] if len(line.split()) > 1 else None
                             if exposed and exposed.isdigit():
-                                container_port = exposed
-                                push_log(project_id, f"Detected EXPOSE {container_port} from Dockerfile")
+                                if not user_set_port:
+                                    container_port = exposed
+                                    push_log(project_id, f"Detected EXPOSE {container_port} from Dockerfile")
+                                else:
+                                    push_log(project_id, f"Dockerfile EXPOSE {exposed} ignored (user PORT={container_port} takes priority)")
                                 break
             except Exception:
                 pass
 
         # 7. Run the new container
         push_log(project_id, f"Starting container on port {port}...")
+        
+        # Ensure the shared Docker network exists (for container-to-container communication on AWS)
+        try:
+            docker_client.networks.get(config.DOCKER_NETWORK)
+        except docker.errors.NotFound:
+            docker_client.networks.create(config.DOCKER_NETWORK, driver="bridge")
+            push_log(project_id, f"Created Docker network: {config.DOCKER_NETWORK}")
         
         run_kwargs = {
             "image": image_name,
@@ -400,58 +352,51 @@ def run_pipeline(project_id: str):
             "cpu_period": config.CONTAINER_CPU_PERIOD,
             "cpu_quota": config.CONTAINER_CPU_QUOTA,
             "name": safe_name,
+            "network": config.DOCKER_NETWORK,
             "restart_policy": {"Name": "unless-stopped"}
         }
         
         # Override start command if provided (only for backend — frontend uses Dockerfile CMD)
         start_cmd = project.get("start_command")
         if start_cmd and start_cmd.strip() and project.get("project_type") != "frontend":
-            run_kwargs["command"] = start_cmd.strip()
+            run_kwargs["command"] = ["sh", "-c", start_cmd.strip()]
             
         container = docker_client.containers.run(**run_kwargs)
 
-        # 8. Health Check
-        push_log(project_id, "Waiting 5 seconds for health check...")
-        time.sleep(5)
-        
-        # Retry container reload in case of temporary Windows socket/Docker pipe hiccup
-        status = "unknown"
-        for _ in range(3):
+        # 8. Health Check — wait for container to be running AND responsive
+        push_log(project_id, "Running health check...")
+        healthy = False
+        for attempt in range(15):
+            time.sleep(1)
+            container.reload()
+            if container.status != "running":
+                logs = container.logs(tail=30).decode('utf-8', errors='replace')
+                push_log(project_id, f"CRASH LOGS:\n{logs}")
+                raise Exception("Container crashed immediately after starting.")
             try:
-                container.reload()
-                status = container.status
-                break
-            except Exception:
-                time.sleep(1)
-        
-        if status != "running":
-            logs = ""
-            try:
-                logs = container.logs().decode('utf-8', errors='replace')
+                resp = requests.get(f"http://127.0.0.1:{port}/", timeout=2)
+                if resp.status_code < 500:
+                    healthy = True
+                    push_log(project_id, f"Health check passed (HTTP {resp.status_code})")
+                    break
             except Exception:
                 pass
-            if logs:
-                push_log(project_id, f"CRASH LOGS:\n{logs}")
-            raise Exception("Container crashed immediately after starting or could not be verified.")
+        if not healthy:
+            push_log(project_id, "Warning: App is running but not responding to HTTP yet. It may need more startup time.")
 
         # 9. Success!
         update_status(project_id, "RUNNING", {
             "container_id": container.id,
             "port": port
         })
-        # Initialize last_active so the watchdog gives it grace period
-        try:
-            redis_client.set(f"last_active:{project_id}", time.time())
-        except Exception:
-            pass
+        redis_client.set(f"last_active:{project_id}", time.time())
+
         push_log(project_id, "🚀 Deploy successful! App is now live.")
         
         # 10. Update Nginx Load Balancer
-        try:
-            import nginx_config
-            nginx_config.generate_nginx_config()
-        except Exception as ng_err:
-            print(f"[Nginx] Config update error: {ng_err}")
+        import nginx_config
+        nginx_config.generate_nginx_config()
+
 
     except Exception as e:
         update_status(project_id, "FAILED")
@@ -479,12 +424,57 @@ def run_pipeline(project_id: str):
             push_log(project_id, "Cleaned up temporary build files.")
 
 
+def _auto_link_backend(project_id, project, env_vars):
+    """Auto-inject VITE_API_URL for fullstack frontend projects.
+    Finds the backend project from the same user+repo and links via Docker network."""
+    try:
+        user_id = project.get("user_id")
+        github_url_normalized = project.get("github_url", "")
+        siblings = supabase.table("projects").select("*").eq(
+            "user_id", user_id
+        ).eq("github_url", github_url_normalized).neq(
+            "id", project_id
+        ).execute()  # No status filter — container name is deterministic regardless of current status
+        
+        backend_project = None
+        for sib in siblings.data:
+            if sib.get("project_type") == "backend":
+                backend_project = sib
+                break
+        
+        if backend_project:
+            # Use Docker network name — the Nginx proxy runs INSIDE the frontend container
+            # so it needs container-to-container communication, not localhost
+            backend_container = f"deploy-{backend_project['id'][:8]}"
+            backend_env = decrypt_env_vars(backend_project["id"])
+            internal_port = backend_env.get("PORT", "8080")
+            vite_url = f"http://{backend_container}:{internal_port}"
+            env_vars["VITE_API_URL"] = vite_url
+            push_log(project_id, f"Auto-linked to backend: {vite_url}")
+            
+            # Also save it to DB so user can see it in the dashboard
+            f_enc = fernet.encrypt(vite_url.encode()).decode()
+            try:
+                supabase.table("env_vars").insert({
+                    "project_id": project_id,
+                    "key_name": "VITE_API_URL",
+                    "value_enc": f_enc
+                }).execute()
+            except Exception:
+                pass
+    except Exception as link_err:
+        push_log(project_id, f"Warning: Could not auto-link backend: {link_err}")
+
+
+# =============================================================================
+# WORKER — Pulls jobs from Redis queue and processes them sequentially
+# =============================================================================
+
 def start_worker():
     """Infinite loop that pulls jobs from Redis and builds them sequentially."""
     print("Builder Worker Started! Waiting for jobs in the queue...")
     while not shutdown_event.is_set():
         try:
-            # Use a non-blocking pop with a short sleep to avoid Windows socket timeout issues
             project_id = redis_client.lpop("build_queue")
             if not project_id:
                 shutdown_event.wait(timeout=2)
@@ -493,7 +483,7 @@ def start_worker():
             run_pipeline(project_id)
         except Exception as e:
             print(f"Worker Error: {str(e)}")
-            shutdown_event.wait(timeout=5)  # Prevent tight crash loops
+            shutdown_event.wait(timeout=5)
     print("Builder Worker shutting down gracefully.")
 
 if __name__ == "__main__":

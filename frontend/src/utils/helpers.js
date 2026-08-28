@@ -1,11 +1,6 @@
 export const getProjectDisplayName = (proj) => {
   if (!proj) return '';
-  const baseName = proj.name || proj.github_url?.split('/').pop().replace('.git', '') || 'Project';
-  // Append project type for clarity (e.g. "My-App (Backend)")
-  if (proj.project_type) {
-    return `${baseName} (${proj.project_type.charAt(0).toUpperCase() + proj.project_type.slice(1)})`;
-  }
-  return baseName;
+  return proj.name || proj.github_url?.split('/').pop().replace('.git', '') || 'Project';
 };
 
 export const getStatusBadge = (status) => {

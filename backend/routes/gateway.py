@@ -50,13 +50,45 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     if status == "SLEEPING":
         print(f"[Auto-Wake Proxy] Incoming request for sleeping project {project_id[:8]}. Waking container up...")
         try:
-            container = client_docker.containers.get(container_name)
-            container.start()
-            # Restore restart policy AFTER starting (update() only works on running containers)
+            # Try to start the existing container
             try:
-                container.update(restart_policy={"Name": "unless-stopped"})
-            except Exception:
-                pass  # Non-critical — container is already running
+                container = client_docker.containers.get(container_name)
+                container.start()
+                try:
+                    container.update(restart_policy={"Name": "unless-stopped"})
+                except Exception:
+                    pass
+            except docker.errors.NotFound:
+                # Container was removed — recreate from image
+                print(f"[Auto-Wake Proxy] Container {container_name} missing. Recreating...")
+                image_name = f"{container_name}:latest"
+                try:
+                    client_docker.images.get(image_name)
+                except docker.errors.ImageNotFound:
+                    raise HTTPException(status_code=502, detail="Container and image were lost. Please redeploy.")
+                
+                from builder import decrypt_env_vars
+                env_vars = decrypt_env_vars(real_id)
+                if "PORT" not in env_vars:
+                    env_vars["PORT"] = "8080"
+                
+                import config as cfg
+                try:
+                    client_docker.networks.get(cfg.DOCKER_NETWORK)
+                except docker.errors.NotFound:
+                    client_docker.networks.create(cfg.DOCKER_NETWORK, driver="bridge")
+                
+                container = client_docker.containers.run(
+                    image=image_name, detach=True,
+                    ports={f"{env_vars['PORT']}/tcp": port},
+                    environment=env_vars,
+                    mem_limit=cfg.CONTAINER_MEM_LIMIT_FRONTEND if project.get("project_type") == "frontend" else cfg.CONTAINER_MEM_LIMIT_BACKEND,
+                    cpu_period=cfg.CONTAINER_CPU_PERIOD, cpu_quota=cfg.CONTAINER_CPU_QUOTA,
+                    name=container_name, network=cfg.DOCKER_NETWORK,
+                    restart_policy={"Name": "unless-stopped"}
+                )
+                supabase.table("projects").update({"container_id": container.id}).eq("id", real_id).execute()
+                print(f"[Auto-Wake Proxy] Recreated container {container_name}")
             
             # Wait for the app to actually respond (not just TCP port open)
             app_ready = False
@@ -65,7 +97,6 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
                 try:
                     async with httpx.AsyncClient(timeout=2.0) as check_client:
                         health_res = await check_client.get(f"http://127.0.0.1:{port}/")
-                        # Any response (even 404) means the app is ready
                         app_ready = True
                         break
                 except Exception:
@@ -76,6 +107,8 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
             
             supabase.table("projects").update({"status": "RUNNING"}).eq("id", real_id).execute()
             redis_client.set(f"last_active:{real_id}", time.time())
+        except HTTPException:
+            raise
         except Exception as e:
             print(f"[Auto-Wake Proxy] Failed to wake container: {e}")
             raise HTTPException(status_code=502, detail=f"Failed to auto-wake application: {str(e)}")
@@ -142,17 +175,69 @@ async def gateway(project_id: str):
         
     elif status == "SLEEPING":
         try:
-            client = docker_client
             container_name = f"deploy-{project_id[:8]}"
-            container = client.containers.get(container_name)
-            container.start()
-            # Restore restart policy AFTER starting (update() only works on running containers)
-            try:
-                container.update(restart_policy={"Name": "unless-stopped"})
-            except Exception:
-                pass
-            
             port = project.get("port", 8001)
+            
+            # Try to start the existing container
+            try:
+                container = docker_client.containers.get(container_name)
+                container.start()
+                # Restore restart policy AFTER starting
+                try:
+                    container.update(restart_policy={"Name": "unless-stopped"})
+                except Exception:
+                    pass
+            except docker.errors.NotFound:
+                # Container was removed (Docker restart, prune, etc.)
+                # Recreate it from the existing image
+                print(f"[Gateway] Container {container_name} not found. Recreating from image...")
+                image_name = f"{container_name}:latest"
+                
+                # Check if image still exists
+                try:
+                    docker_client.images.get(image_name)
+                except docker.errors.ImageNotFound:
+                    # Image is also gone — must rebuild
+                    supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
+                    raise HTTPException(
+                        status_code=500, 
+                        detail="Container and image were lost. Please redeploy from the dashboard."
+                    )
+                
+                # Decrypt env vars for the container
+                from builder import decrypt_env_vars
+                env_vars = decrypt_env_vars(project_id)
+                if "PORT" not in env_vars:
+                    env_vars["PORT"] = "8080"
+                
+                container_port = env_vars["PORT"]
+                
+                # Ensure Docker network exists
+                import config as cfg
+                try:
+                    docker_client.networks.get(cfg.DOCKER_NETWORK)
+                except docker.errors.NotFound:
+                    docker_client.networks.create(cfg.DOCKER_NETWORK, driver="bridge")
+                
+                # Recreate the container
+                container = docker_client.containers.run(
+                    image=image_name,
+                    detach=True,
+                    ports={f"{container_port}/tcp": port},
+                    environment=env_vars,
+                    mem_limit=cfg.CONTAINER_MEM_LIMIT_FRONTEND if project.get("project_type") == "frontend" else cfg.CONTAINER_MEM_LIMIT_BACKEND,
+                    cpu_period=cfg.CONTAINER_CPU_PERIOD,
+                    cpu_quota=cfg.CONTAINER_CPU_QUOTA,
+                    name=container_name,
+                    network=cfg.DOCKER_NETWORK,
+                    restart_policy={"Name": "unless-stopped"}
+                )
+                
+                # Update container_id in DB
+                supabase.table("projects").update({"container_id": container.id}).eq("id", project_id).execute()
+                print(f"[Gateway] Recreated container {container_name}")
+            
+            # Wait for port to be ready
             import socket
             for _ in range(10):
                 await asyncio.sleep(1)
@@ -168,7 +253,14 @@ async def gateway(project_id: str):
             
             supabase.table("projects").update({"status": "RUNNING"}).eq("id", project_id).execute()
             redis_client.set(f"last_active:{project_id}", time.time())
+            
+            # Render-style: if this is a frontend, also wake its linked backend
+            if project.get("project_type") == "frontend":
+                await _wake_linked_backend(project)
+            
             return {"status": "woken up"}
+        except HTTPException:
+            raise
         except Exception as e:
             print(f"Gateway error waking container: {e}")
             supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
@@ -276,3 +368,94 @@ async def wake_page(project_id: str):
     </html>
     """
     return HTMLResponse(content=html)
+
+
+async def _wake_linked_backend(frontend_project: dict):
+    """When a frontend wakes up, also wake its linked backend (Render-style).
+    Finds the backend from the same user + same repo and starts its container."""
+    try:
+        user_id = frontend_project.get("user_id")
+        github_url = frontend_project.get("github_url")
+        if not user_id or not github_url:
+            return
+        
+        # Find the linked backend
+        siblings = supabase.table("projects").select("*").eq(
+            "user_id", user_id
+        ).eq("github_url", github_url).eq(
+            "project_type", "backend"
+        ).eq("status", "SLEEPING").execute()
+        
+        if not siblings.data:
+            return
+        
+        backend = siblings.data[0]
+        backend_id = backend["id"]
+        container_name = f"deploy-{backend_id[:8]}"
+        backend_port = backend.get("port")
+        
+        print(f"[Gateway] Waking linked backend {container_name} for fullstack project")
+        
+        # Start the backend container
+        try:
+            container = docker_client.containers.get(container_name)
+            container.start()
+            try:
+                container.update(restart_policy={"Name": "unless-stopped"})
+            except Exception:
+                pass
+        except docker.errors.NotFound:
+            # Container was removed — try to recreate from image
+            image_name = f"{container_name}:latest"
+            try:
+                docker_client.images.get(image_name)
+            except docker.errors.ImageNotFound:
+                print(f"[Gateway] Backend image {image_name} not found. Cannot auto-wake.")
+                return
+            
+            from builder import decrypt_env_vars
+            import config as cfg
+            env_vars = decrypt_env_vars(backend_id)
+            if "PORT" not in env_vars:
+                env_vars["PORT"] = "8080"
+            
+            container_port = env_vars["PORT"]
+            try:
+                docker_client.networks.get(cfg.DOCKER_NETWORK)
+            except docker.errors.NotFound:
+                docker_client.networks.create(cfg.DOCKER_NETWORK, driver="bridge")
+            
+            container = docker_client.containers.run(
+                image=image_name,
+                detach=True,
+                ports={f"{container_port}/tcp": backend_port},
+                environment=env_vars,
+                mem_limit=cfg.CONTAINER_MEM_LIMIT_BACKEND,
+                cpu_period=cfg.CONTAINER_CPU_PERIOD,
+                cpu_quota=cfg.CONTAINER_CPU_QUOTA,
+                name=container_name,
+                network=cfg.DOCKER_NETWORK,
+                restart_policy={"Name": "unless-stopped"}
+            )
+            supabase.table("projects").update({"container_id": container.id}).eq("id", backend_id).execute()
+        
+        # Wait for backend port to be ready
+        if backend_port:
+            import socket
+            for _ in range(10):
+                await asyncio.sleep(1)
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(1)
+                    result = sock.connect_ex(('127.0.0.1', backend_port))
+                    sock.close()
+                    if result == 0:
+                        break
+                except Exception:
+                    pass
+        
+        supabase.table("projects").update({"status": "RUNNING"}).eq("id", backend_id).execute()
+        redis_client.set(f"last_active:{backend_id}", time.time())
+        print(f"[Gateway] Linked backend {container_name} is now RUNNING")
+    except Exception as e:
+        print(f"[Gateway] Error waking linked backend: {e}")

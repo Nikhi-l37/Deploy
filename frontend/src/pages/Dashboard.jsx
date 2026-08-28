@@ -39,7 +39,7 @@ export default function Dashboard({ session }) {
   
   // Terminal Logs State
   const [logs, setLogs] = useState([]);
-  const [selectedLogSessionIndex, setSelectedLogSessionIndex] = useState(0);
+
   const logsContainerRef = useRef(null);
   const userHasScrolledUp = useRef(false);
   const isProgrammaticScroll = useRef(false);
@@ -385,52 +385,9 @@ export default function Dashboard({ session }) {
     showToast("Deployment Container ID copied!", "success");
   };
 
-  // Group logs into up to 3 recent build sessions
-  const logSessions = useMemo(() => {
-    if (!logs || logs.length === 0) return [];
-    
-    const sessions = [];
-    let currentSessionLogs = [];
-    
-    for (let i = 0; i < logs.length; i++) {
-      const log = logs[i];
-      if (log.log_text && (log.log_text.includes("Starting build for") || log.log_text.includes("Cloning repository"))) {
-        if (currentSessionLogs.length > 0) {
-          sessions.push(currentSessionLogs);
-          currentSessionLogs = [];
-        }
-      }
-      currentSessionLogs.push(log);
-    }
-    if (currentSessionLogs.length > 0) {
-      sessions.push(currentSessionLogs);
-    }
 
-    const recentSessions = sessions.slice(-3).reverse();
-    return recentSessions.map((sessLogs, idx) => {
-      const isLatest = idx === 0;
-      const totalBuilds = sessions.length;
-      const buildNumber = totalBuilds - idx;
-      const hasFailed = sessLogs.some(l => l.log_text && l.log_text.toLowerCase().includes("failed"));
-      const isLive = isLatest && (selectedProject?.status === 'BUILDING' || selectedProject?.status === 'RUNNING');
-      
-      return {
-        id: `session-${buildNumber}`,
-        title: isLatest ? `Latest Run (#${buildNumber})` : `Build Run #${buildNumber}`,
-        buildNumber,
-        isLatest,
-        hasFailed,
-        isLive,
-        logs: sessLogs
-      };
-    });
-  }, [logs, selectedProject?.status]);
-
-  const displayedLogs = useMemo(() => {
-    if (logSessions.length === 0) return logs;
-    const session = logSessions[selectedLogSessionIndex] || logSessions[0];
-    return session ? session.logs : logs;
-  }, [logSessions, selectedLogSessionIndex, logs]);
+  // Just use logs directly — no session splitting needed
+  const displayedLogs = logs;
 
   return (
     <div className="flex h-screen bg-[#010409] text-[#c9d1d9] font-sans antialiased overflow-hidden selection:bg-[#238636] selection:text-white">
@@ -497,9 +454,6 @@ export default function Dashboard({ session }) {
             <LogsTab 
               selectedProject={selectedProject}
               getProjectDisplayName={getProjectDisplayName}
-              logSessions={logSessions}
-              selectedLogSessionIndex={selectedLogSessionIndex}
-              setSelectedLogSessionIndex={setSelectedLogSessionIndex}
               displayedLogs={displayedLogs}
               handleCopyLogs={handleCopyLogs}
               copiedLogs={copiedLogs}
