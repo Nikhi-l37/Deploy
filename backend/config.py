@@ -40,6 +40,7 @@ CONTAINER_CPU_QUOTA = int(os.getenv("CONTAINER_CPU_QUOTA", 50000))  # 50% of 1 C
 # ---------- URLs ----------
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 HOST_URL = os.getenv("HOST_URL", "http://localhost")
+DOCKER_NETWORK = os.getenv("DOCKER_NETWORK", "deployly-net")
 
 # ---------- Watchdog ----------
 WATCHDOG_IDLE_TIMEOUT = int(os.getenv("WATCHDOG_IDLE_TIMEOUT", 120))  # 120s (2 minutes) idle timeout

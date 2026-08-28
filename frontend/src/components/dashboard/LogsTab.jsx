@@ -4,9 +4,6 @@ import { Terminal, Copy, Check } from 'lucide-react';
 export default function LogsTab({
   selectedProject,
   getProjectDisplayName,
-  logSessions,
-  selectedLogSessionIndex,
-  setSelectedLogSessionIndex,
   displayedLogs,
   handleCopyLogs,
   copiedLogs,
@@ -44,32 +41,6 @@ export default function LogsTab({
             Logs
           </h2>
           <p className="text-xs text-[#8b949e] mt-0.5">Streaming build output and runtime container logs in real time.</p>
-        </div>
-
-        {/* Minimalist Session Switcher */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {logSessions.length === 0 ? (
-            <div className="text-xs font-mono text-[#8b949e] italic px-3 py-1.5 rounded-lg bg-[#161b22] border border-[#30363d]">
-              No build history
-            </div>
-          ) : (
-            logSessions.map((session, idx) => (
-              <button
-                key={session.id}
-                onClick={() => setSelectedLogSessionIndex(idx)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer border ${
-                  selectedLogSessionIndex === idx
-                    ? 'bg-[#21262d] text-[#f0f6fc] border-[#58a6ff]'
-                    : 'bg-[#161b22] text-[#8b949e] border-[#30363d] hover:text-[#c9d1d9] hover:bg-[#21262d]'
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  session.isLatest ? 'bg-[#3fb950]' : session.hasFailed ? 'bg-[#f85149]' : 'bg-[#8b949e]'
-                }`} />
-                <span>{session.title}</span>
-              </button>
-            ))
-          )}
         </div>
       </div>
 

@@ -169,7 +169,7 @@ async def manual_deploy(request: Request):
                 "status": "QUEUED",
                 "subdomain": subdomain,
                 "project_type": project_type,
-                "name": f"{repo_name} ({project_type.capitalize()})"
+                "name": repo_name
             }
             if root_directory:
                 project_data["root_directory"] = root_directory

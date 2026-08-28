@@ -40,15 +40,32 @@ def _watchdog_poll():
             project_id = project["id"]
             container_name = f"deploy-{project_id[:8]}"
             
-            # Frontend static Nginx apps consume negligible resources (~1MB RAM); keep them online
+            # Frontend handling:
+            # - Standalone frontends: never sleep (Nginx uses ~1MB RAM, negligible)
+            # - Fullstack frontends: DO sleep together with their backend (Render-style)
             if project.get("project_type") == "frontend":
+                # Check if this is a fullstack frontend (has a linked backend)
+                has_linked_backend = False
                 try:
-                    container = docker_client.containers.get(container_name)
-                    if container.status != "running":
-                        container.start()
+                    linked = supabase.table("projects").select("id").eq(
+                        "user_id", project.get("user_id")
+                    ).eq("github_url", project.get("github_url")).eq(
+                        "project_type", "backend"
+                    ).execute()
+                    has_linked_backend = bool(linked.data)
                 except Exception:
                     pass
-                continue
+                
+                if not has_linked_backend:
+                    # Standalone frontend — keep it alive, restart if crashed
+                    try:
+                        container = docker_client.containers.get(container_name)
+                        if container.status != "running":
+                            container.start()
+                    except Exception:
+                        pass
+                    continue
+                # Fullstack frontend — fall through to normal idle check (will sleep)
             
             # Verify container is actually running in Docker
             try:
@@ -56,25 +73,22 @@ def _watchdog_poll():
                 if container.status != "running":
                     supabase.table("projects").update({"status": "SLEEPING"}).eq("id", project_id).execute()
                     continue
+                # Detect crash loops — if container keeps restarting, mark as FAILED
+                restart_count = container.attrs.get("RestartCount", 0)
+                if restart_count > 5:
+                    print(f"[Watchdog] Project {project_id[:8]} in crash loop ({restart_count} restarts). Marking as FAILED.")
+                    container.update(restart_policy={"Name": "no"})
+                    container.stop(timeout=2)
+                    supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
+                    continue
             except Exception:
                 continue
             
-            # Check Docker network activity (catches direct port access that bypasses gateway)
-            try:
-                stats = container.stats(stream=False)
-                networks = stats.get("networks", {})
-                current_rx = sum(net.get("rx_bytes", 0) for net in networks.values())
-                
-                last_bytes_key = f"last_bytes:{project_id}"
-                prev_rx_str = redis_client.get(last_bytes_key)
-                redis_client.set(last_bytes_key, str(current_rx))
-                
-                if prev_rx_str and current_rx > int(prev_rx_str):
-                    # Container has received new network traffic — it's active!
-                    redis_client.set(f"last_active:{project_id}", current_time)
-                    continue
-            except Exception:
-                pass  # If stats fail, fall through to Redis last_active check
+            # NOTE: We removed the Docker network stats check here because it gave false
+            # positives for apps with external DB connections (MongoDB Atlas, PostgreSQL cloud, etc.)
+            # These apps constantly send heartbeat/keepalive traffic even when idle.
+            # We now rely solely on the Redis last_active timestamp, which is set by the
+            # gateway/proxy when a REAL user HTTP request arrives.
             
             # Check Redis last_active timestamp
             last_active_str = redis_client.get(f"last_active:{project_id}")
@@ -97,6 +111,5 @@ def _watchdog_poll():
                 
                 supabase.table("projects").update({"status": "SLEEPING"}).eq("id", project_id).execute()
                 redis_client.delete(f"last_active:{project_id}")
-                redis_client.delete(f"last_bytes:{project_id}")
     except Exception as e:
         print(f"[Watchdog] Error in poll: {e}")

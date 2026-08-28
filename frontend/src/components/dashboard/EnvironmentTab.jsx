@@ -1,5 +1,5 @@
-import React from 'react';
-import { Database, X, Plus, RefreshCw, Save } from 'lucide-react';
+import React, { useState } from 'react';
+import { Database, X, Plus, RefreshCw, Save, Eye, EyeOff } from 'lucide-react';
 
 export default function EnvironmentTab({
   selectedProject,
@@ -9,6 +9,12 @@ export default function EnvironmentTab({
   isSavingEnv
 }) {
   if (!selectedProject) return null;
+
+  const [visibleVars, setVisibleVars] = useState({});
+
+  const toggleVisibility = (idx) => {
+    setVisibleVars(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
@@ -25,8 +31,8 @@ export default function EnvironmentTab({
       <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-[#30363d] bg-[#21262d] text-xs font-bold text-[#8b949e] uppercase tracking-wider">
           <div className="col-span-5">Key Name</div>
-          <div className="col-span-6">Encrypted Value</div>
-          <div className="col-span-1 text-center"></div>
+          <div className="col-span-5">Encrypted Value</div>
+          <div className="col-span-2 text-center"></div>
         </div>
         
         <div className="p-5 space-y-3">
@@ -45,9 +51,9 @@ export default function EnvironmentTab({
                   className="input-field font-mono text-xs py-2 px-3"
                 />
               </div>
-              <div className="col-span-6">
+              <div className="col-span-5 relative">
                 <input 
-                  type="password" 
+                  type={visibleVars[idx] ? "text" : "password"} 
                   value={ev.value}
                   onChange={(e) => {
                     const newVars = [...envVars];
@@ -55,10 +61,18 @@ export default function EnvironmentTab({
                     setEnvVars(newVars);
                   }}
                   placeholder="••••••••••••"
-                  className="input-field font-mono text-xs py-2 px-3"
+                  className="input-field font-mono text-xs py-2 px-3 pr-9 w-full"
                 />
+                <button
+                  type="button"
+                  onClick={() => toggleVisibility(idx)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#8b949e] hover:text-[#58a6ff] transition-colors cursor-pointer"
+                  title={visibleVars[idx] ? "Hide value" : "Show value"}
+                >
+                  {visibleVars[idx] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
               </div>
-              <div className="col-span-1 flex justify-center">
+              <div className="col-span-2 flex justify-center">
                 <button 
                   onClick={() => {
                     const newVars = envVars.filter((_, i) => i !== idx);
