@@ -128,6 +128,7 @@ async def manual_deploy(request: Request):
             
             if existing.count == 1:
                 existing_type = existing_types[0]
+                existing_url = existing.data[0].get("github_url", "")
                 if existing_type == "fullstack":
                     raise HTTPException(
                         status_code=403,
@@ -138,10 +139,13 @@ async def manual_deploy(request: Request):
                         status_code=403,
                         detail=f"Cannot deploy fullstack — you already have a {existing_type} project. Delete it first, or deploy a {'frontend' if existing_type == 'backend' else 'backend'} instead."
                     )
+                # Allow complementary types (backend + frontend)
+                # Block duplicate types
                 if project_type == existing_type:
+                    other_type = 'frontend' if existing_type == 'backend' else 'backend'
                     raise HTTPException(
                         status_code=403,
-                        detail=f"You already have a {existing_type} project. You can deploy a {'frontend' if existing_type == 'backend' else 'backend'} instead."
+                        detail=f"You already have a {existing_type} project. You can deploy a {other_type} instead."
                     )
             
             # Extract optional fields
