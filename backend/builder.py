@@ -69,16 +69,50 @@ def update_status(project_id: str, status: str, extra_data: dict = None):
 
 def get_free_port(project_id: str) -> int:
     """Finds a free port and assigns it to the project, using a Redis lock to prevent race conditions."""
+    import socket
     lock = redis_client.lock("lock:port_allocation", timeout=10)
     if not lock.acquire(blocking=True, blocking_timeout=5):
         raise Exception("Could not acquire port allocation lock. Try again.")
     try:
-        res = supabase.table("port_registry").select("port").eq("in_use", False).limit(1).execute()
+        res = supabase.table("port_registry").select("port").eq("in_use", False).order("port").execute()
         if not res.data:
             raise Exception("No free ports available on the platform.")
-        port = res.data[0]["port"]
-        supabase.table("port_registry").update({"in_use": True, "project_id": project_id}).eq("port", port).execute()
-        return port
+        
+        for row in res.data:
+            port = row["port"]
+            # Verify the port is ACTUALLY free on the host (no zombie container)
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
+                result = sock.connect_ex(('127.0.0.1', port))
+                sock.close()
+                if result == 0:
+                    # Port is occupied by something — try to kill the zombie container
+                    try:
+                        for c in docker_client.containers.list(all=True):
+                            port_bindings = c.attrs.get("HostConfig", {}).get("PortBindings", {}) or {}
+                            for bindings in port_bindings.values():
+                                if bindings and any(b.get("HostPort") == str(port) for b in bindings):
+                                    print(f"[Port] Removing zombie container {c.name} on port {port}")
+                                    c.stop(timeout=1)
+                                    c.remove(force=True)
+                    except Exception:
+                        pass
+                    # Re-check if we freed it
+                    sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock2.settimeout(1)
+                    result2 = sock2.connect_ex(('127.0.0.1', port))
+                    sock2.close()
+                    if result2 == 0:
+                        continue  # Still occupied, skip this port
+            except Exception:
+                pass
+            
+            # Port is free — assign it
+            supabase.table("port_registry").update({"in_use": True, "project_id": project_id}).eq("port", port).execute()
+            return port
+        
+        raise Exception("All ports are occupied. Try deleting unused projects.")
     finally:
         lock.release()
 
@@ -105,8 +139,8 @@ def force_remove_readonly(func, path, excinfo):
 # =============================================================================
 
 FRONTEND_ENTRYPOINT = """#!/bin/sh
-if [ -n "$VITE_API_URL" ]; then
-  echo "Smart API proxy enabled -> $VITE_API_URL"
+if [ -n "$BACKEND_PROXY_URL" ]; then
+  echo "Smart API proxy enabled -> $BACKEND_PROXY_URL"
   cat > /etc/nginx/conf.d/default.conf << 'CONFEOF'
 server {
   listen 8080;
@@ -137,7 +171,7 @@ server {
   location @backend {
     # Resolve at request time (not startup) using Docker's internal DNS
     resolver 127.0.0.11 valid=10s ipv6=off;
-    set $backend_url VITE_API_URL_PLACEHOLDER;
+    set $backend_url BACKEND_PROXY_PLACEHOLDER;
     proxy_pass $backend_url;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -151,7 +185,7 @@ server {
   }
 }
 CONFEOF
-  sed -i "s|VITE_API_URL_PLACEHOLDER|$VITE_API_URL|g" /etc/nginx/conf.d/default.conf
+  sed -i "s|BACKEND_PROXY_PLACEHOLDER|$BACKEND_PROXY_URL|g" /etc/nginx/conf.d/default.conf
 else
   echo 'server { listen 8080; root /usr/share/nginx/html; location /assets/ { expires 1y; add_header Cache-Control "public, immutable"; } location / { try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
 fi
@@ -195,10 +229,10 @@ def run_pipeline(project_id: str):
             
         push_log(project_id, "Cloning repository...")
         branch = project.get("branch") or "main"
-        result = subprocess.run(["git", "clone", "--depth", "1", "-b", branch, github_url, repo_path], capture_output=True, text=True, timeout=120)
+        result = subprocess.run(["git", "clone", "--depth", "1", "-b", branch, github_url, repo_path], capture_output=True, text=True, timeout=300)
         if result.returncode != 0:
             # Retry without -b flag in case the branch doesn't exist (use default branch)
-            result = subprocess.run(["git", "clone", "--depth", "1", github_url, repo_path], capture_output=True, text=True, timeout=120)
+            result = subprocess.run(["git", "clone", "--depth", "1", github_url, repo_path], capture_output=True, text=True, timeout=300)
         if result.returncode != 0:
             raise Exception(f"Git clone failed: {result.stderr}")
         
@@ -219,13 +253,21 @@ def run_pipeline(project_id: str):
         env_vars = decrypt_env_vars(project_id)
         build_args = {}
         
-        # Auto-inject VITE_API_URL for fullstack frontend projects
-        # If this is a frontend and no VITE_API_URL is set, find the backend from same user+repo
-        if project.get("project_type") == "frontend" and "VITE_API_URL" not in env_vars:
-            _auto_link_backend(project_id, project, env_vars)
+        # Auto-inject API URL for fullstack frontend projects
+        # Scans source code to find the actual VITE env var name (VITE_API_URL, VITE_API_BASE_URL, etc.)
+        if project.get("project_type") == "frontend":
+            _auto_link_backend(project_id, project, env_vars, build_path)
         
         if lang != "dockerfile":
             generate_dockerfile(project_id, build_path, lang, env_vars, build_args, push_log)
+        else:
+            # Project has its own Dockerfile — still pass VITE_/REACT_APP_/NEXT_PUBLIC_ as build args
+            # These are needed for frameworks that bake env vars at build time (Vite, CRA, Next.js)
+            for k, v in env_vars.items():
+                if k.startswith(('VITE_', 'REACT_APP_', 'NEXT_PUBLIC_')):
+                    build_args[k] = v
+            if build_args:
+                push_log(project_id, f"Injected build-time env vars: {list(build_args.keys())}")
 
         # Auto-generate .dockerignore to speed up builds and reduce image size
         dockerignore_path = os.path.join(build_path, ".dockerignore")
@@ -326,6 +368,7 @@ def run_pipeline(project_id: str):
                             if exposed and exposed.isdigit():
                                 if not user_set_port:
                                     container_port = exposed
+                                    env_vars["PORT"] = exposed  # Sync so app listens on the same port Docker maps to
                                     push_log(project_id, f"Detected EXPOSE {container_port} from Dockerfile")
                                 else:
                                     push_log(project_id, f"Dockerfile EXPOSE {exposed} ignored (user PORT={container_port} takes priority)")
@@ -424,9 +467,11 @@ def run_pipeline(project_id: str):
             push_log(project_id, "Cleaned up temporary build files.")
 
 
-def _auto_link_backend(project_id, project, env_vars):
-    """Auto-inject VITE_API_URL for fullstack frontend projects.
-    Finds the backend project from the same user+repo and links via Docker network."""
+def _auto_link_backend(project_id, project, env_vars, build_path):
+    """Auto-inject the correct VITE_*API* env var for fullstack frontend projects.
+    Sets browser-accessible URL for VITE vars and Docker network URL for Nginx proxy."""
+    import re
+    import glob
     try:
         user_id = project.get("user_id")
         github_url_normalized = project.get("github_url", "")
@@ -434,34 +479,110 @@ def _auto_link_backend(project_id, project, env_vars):
             "user_id", user_id
         ).eq("github_url", github_url_normalized).neq(
             "id", project_id
-        ).execute()  # No status filter — container name is deterministic regardless of current status
+        ).execute()
         
         backend_project = None
-        for sib in siblings.data:
-            if sib.get("project_type") == "backend":
-                backend_project = sib
-                break
+        # Prefer RUNNING backends, then most recently created
+        running_backends = [s for s in siblings.data if s.get("project_type") == "backend" and s.get("status") in ("RUNNING", "BUILDING", "SLEEPING")]
+        all_backends = [s for s in siblings.data if s.get("project_type") == "backend"]
         
-        if backend_project:
-            # Use Docker network name — the Nginx proxy runs INSIDE the frontend container
-            # so it needs container-to-container communication, not localhost
-            backend_container = f"deploy-{backend_project['id'][:8]}"
-            backend_env = decrypt_env_vars(backend_project["id"])
-            internal_port = backend_env.get("PORT", "8080")
-            vite_url = f"http://{backend_container}:{internal_port}"
-            env_vars["VITE_API_URL"] = vite_url
-            push_log(project_id, f"Auto-linked to backend: {vite_url}")
-            
-            # Also save it to DB so user can see it in the dashboard
-            f_enc = fernet.encrypt(vite_url.encode()).decode()
+        candidates = running_backends if running_backends else all_backends
+        if candidates:
+            # Pick the most recently created one
+            candidates.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            backend_project = candidates[0]
+        
+        if not backend_project:
+            return
+        
+        # Detect the actual internal port the backend listens on
+        backend_container_name = f"deploy-{backend_project['id'][:8]}"
+        backend_host_port = backend_project.get("port")  # Host port (e.g., 8001)
+        backend_env = decrypt_env_vars(backend_project["id"])
+        internal_port = backend_env.get("PORT", "8080")
+        
+        # Also check the actual Docker container port mapping
+        try:
+            bc = docker_client.containers.get(backend_container_name)
+            exposed_ports = bc.attrs.get("Config", {}).get("ExposedPorts", {})
+            if exposed_ports:
+                # Use the first exposed port (e.g., "80/tcp" -> 80)
+                first_port = list(exposed_ports.keys())[0].split("/")[0]
+                internal_port = first_port
+        except Exception:
+            pass
+        
+        # Browser-accessible URL (for VITE vars baked into JS)
+        browser_url = f"{config.HOST_URL}:{backend_host_port}" if backend_host_port else f"http://{backend_container_name}:{internal_port}"
+        
+        # Docker network URL (for Nginx proxy inside the container)
+        docker_url = f"http://{backend_container_name}:{internal_port}"
+        
+        # Scan source code to find the actual VITE env var name
+        # Look for patterns like: import.meta.env.VITE_API_BASE_URL, process.env.VITE_API_URL, etc.
+        detected_var_names = set()
+        api_var_pattern = re.compile(r'import\.meta\.env\.(VITE_[A-Z_]*(?:API|BACKEND|SERVER|BASE)[A-Z_]*URL[A-Z_]*)')
+        
+        search_extensions = ["*.js", "*.jsx", "*.ts", "*.tsx", "*.vue", "*.svelte"]
+        for ext in search_extensions:
+            for filepath in glob.glob(os.path.join(build_path, "src", "**", ext), recursive=True):
+                try:
+                    with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                        content = f.read()
+                    matches = api_var_pattern.findall(content)
+                    detected_var_names.update(matches)
+                except Exception:
+                    pass
+        
+        # Also check root-level files (api.js, config.js, etc.)
+        for ext in search_extensions:
+            for filepath in glob.glob(os.path.join(build_path, ext)):
+                try:
+                    with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                        content = f.read()
+                    matches = api_var_pattern.findall(content)
+                    detected_var_names.update(matches)
+                except Exception:
+                    pass
+        
+        # Use detected names, or fall back to VITE_API_URL
+        if not detected_var_names:
+            detected_var_names = {"VITE_API_URL"}
+        
+        # Filter out any that the user already set manually
+        var_names_to_set = [name for name in detected_var_names if name not in env_vars]
+        
+        if not var_names_to_set:
+            push_log(project_id, f"API URL already set by user: {list(detected_var_names)}")
+            return
+        
+        # Clean up old auto-linked env vars from previous deploys
+        for var_name in var_names_to_set:
             try:
+                supabase.table("env_vars").delete().eq("project_id", project_id).eq("key_name", var_name).execute()
+            except Exception:
+                pass
+        
+        # Set VITE vars to browser-accessible URL
+        for var_name in var_names_to_set:
+            env_vars[var_name] = browser_url
+            # Save to DB so user can see it in the dashboard
+            try:
+                f_enc = fernet.encrypt(browser_url.encode()).decode()
                 supabase.table("env_vars").insert({
                     "project_id": project_id,
-                    "key_name": "VITE_API_URL",
+                    "key_name": var_name,
                     "value_enc": f_enc
                 }).execute()
             except Exception:
                 pass
+        
+        # Also set BACKEND_PROXY_URL for our Nginx smart proxy (Docker network)
+        env_vars["BACKEND_PROXY_URL"] = docker_url
+        
+        push_log(project_id, f"Auto-linked to backend: {browser_url} (proxy: {docker_url})")
+        push_log(project_id, f"Set env vars: {var_names_to_set}")
+        
     except Exception as link_err:
         push_log(project_id, f"Warning: Could not auto-link backend: {link_err}")
 

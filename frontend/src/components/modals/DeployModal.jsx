@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { 
   Activity, Code, Layers, AlertCircle, AlertTriangle, Info, 
-  Globe, Folder, Play, Database, Plus, RefreshCw, X, GitBranch, Lock 
+  Globe, Folder, Play, Database, Plus, RefreshCw, X, GitBranch, Lock,
+  Upload, FileText
 } from 'lucide-react';
 import { isValidGithubUrl } from '../../utils/helpers';
 
@@ -56,6 +57,10 @@ export default function DeployModal({
     return { allowed: ['backend', 'frontend', 'fullstack'], warning: null };
   }, [projects]);
 
+  // Track paste box visibility per section (must be before early return)
+  const [pasteBoxes, setPasteBoxes] = useState({});
+  const [pasteContents, setPasteContents] = useState({});
+
   if (!showModal) return null;
 
   const handleClose = () => {
@@ -73,53 +78,153 @@ export default function DeployModal({
     });
   };
 
-  const renderEnvSection = (envVars, setEnvVars, label = '') => (
-    <div className="space-y-2">
-      {envVars.map((env, i) => (
-        <div key={i} className="flex gap-2 items-center">
+  // Parse .env file content into key-value pairs
+  const parseEnvContent = (content) => {
+    const vars = [];
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('//')) continue;
+      const eqIndex = trimmed.indexOf('=');
+      if (eqIndex === -1) continue;
+      const key = trimmed.substring(0, eqIndex).trim();
+      let value = trimmed.substring(eqIndex + 1).trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      if (key) vars.push({ key, value });
+    }
+    return vars;
+  };
+
+  const mergeEnvVars = (newVars, existing, setEnvVars) => {
+    const merged = [...existing].filter(ev => ev.key);
+    const existingKeys = new Set(merged.map(ev => ev.key));
+    for (const nv of newVars) {
+      if (existingKeys.has(nv.key)) {
+        const idx = merged.findIndex(ev => ev.key === nv.key);
+        merged[idx].value = nv.value;
+      } else {
+        merged.push(nv);
+      }
+    }
+    setEnvVars(merged.length ? merged : [{ key: '', value: '' }]);
+  };
+
+  const renderEnvSection = (envVars, setEnvVars, sectionId = 'default') => {
+    const fileInputRef = React.createRef();
+
+    const handleFileUpload = (file) => {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const parsed = parseEnvContent(e.target.result);
+        if (parsed.length > 0) mergeEnvVars(parsed, envVars, setEnvVars);
+      };
+      reader.readAsText(file);
+    };
+
+    return (
+      <div className="space-y-2">
+        {/* .env file upload area */}
+        <div
+          onDrop={(e) => { e.preventDefault(); handleFileUpload(e.dataTransfer.files[0]); }}
+          onDragOver={(e) => e.preventDefault()}
+          onClick={() => fileInputRef.current?.click()}
+          className="border border-dashed border-[#30363d] hover:border-[#58a6ff]/50 rounded-lg p-2.5 text-center transition-all cursor-pointer bg-[#0d1117]/50"
+        >
           <input
-            type="text"
-            placeholder="KEY"
-            value={env.key}
-            onChange={(e) => {
-              const updated = [...envVars];
-              updated[i].key = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
-              setEnvVars(updated);
-            }}
-            className="input-field flex-1 font-mono text-xs py-2 px-3"
+            ref={fileInputRef}
+            type="file"
+            accept=".env,.env.local,.env.production,.txt"
+            className="hidden"
+            onChange={(e) => { handleFileUpload(e.target.files[0]); e.target.value = ''; }}
           />
-          <input
-            type="password"
-            placeholder="Value"
-            value={env.value}
-            onChange={(e) => {
-              const updated = [...envVars];
-              updated[i].value = e.target.value;
-              setEnvVars(updated);
-            }}
-            className="input-field flex-1 font-mono text-xs py-2 px-3"
-          />
+          <div className="flex items-center justify-center gap-2">
+            <Upload className="w-3.5 h-3.5 text-[#8b949e]" />
+            <span className="text-[11px] text-[#8b949e]">Drop .env file or click to upload</span>
+          </div>
+        </div>
+
+        {envVars.map((env, i) => (
+          <div key={i} className="flex gap-2 items-center">
+            <input
+              type="text"
+              placeholder="KEY"
+              value={env.key}
+              onChange={(e) => {
+                const updated = [...envVars];
+                updated[i].key = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                setEnvVars(updated);
+              }}
+              className="input-field flex-1 font-mono text-xs py-2 px-3"
+            />
+            <input
+              type="password"
+              placeholder="Value"
+              value={env.value}
+              onChange={(e) => {
+                const updated = [...envVars];
+                updated[i].value = e.target.value;
+                setEnvVars(updated);
+              }}
+              className="input-field flex-1 font-mono text-xs py-2 px-3"
+            />
+            <button 
+              type="button" 
+              onClick={() => {
+                const updated = envVars.filter((_, idx) => idx !== i);
+                setEnvVars(updated.length ? updated : [{ key: '', value: '' }]);
+              }} 
+              className="text-[#8b949e] hover:text-[#f85149] p-1.5 rounded hover:bg-[#30363d] transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+
+        {/* Paste .env content */}
+        {pasteBoxes[sectionId] && (
+          <div className="space-y-2">
+            <textarea
+              value={pasteContents[sectionId] || ''}
+              onChange={(e) => setPasteContents(prev => ({ ...prev, [sectionId]: e.target.value }))}
+              placeholder={"# Paste .env content\nDATABASE_URL=postgres://...\nJWT_SECRET=mysecret"}
+              className="w-full h-24 bg-[#0d1117] border border-[#30363d] rounded-lg p-2.5 text-xs font-mono text-[#c9d1d9] placeholder-[#484f58] focus:border-[#58a6ff] focus:outline-none resize-none"
+            />
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setPasteBoxes(prev => ({ ...prev, [sectionId]: false }))}
+                className="text-xs text-[#8b949e] hover:text-[#c9d1d9] px-2 py-1 cursor-pointer">Cancel</button>
+              <button type="button" onClick={() => {
+                const parsed = parseEnvContent(pasteContents[sectionId] || '');
+                if (parsed.length > 0) mergeEnvVars(parsed, envVars, setEnvVars);
+                setPasteBoxes(prev => ({ ...prev, [sectionId]: false }));
+                setPasteContents(prev => ({ ...prev, [sectionId]: '' }));
+              }} className="text-xs bg-[#238636] hover:bg-[#2ea043] text-white px-3 py-1 rounded font-semibold cursor-pointer">
+                Add Variables
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
           <button 
             type="button" 
-            onClick={() => {
-              const updated = envVars.filter((_, idx) => idx !== i);
-              setEnvVars(updated.length ? updated : [{ key: '', value: '' }]);
-            }} 
-            className="text-[#8b949e] hover:text-[#f85149] p-1.5 rounded hover:bg-[#30363d] transition-colors cursor-pointer"
+            onClick={() => setEnvVars([...envVars, { key: '', value: '' }])}
+            className="text-xs text-[#58a6ff] hover:text-[#79c0ff] font-semibold flex items-center gap-1.5 mt-1 cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" /> Add Variable
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setPasteBoxes(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))}
+            className="text-xs text-[#58a6ff] hover:text-[#79c0ff] font-semibold flex items-center gap-1.5 mt-1 cursor-pointer"
+          >
+            <FileText className="w-3.5 h-3.5" /> Paste .env
           </button>
         </div>
-      ))}
-      <button 
-        type="button" 
-        onClick={() => setEnvVars([...envVars, { key: '', value: '' }])}
-        className="text-xs text-[#58a6ff] hover:text-[#79c0ff] font-semibold flex items-center gap-1.5 mt-1 cursor-pointer"
-      >
-        <Plus className="w-3.5 h-3.5" /> Add Variable
-      </button>
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 bg-[#010409]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-200 animate-fade-in">
@@ -349,7 +454,7 @@ export default function DeployModal({
                     <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">
                       <Database className="w-3.5 h-3.5 text-[#bc8cff]" /> Environment Variables
                     </label>
-                    {renderEnvSection(fsBackendEnv, setFsBackendEnv)}
+                    {renderEnvSection(fsBackendEnv, setFsBackendEnv, 'fs-backend')}
                   </div>
                 </div>
               </div>
@@ -394,7 +499,7 @@ export default function DeployModal({
                     <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">
                       <Database className="w-3.5 h-3.5 text-[#bc8cff]" /> Environment Variables
                     </label>
-                    {renderEnvSection(fsFrontendEnv, setFsFrontendEnv)}
+                    {renderEnvSection(fsFrontendEnv, setFsFrontendEnv, 'fs-frontend')}
                   </div>
                 </div>
               </div>
@@ -500,7 +605,7 @@ export default function DeployModal({
                   </label>
                   <span className="text-[11px] text-[#8b949e]">Encrypted Fernet AES</span>
                 </div>
-                {renderEnvSection(newEnvVars, setNewEnvVars)}
+                {renderEnvSection(newEnvVars, setNewEnvVars, 'single')}
               </div>
             </div>
 
