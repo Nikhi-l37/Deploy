@@ -48,7 +48,88 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     container_name = f"deploy-{real_id[:8]}"
     
     if status == "SLEEPING":
-        print(f"[Auto-Wake Proxy] Incoming request for sleeping project {project_id[:8]}. Waking container up...")
+        # For browser GET requests: show a nice wake-up animation page
+        accept = request.headers.get("accept", "")
+        if request.method == "GET" and "text/html" in accept:
+            service_url = f"/service/{project_id}/{path}"
+            if request.url.query:
+                service_url += f"?{request.url.query}"
+            wake_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waking Up - Deployat</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #090d16;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }}
+        .card {{
+            background: #111827;
+            border: 1px solid #1f293d;
+            border-radius: 20px;
+            padding: 48px 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+        }}
+        .spinner {{
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            border: 3px solid #1e293b;
+            border-top-color: #8b5cf6;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 28px;
+        }}
+        @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+        h1 {{ font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #fff; }}
+        .subtitle {{ color: #64748b; font-size: 14px; margin-bottom: 28px; }}
+        .status-text {{ font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a78bfa; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="spinner"></div>
+        <h1>Waking up application...</h1>
+        <p class="subtitle">Your app was sleeping to save resources. Starting it now!</p>
+        <p id="status" class="status-text">Booting container...</p>
+    </div>
+    <script>
+        async function wake() {{
+            try {{
+                const res = await fetch('/gateway/{real_id}');
+                const data = await res.json();
+                if (data.status === 'woken up' || data.status === 'ok') {{
+                    document.getElementById('status').textContent = 'Ready! Redirecting...';
+                    setTimeout(() => window.location.href = '{service_url}', 800);
+                }} else {{
+                    document.getElementById('status').textContent = 'Starting up... retrying';
+                    setTimeout(wake, 2000);
+                }}
+            }} catch (e) {{
+                document.getElementById('status').textContent = 'Retrying...';
+                setTimeout(wake, 2000);
+            }}
+        }}
+        wake();
+    </script>
+</body>
+</html>"""
+            return HTMLResponse(content=wake_html)
+
+        # For API calls: blocking wake (wait for container to be ready)
+        print(f"[Auto-Wake Proxy] Incoming API request for sleeping project {project_id[:8]}. Waking container up...")
         try:
             # Try to start the existing container
             try:
@@ -59,7 +140,7 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
                 except Exception:
                     pass
             except docker.errors.NotFound:
-                # Container was removed — recreate from image
+                # Container was removed - recreate from image
                 print(f"[Auto-Wake Proxy] Container {container_name} missing. Recreating...")
                 image_name = f"{container_name}:latest"
                 try:
@@ -123,6 +204,7 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     forward_headers = {k: v for k, v in request.headers.items() if k.lower() not in excluded_headers}
     
     # Retry the proxy request (container may still be warming up)
+    base_prefix = f"/service/{project_id}"
     last_error = None
     for retry in range(3):
         try:
@@ -141,11 +223,55 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
                 if k.lower() not in {"content-encoding", "transfer-encoding", "content-length"}:
                     res_headers[k] = v
             
+            content = proxy_res.content
+            content_type = proxy_res.headers.get("content-type", "")
+            content_encoding = proxy_res.headers.get("content-encoding", "")
+            
+            # Rewrite HTML responses: prefix absolute paths with /service/{id}
+            # so /assets/index.js becomes /service/{id}/assets/index.js
+            if "text/html" in content_type:
+                # Decompress if needed (container might gzip even without accept-encoding)
+                raw = content
+                if content_encoding == "gzip":
+                    import gzip
+                    try:
+                        raw = gzip.decompress(content)
+                    except Exception:
+                        pass
+                elif content_encoding == "br":
+                    try:
+                        import brotli
+                        raw = brotli.decompress(content)
+                    except Exception:
+                        pass
+                
+                html = raw.decode("utf-8", errors="replace")
+                print(f"[Service Proxy] Rewriting HTML for {project_id} (len={len(html)}, encoding={content_encoding})")
+                
+                # Replace absolute paths in HTML attributes (both quote styles)
+                for attr in ['src="/', 'href="/', 'action="/']:
+                    html = html.replace(attr, attr[:-1] + base_prefix + '/')
+                for attr in ["src='/", "href='/", "action='/"]:
+                    html = html.replace(attr, attr[:-1] + base_prefix + '/')
+                # Fix protocol-relative URLs we accidentally rewrote
+                html = html.replace(f'{base_prefix}//', '//')
+                
+                content = html.encode("utf-8")
+                # Remove content-encoding since we decompressed
+                res_headers.pop("content-encoding", None)
+            
+            # Prevent browser from caching proxied HTML (causes stale pages when sleeping)
+            if "text/html" in content_type:
+                res_headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                res_headers["Pragma"] = "no-cache"
+            else:
+                print(f"[Service Proxy] Non-HTML response for {project_id}/{path}: {content_type}")
+            
             return Response(
-                content=proxy_res.content,
+                content=content,
                 status_code=proxy_res.status_code,
                 headers=res_headers,
-                media_type=proxy_res.headers.get("content-type")
+                media_type=content_type
             )
         except httpx.ConnectError as e:
             last_error = e
@@ -155,6 +281,38 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
             raise HTTPException(status_code=500, detail=f"Proxy error: {str(e)}")
     
     raise HTTPException(status_code=502, detail="Application is starting or port is unreachable. Try again in a few seconds.")
+
+
+# ---------- ASSET FALLBACK (catches /assets/* requests without /service/ prefix) ----------
+
+@router.get("/assets/{path:path}")
+@router.get("/vite.svg")
+@router.get("/favicon.ico")
+async def asset_fallback(request: Request, path: str = ""):
+    """Catches asset requests that browsers make with absolute paths.
+    Uses the Referer header to determine which project to proxy to.
+    
+    Example: Browser loads /service/3dc9d5d8/, HTML has <script src="/assets/index.js">
+    Browser requests /assets/index.js (without /service/ prefix).
+    We check Referer: http://localhost:8000/service/3dc9d5d8/ -> redirect to /service/3dc9d5d8/assets/index.js
+    """
+    import re as re_mod
+    from fastapi.responses import RedirectResponse
+    
+    referer = request.headers.get("referer", "")
+    match = re_mod.search(r'/service/([a-f0-9-]+)', referer)
+    
+    if match:
+        project_short_id = match.group(1)
+        # Reconstruct the full path
+        full_path = request.url.path
+        redirect_url = f"/service/{project_short_id}{full_path}"
+        if request.url.query:
+            redirect_url += f"?{request.url.query}"
+        print(f"[Asset Fallback] Redirecting {full_path} -> {redirect_url}")
+        return RedirectResponse(url=redirect_url, status_code=307)
+    
+    raise HTTPException(status_code=404, detail="Not found")
 
 
 # ---------- GATEWAY & WAKE SCREEN ----------

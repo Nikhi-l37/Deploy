@@ -154,12 +154,12 @@ export default function OverviewTab({
               </a>
             ) : isSleeping && selectedProject.port ? (
               <a
-                href={`${BACKEND_URL}/wake-page/${selectedProject.id}`}
+                href={getAppUrl(selectedProject)}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 bg-[#8957e5] hover:bg-[#7a49db] text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 shadow-sm"
               >
-                <span>Wake App</span>
+                <span>Wake & Visit App</span>
               </a>
             ) : null}
           </div>

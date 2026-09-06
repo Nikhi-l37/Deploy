@@ -303,6 +303,21 @@ def run_pipeline(project_id: str):
             errors='replace',
             bufsize=1
         )
+        
+        # Background timer: kill the build if it exceeds 10 minutes
+        # This handles the case where stdout blocks forever (e.g., npm install hangs on network drop)
+        build_timeout = 600  # 10 minutes
+        build_killed = [False]
+        def _kill_on_timeout():
+            time.sleep(build_timeout)
+            if process.poll() is None:  # Still running
+                build_killed[0] = True
+                process.kill()
+        
+        import threading as _threading
+        timer = _threading.Thread(target=_kill_on_timeout, daemon=True)
+        timer.start()
+        
         last_log_time = 0
         try:
             for line in process.stdout:
@@ -318,11 +333,9 @@ def run_pipeline(project_id: str):
             if process.stdout:
                 process.stdout.close()
                 
-        try:
-            return_code = process.wait(timeout=600)  # 10 minute build timeout
-        except subprocess.TimeoutExpired:
-            process.kill()
-            raise Exception("Docker build timed out after 10 minutes. Check for infinite loops in build scripts.")
+        return_code = process.wait()
+        if build_killed[0]:
+            raise Exception("Docker build timed out after 10 minutes. Possible network issue during npm install.")
         if return_code != 0:
             raise Exception(f"Docker build failed with exit code {return_code}")
         
