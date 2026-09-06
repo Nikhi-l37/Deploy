@@ -66,6 +66,33 @@ app.include_router(logs.router)
 app.include_router(env_vars.router)
 app.include_router(gateway.router)
 
+# ---------- SPA CATCH-ALL FALLBACK ----------
+# Must be LAST — catches SPA routes (e.g., /retention, /about) when user refreshes.
+# These are client-side React Router paths that don't exist in FastAPI.
+# Uses the Referer header to redirect back to /service/{id}/{path}.
+from fastapi import Request
+from fastapi.responses import RedirectResponse, JSONResponse
+import re as _re
+
+@app.api_route("/{path:path}", methods=["GET"], include_in_schema=False)
+async def spa_catch_all(path: str, request: Request):
+    # Skip API-like paths (they should return proper 404, not redirect)
+    if path.startswith(("api/", "docs", "openapi", "webhook", "projects", "logs", "env-vars")):
+        return JSONResponse(status_code=404, content={"detail": "Not found"})
+    
+    referer = request.headers.get("referer", "")
+    match = _re.search(r'/service/([a-f0-9-]+)', referer)
+    
+    if match:
+        project_short_id = match.group(1)
+        redirect_url = f"/service/{project_short_id}/{path}"
+        if request.url.query:
+            redirect_url += f"?{request.url.query}"
+        print(f"[SPA Fallback] Redirecting /{path} -> {redirect_url}")
+        return RedirectResponse(url=redirect_url, status_code=307)
+    
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=config.PORT, reload=True)

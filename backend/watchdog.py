@@ -15,7 +15,7 @@ docker_client = docker.from_env()
 async def watchdog_task():
     """Background task to pause idle containers.
     
-    Monitors Redis last_active timestamps.
+    Monitors Redis last_active timestamps set by the /service/ proxy.
     When a container has had no user traffic for WATCHDOG_IDLE_TIMEOUT,
     it is safely stopped and marked as SLEEPING in Supabase.
     """
@@ -28,6 +28,60 @@ async def watchdog_task():
             print(f"[Watchdog] Exception in poll loop: {e}")
             
         await asyncio.sleep(config.WATCHDOG_POLL_INTERVAL)
+
+def _has_inbound_connections(container_name):
+    """Check if a container has INBOUND TCP connections from users.
+    
+    Only counts connections TO the app's LISTEN port (user HTTP requests).
+    Ignores OUTBOUND connections FROM the app (database heartbeats to MongoDB/PostgreSQL).
+    
+    netstat example:
+      tcp  0.0.0.0:3001  0.0.0.0:*          LISTEN      ← app listening
+      tcp  172.18.0.3:3001  172.18.0.1:50678  ESTABLISHED ← INBOUND (user request) ✅
+      tcp  172.18.0.3:45678  54.83.23.8:27017  ESTABLISHED ← OUTBOUND (MongoDB) ❌
+    """
+    try:
+        result = docker_client.containers.get(container_name).exec_run(
+            "sh -c 'netstat -tn 2>/dev/null || ss -tn 2>/dev/null'",
+            demux=True
+        )
+        stdout = result.output[0]
+        if not stdout:
+            return False
+        output = stdout.decode("utf-8", errors="ignore")
+        lines = output.splitlines()
+        
+        # Step 1: Find which ports the app is LISTENing on
+        listen_ports = set()
+        for line in lines:
+            if "LISTEN" in line:
+                parts = line.split()
+                for part in parts:
+                    if ":" in part:
+                        port = part.rsplit(":", 1)[-1]
+                        if port.isdigit():
+                            listen_ports.add(port)
+                        break
+        
+        if not listen_ports:
+            return False
+        
+        # Step 2: Count ESTABLISHED connections where LOCAL port = LISTEN port (inbound)
+        for line in lines:
+            if "ESTAB" in line:
+                parts = line.split()
+                # Local address is typically the 4th column in netstat, 4th in ss
+                for i, part in enumerate(parts):
+                    if ":" in part and i < len(parts) - 1:
+                        local_port = part.rsplit(":", 1)[-1]
+                        if local_port in listen_ports:
+                            return True  # Found an inbound user connection
+                        break
+        
+        return False
+    except Exception:
+        return False
+
 
 def _watchdog_poll():
     """Synchronous poll function — runs in a thread to avoid blocking the event loop."""
@@ -42,21 +96,21 @@ def _watchdog_poll():
             
             # Frontend handling:
             # - Standalone frontends: never sleep (Nginx uses ~1MB RAM, negligible)
-            # - Fullstack frontends: DO sleep together with their backend (Render-style)
+            # - Fullstack frontends: sleep only when BOTH are idle
             if project.get("project_type") == "frontend":
-                # Check if this is a fullstack frontend (has a linked backend)
-                has_linked_backend = False
+                linked_backend = None
                 try:
-                    linked = supabase.table("projects").select("id").eq(
+                    linked = supabase.table("projects").select("id, status").eq(
                         "user_id", project.get("user_id")
                     ).eq("github_url", project.get("github_url")).eq(
                         "project_type", "backend"
                     ).execute()
-                    has_linked_backend = bool(linked.data)
+                    if linked.data:
+                        linked_backend = linked.data[0]
                 except Exception:
                     pass
                 
-                if not has_linked_backend:
+                if not linked_backend:
                     # Standalone frontend — keep it alive, restart if crashed
                     try:
                         container = docker_client.containers.get(container_name)
@@ -65,7 +119,48 @@ def _watchdog_poll():
                     except Exception:
                         pass
                     continue
-                # Fullstack frontend — fall through to normal idle check (will sleep)
+                
+                # Fullstack frontend — follow the backend's lead
+                if linked_backend.get("status") == "SLEEPING":
+                    # Backend already asleep → sleep frontend immediately (same app, sleep together)
+                    print(f"[Watchdog] Frontend {project_id[:8]} following backend to sleep.")
+                    try:
+                        container = docker_client.containers.get(container_name)
+                        container.update(restart_policy={"Name": "no"})
+                        container.stop(timeout=5)
+                    except Exception as e:
+                        print(f"[Watchdog] Error stopping frontend container: {e}")
+                    supabase.table("projects").update({"status": "SLEEPING"}).eq("id", project_id).execute()
+                    redis_client.delete(f"last_active:{project_id}")
+                    continue
+                
+                # Backend is RUNNING — skip sleep if it has RECENT activity
+                if linked_backend.get("status") == "RUNNING":
+                    backend_la = redis_client.get(f"last_active:{linked_backend['id']}")
+                    if backend_la and (current_time - float(backend_la)) < config.WATCHDOG_IDLE_TIMEOUT:
+                        continue  # Backend has genuine traffic, skip sleep
+                # Fall through to normal idle check
+            
+            # Backend handling for fullstack projects:
+            # Skip sleep if linked frontend has RECENT activity (user browsing).
+            # DON'T refresh our own last_active (avoids circular keep-alive).
+            if project.get("project_type") == "backend":
+                linked_frontend = None
+                try:
+                    linked = supabase.table("projects").select("id, status").eq(
+                        "user_id", project.get("user_id")
+                    ).eq("github_url", project.get("github_url")).eq(
+                        "project_type", "frontend"
+                    ).execute()
+                    if linked.data:
+                        linked_frontend = linked.data[0]
+                except Exception:
+                    pass
+                
+                if linked_frontend and linked_frontend.get("status") == "RUNNING":
+                    frontend_la = redis_client.get(f"last_active:{linked_frontend['id']}")
+                    if frontend_la and (current_time - float(frontend_la)) < config.WATCHDOG_IDLE_TIMEOUT:
+                        continue  # Frontend has genuine traffic, skip sleep
             
             # Verify container is actually running in Docker
             try:
@@ -84,13 +179,7 @@ def _watchdog_poll():
             except Exception:
                 continue
             
-            # NOTE: We removed the Docker network stats check here because it gave false
-            # positives for apps with external DB connections (MongoDB Atlas, PostgreSQL cloud, etc.)
-            # These apps constantly send heartbeat/keepalive traffic even when idle.
-            # We now rely solely on the Redis last_active timestamp, which is set by the
-            # gateway/proxy when a REAL user HTTP request arrives.
-            
-            # Check Redis last_active timestamp
+            # Check Redis last_active timestamp (set by /service/ proxy)
             last_active_str = redis_client.get(f"last_active:{project_id}")
             if not last_active_str:
                 redis_client.set(f"last_active:{project_id}", current_time)
@@ -99,11 +188,18 @@ def _watchdog_poll():
             last_active = float(last_active_str)
             diff = current_time - last_active
             
+            # Before sleeping: check for INBOUND user connections (direct port access)
+            # This catches API calls that go to localhost:8001 directly, bypassing /service/
+            # Only counts inbound HTTP connections, ignores outbound DB connections
+            if diff > config.WATCHDOG_IDLE_TIMEOUT / 2:  # Only check when getting close to timeout
+                if _has_inbound_connections(container_name):
+                    redis_client.set(f"last_active:{project_id}", current_time)
+                    continue
+            
             if diff > config.WATCHDOG_IDLE_TIMEOUT:
                 print(f"[Watchdog] Project {project_id[:8]} idle for {int(diff)}s (Threshold: {config.WATCHDOG_IDLE_TIMEOUT}s). Putting to sleep.")
                 try:
                     container = docker_client.containers.get(container_name)
-                    # Disable restart policy BEFORE stopping, so Docker doesn't auto-restart it
                     container.update(restart_policy={"Name": "no"})
                     container.stop(timeout=5)
                 except Exception as e:

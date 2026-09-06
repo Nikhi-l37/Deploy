@@ -57,6 +57,8 @@ export const getAppUrl = (project) => {
     return `http://${project.subdomain}.${baseDomain}`;
   }
   
-  // Direct port mapping on the active host IP or localhost
-  return `http://${hostname}:${project.port}`;
+  // On localhost/IP: route through the service proxy for auto-wake support
+  // The /service/{id} endpoint wakes sleeping containers automatically
+  const apiBase = `http://${hostname}:${import.meta.env.VITE_BACKEND_PORT || '8000'}`;
+  return `${apiBase}/service/${project.id.substring(0, 8)}`;
 };

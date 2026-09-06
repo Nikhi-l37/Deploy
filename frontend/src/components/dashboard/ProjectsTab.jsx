@@ -128,7 +128,7 @@ export default function ProjectsTab({
                     ) : project.status === 'SLEEPING' && project.port ? (
                       <div className="flex items-center gap-1.5">
                         <a 
-                          href={`${BACKEND_URL}/wake-page/${project.id}`} 
+                          href={getAppUrl(project)} 
                           target="_blank" 
                           rel="noreferrer" 
                           className="text-[#bc8cff] hover:text-[#d2a8ff] hover:underline inline-flex items-center gap-1.5"
