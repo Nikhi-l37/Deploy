@@ -1,3 +1,5 @@
+import { BACKEND_URL } from './constants';
+
 export const getProjectDisplayName = (proj) => {
   if (!proj) return '';
   return proj.name || proj.github_url?.split('/').pop().replace('.git', '') || 'Project';
@@ -59,6 +61,5 @@ export const getAppUrl = (project) => {
   
   // On localhost/IP: route through the service proxy for auto-wake support
   // The /service/{id} endpoint wakes sleeping containers automatically
-  const apiBase = `http://${hostname}:${import.meta.env.VITE_BACKEND_PORT || '8000'}`;
-  return `${apiBase}/service/${project.id.substring(0, 8)}`;
+  return `${BACKEND_URL}/service/${project.id.substring(0, 8)}`;
 };

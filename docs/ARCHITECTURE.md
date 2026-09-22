@@ -75,7 +75,7 @@ Tables and their columns as implemented:
 * **`users`**: `id` uuid PK, `github_id` bigint unique, `username` text, `email` text, `avatar_url` text, `created_at` timestamp
 * **`projects`**: `id` uuid PK, `user_id` uuid FK→users, `github_url` text, `status` text default 'QUEUED', `port` integer unique, `subdomain` text unique, `container_id` text, `root_directory` text, `start_command` text, `created_at` timestamp, `updated_at` timestamp
 * **`env_vars`**: `id` uuid PK, `project_id` uuid FK→projects cascade, `key_name` text, `value_enc` text
-* **`port_registry`**: `port` integer PK, `project_id` uuid FK→projects, `in_use` boolean default false (Pre-populated ports: 8001-8010)
+* **`port_registry`**: `port` integer PK, `project_id` uuid FK→projects, `in_use` boolean default false (Pre-populated ports: 8001-8050)
 * **`deploy_logs`**: `id` uuid PK, `project_id` uuid FK→projects cascade, `log_text` text, `created_at` timestamp
 
 ## 6. API Reference
@@ -92,7 +92,7 @@ Tables and their columns as implemented:
 | `/projects/{id}/env` | POST | Encrypts and saves new environment variables (ownership verified). |
 | `/projects/{id}/settings` | PUT | Updates `root_directory` and `start_command` (ownership verified). |
 | `/webhook/` | POST | GitHub push event webhook listener with HMAC-SHA256 verification (public). |
-| `/webhook/manual` | POST | Creates a new project or redeploys an existing one (authenticated, enforces 1-app limit). |
+| `/webhook/manual` | POST | Creates a new project or redeploys an existing one (authenticated, enforces 5-app limit). |
 
 ## 7. Frontend Screens
 
@@ -123,11 +123,11 @@ A project transitions through these explicit states:
 ## 10. Platform Limits
 
 Enforced in code to maintain system stability (`config.py`):
-* `MAX_RUNNING_CONTAINERS`: 2
-* `MAX_APPS_PER_USER`: 1
-* `PORT_RANGE`: 8001 - 8010
-* Docker Memory Limit (`CONTAINER_MEM_LIMIT`): `128m`
-* Docker CPU Quota (`CONTAINER_CPU_QUOTA`): `25000` (25% of 1 CPU based on a 100000 period)
+* `MAX_RUNNING_CONTAINERS`: 10
+* `MAX_APPS_PER_USER`: 5
+* `PORT_RANGE`: 8001 - 8050
+* Docker Memory Limit (`CONTAINER_MEM_LIMIT_BACKEND`): `512m`, `CONTAINER_MEM_LIMIT_FRONTEND`: `128m`
+* Docker CPU Quota (`CONTAINER_CPU_QUOTA`): `100000` (100% of 1 CPU core based on a 100000 period)
 
 ## 11. Project Structure
 

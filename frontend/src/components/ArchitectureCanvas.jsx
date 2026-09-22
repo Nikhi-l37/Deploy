@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Activity, Globe, Database, Lock, Plus, Minus, 
   Maximize2, RefreshCw, Grid, Cloud, FileCode, 
-  Terminal, ArrowUp 
+  Terminal, ArrowUp, Network, Server, Zap, Shield 
 } from 'lucide-react';
 
 // =========================================================================
@@ -114,8 +114,8 @@ export default function ArchitectureCanvas() {
           <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-[#8b949e]">
             <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
             <span className="text-[#c9d1d9]">
-              {activeTab === 'user' && 'User Journey · Code ➔ GitHub ➔ Platform ➔ Keys ➔ Live Internet'}
-              {activeTab === 'engine' && 'AWS Cloud Architecture · Ingestion ➔ Secrets ➔ EC2 Sandbox ➔ State Registry ➔ Watchdog'}
+              {activeTab === 'user' && 'User Journey · Code ➔ GitHub ➔ Platform ➔ Live Internet'}
+              {activeTab === 'engine' && 'Internal Engine · Code Push ➔ Smart Queue ➔ Auto-Build ➔ Live Container ➔ Smart Sleep/Wake'}
             </span>
           </div>
 
@@ -131,12 +131,12 @@ export default function ArchitectureCanvas() {
           </div>
         </div>
 
-        {/* Canvas Body (Dot-Grid Surface - with responsive horizontal scroll support) */}
-        <div className="relative w-full h-[530px] bg-[#080b10] bg-dot-grid overflow-x-auto overflow-y-hidden select-none">
-          <div className="relative w-full min-w-[980px] h-full">
+        {/* Canvas Body (Dot-Grid Surface - uniform h-[440px] for zero layout shift) */}
+        <div className="relative w-full h-[440px] bg-[#080b10] bg-dot-grid overflow-hidden select-none">
+          <div className="relative w-full h-full">
 
             {/* ================================================================= */}
-            {/* VIEW 1: USER FLOW (CODE -> GITHUB -> PLATFORM -> .ENV -> LIVE)    */}
+            {/* VIEW 1: USER FLOW (DEVELOPER JOURNEY & VISITOR EXPERIENCE)        */}
             {/* ================================================================= */}
             {activeTab === 'user' && (
               <div className="w-full h-full relative animate-fade-in">
@@ -154,51 +154,78 @@ export default function ArchitectureCanvas() {
                       <feGaussianBlur stdDeviation="3.5" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
-                    <filter id="glow-red-dev" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="3.5" result="blur" />
-                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                    </filter>
                   </defs>
 
-                  {/* Wire 1: User Code ➔ GitHub (Vertical Up) */}
-                  <path d="M 130 305 L 130 180" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 130 305 L 130 180" fill="none" stroke="#388bfd" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#58a6ff" filter="url(#glow-cyan-dev)">
-                    <animateMotion dur="2.0s" repeatCount="indefinite" path="M 130 305 L 130 180" />
+                  {/* Wire 1: User Code ➔ GitHub */}
+                  <path d="M 240 111 L 275 111" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 240 111 L 275 111" fill="none" stroke="#388bfd" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#58a6ff" filter="url(#glow-cyan-dev)">
+                    <animateMotion dur="2.0s" repeatCount="indefinite" path="M 240 111 L 275 111" />
                   </circle>
 
-                  {/* Wire 2: GitHub ➔ Our Platform (Horizontal Purple) */}
-                  <path d="M 230 115 L 275 115" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 230 115 L 275 115" fill="none" stroke="#bc8cff" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#bc8cff" filter="url(#glow-purple-dev)">
-                    <animateMotion dur="2.2s" repeatCount="indefinite" path="M 230 115 L 275 115" />
+                  {/* Wire 2: GitHub ➔ Deployat Engine */}
+                  <path d="M 485 111 L 520 111" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 485 111 L 520 111" fill="none" stroke="#bc8cff" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#bc8cff" filter="url(#glow-purple-dev)">
+                    <animateMotion dur="2.2s" repeatCount="indefinite" path="M 485 111 L 520 111" />
                   </circle>
 
-                  {/* Wire 3: Our Platform ➔ Adding Environment Variables (Horizontal Red) */}
-                  <path d="M 480 115 L 525 115" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 480 115 L 525 115" fill="none" stroke="#f85149" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#f85149" filter="url(#glow-red-dev)">
-                    <animateMotion dur="2.2s" repeatCount="indefinite" path="M 480 115 L 525 115" />
+                  {/* Wire 3: Deployat Engine ➔ Live on Internet */}
+                  <path d="M 745 111 L 780 111" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 745 111 L 780 111" fill="none" stroke="#2ea44f" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#2ea44f" filter="url(#glow-green-dev)">
+                    <animateMotion dur="2.0s" repeatCount="indefinite" path="M 745 111 L 780 111" />
                   </circle>
 
-                  {/* Wire 4: Environment Variables ➔ Live on Internet (Horizontal Green) */}
-                  <path d="M 730 115 L 770 115" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 730 115 L 770 115" fill="none" stroke="#2ea44f" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#2ea44f" filter="url(#glow-green-dev)">
-                    <animateMotion dur="2.0s" repeatCount="indefinite" path="M 730 115 L 770 115" />
+                  {/* Vertical Wire: Live on Internet ➔ Production Serving */}
+                  <path d="M 885 178 L 885 232" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 885 178 L 885 232" fill="none" stroke="#2ea44f" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#2ea44f" filter="url(#glow-green-dev)">
+                    <animateMotion dur="1.5s" repeatCount="indefinite" path="M 885 178 L 885 232" />
+                  </circle>
+
+                  {/* Wire 5: Serving ➔ Global Visitor (Going Left) */}
+                  <path d="M 542 302 L 480 302" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 542 302 L 480 302" fill="none" stroke="#388bfd" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#58a6ff" filter="url(#glow-cyan-dev)">
+                    <animateMotion dur="1.8s" repeatCount="indefinite" path="M 542 302 L 480 302" />
                   </circle>
                 </svg>
 
-                {/* Node 1: User Code (Bottom-Left) */}
-                <div className="absolute left-[30px] top-[305px] w-[200px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#58a6ff]">
-                      <FileCode className="w-4 h-4" />
+                {/* Floating Bridge Badge on Vertical Drop */}
+                <div className="absolute left-[885px] top-[198px] -translate-x-1/2 z-20 pointer-events-none flex items-center gap-1.5 text-[9px] font-mono bg-[#0d1117] text-[#2ea44f] px-2.5 py-0.5 rounded-full border border-[#2ea44f]/40 shadow-lg select-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f] animate-pulse"></span>
+                  <span>Live Globally ➔</span>
+                </div>
+
+                {/* ============================================================= */}
+                {/* SECTION 1: DEVELOPER DEPLOYMENT JOURNEY (TOP ROW)             */}
+                {/* ============================================================= */}
+                <div className="absolute left-[30px] top-[14px] w-[962px] flex items-center justify-between border-b border-[#30363d]/70 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#58a6ff]"></span>
+                    <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#f0f6fc]">
+                      Stage 1 · Developer Deployment Journey
+                    </span>
+                  </div>
+                  <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#58a6ff] border border-[#30363d] font-semibold">
+                    Zero-DevOps
+                  </span>
+                </div>
+
+                {/* Node 1: User Code */}
+                <div className="absolute left-[30px] top-[44px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center text-[#58a6ff]">
+                        <FileCode className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">User Code</h3>
+                        <span className="text-[10px] text-[#8b949e]">Local Workspace</span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">User Code</h3>
-                      <span className="text-[10.5px] text-[#8b949e]">Local Workspace</span>
-                    </div>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#58a6ff] border border-[#30363d] font-bold">01</span>
                   </div>
                   <p className="text-[10.5px] font-mono text-[#58a6ff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">git commit -m "feat"</p>
                   <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
@@ -206,20 +233,23 @@ export default function ArchitectureCanvas() {
                       <span className="text-[#58a6ff] font-bold">●</span>
                       <span className="text-[#c9d1d9]">Full-Stack App</span>
                     </div>
-                    <ArrowUp className="w-3.5 h-3.5 text-[#58a6ff] animate-bounce" />
+                    <span className="text-[#8b949e]">Local IDE</span>
                   </div>
                 </div>
 
-                {/* Node 2: GitHub (Top-Left) */}
-                <div className="absolute left-[30px] top-[50px] w-[200px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#f0f6fc] hover:shadow-[0_0_15px_rgba(240,246,252,0.12)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#f0f6fc]">
-                      <BrandLogos.GitHub />
+                {/* Node 2: GitHub */}
+                <div className="absolute left-[275px] top-[44px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#f0f6fc] hover:shadow-[0_0_15px_rgba(240,246,252,0.12)] rounded-[8px] p-3.5 space-y-2 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] flex items-center justify-center p-1 text-[#f0f6fc]">
+                        <BrandLogos.GitHub />
+                      </div>
+                      <div>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#ffffff] transition-colors leading-tight">GitHub</h3>
+                        <span className="text-[10px] text-[#8b949e]">Remote Repository</span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#ffffff] transition-colors leading-tight">GitHub</h3>
-                      <span className="text-[10.5px] text-[#8b949e]">Remote Repository</span>
-                    </div>
+                    <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] font-bold">02</span>
                   </div>
                   <p className="text-[10.5px] font-mono text-[#c9d1d9] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">git push origin main</p>
                   <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
@@ -228,55 +258,44 @@ export default function ArchitectureCanvas() {
                   </div>
                 </div>
 
-                {/* Node 3: Our Platform (Top Center-Left - Styled with Purple) */}
-                <div className="absolute left-[275px] top-[50px] w-[205px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_20px_rgba(188,140,255,0.2)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                {/* Node 3: Deployat Engine */}
+                <div className="absolute left-[520px] top-[44px] w-[225px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_20px_rgba(188,140,255,0.2)] rounded-[8px] p-3.5 space-y-2 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#bc8cff]/40 flex items-center justify-center text-[#bc8cff] transition-colors">
                         <Activity className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Our Platform</h3>
-                        <span className="text-[10.5px] text-[#8b949e]">Build Engine</span>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Deployat Engine</h3>
+                        <span className="text-[10px] text-[#8b949e]">Build · Secrets · Container</span>
                       </div>
                     </div>
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#bc8cff] animate-pulse"></span>
+                    <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#bc8cff] border border-[#30363d] font-bold">03</span>
                   </div>
                   <p className="text-[10.5px] font-mono text-[#bc8cff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">docker.build --cgroup</p>
-                  <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#bc8cff] font-bold">✓</span>
-                    <span className="text-[#c9d1d9]">auto-detect runtime</span>
+                  <div className="flex items-center gap-2 text-[10px] font-mono">
+                    <span className="flex items-center gap-1 text-[#f85149] bg-[#0d1117] px-1.5 py-0.5 rounded border border-[#30363d]">
+                      <Lock className="w-3 h-3" /> .env encrypted
+                    </span>
+                    <span className="flex items-center gap-1 text-[#8b949e]">
+                      <span className="text-[#bc8cff] font-bold">✓</span> auto-detect
+                    </span>
                   </div>
                 </div>
 
-                {/* Node 4: Adding Environment Variables (Top Center-Right - Styled with Red) */}
-                <div className="absolute left-[525px] top-[50px] w-[205px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#f85149] hover:shadow-[0_0_20px_rgba(248,81,73,0.2)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#f85149]/40 flex items-center justify-center text-[#f85149] transition-colors">
-                      <Lock className="w-4 h-4" />
+                {/* Node 4: Live on Internet */}
+                <div className="absolute left-[780px] top-[44px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#2ea44f] hover:shadow-[0_0_20px_rgba(46,164,79,0.2)] rounded-[8px] p-3.5 space-y-2 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#2ea44f]/40 flex items-center justify-center text-[#2ea44f] transition-colors">
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">Live on Internet</h3>
+                        <span className="text-[10px] text-[#8b949e]">Nginx Reverse Proxy</span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#f85149] transition-colors leading-tight">Environment Keys</h3>
-                      <span className="text-[10.5px] text-[#8b949e]">.env Secrets Injection</span>
-                    </div>
-                  </div>
-                  <p className="text-[10.5px] font-mono text-[#f85149] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">API_KEY=••••••••</p>
-                  <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#f85149]">🔒</span>
-                    <span className="text-[#c9d1d9]">Fernet AES-128 GCM</span>
-                  </div>
-                </div>
-
-                {/* Node 5: Live on Internet (Top Far-Right - Styled with Green) */}
-                <div className="absolute left-[770px] top-[50px] w-[200px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#2ea44f] hover:shadow-[0_0_20px_rgba(46,164,79,0.2)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#2ea44f]/40 flex items-center justify-center text-[#2ea44f] transition-colors">
-                      <Globe className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">Live on Internet</h3>
-                      <span className="text-[10.5px] text-[#8b949e]">Nginx Reverse Proxy</span>
-                    </div>
+                    <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#2ea44f] border border-[#30363d] font-bold">04</span>
                   </div>
                   <p className="text-[10.5px] font-mono text-[#2ea44f] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">https://myapp.deployat.me</p>
                   <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
@@ -288,241 +307,358 @@ export default function ArchitectureCanvas() {
                   </div>
                 </div>
 
-                {/* Interactive Workflow Summary Panel (Lower Canvas Area) */}
-                <div className="absolute left-[275px] w-[695px] top-[240px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] rounded-[8px] p-4 sm:p-5 space-y-3 shadow-lg select-none">
-                  <div className="flex items-center justify-between border-b border-[#30363d]/60 pb-2.5">
-                    <div className="flex items-center gap-2">
-                      <Terminal className="w-4 h-4 text-[#2ea44f]" />
-                      <span className="text-[12.5px] font-semibold text-[#f0f6fc] font-mono">Automated End-to-End Pipeline</span>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#2ea44f] border border-[#30363d] font-semibold">
-                      0-Config Workflow
+                {/* ============================================================= */}
+                {/* SECTION 2: LIVE VISITOR TRAFFIC & GLOBAL ROUTING (BOTTOM ROW) */}
+                {/* ============================================================= */}
+                <div className="absolute left-[30px] top-[204px] w-[962px] flex items-center justify-between border-b border-[#30363d]/70 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
+                    <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#f0f6fc]">
+                      Stage 2 · Live Visitor Experience & Global Routing
                     </span>
                   </div>
+                  <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#2ea44f] border border-[#30363d] font-semibold">
+                    &lt;50ms Edge
+                  </span>
+                </div>
 
-                  <div className="grid grid-cols-4 gap-3 text-left pt-1">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#f0f6fc]">
-                        <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#58a6ff]">1</span>
-                        <span>Push Code</span>
+                {/* Card A: Global Visitor Access */}
+                <div className="absolute left-[30px] top-[232px] w-[450px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#388bfd] hover:shadow-[0_0_15px_rgba(56,139,253,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#388bfd]/40 flex items-center justify-center p-1 text-[#388bfd] transition-colors">
+                        <Globe className="w-4 h-4" />
                       </div>
-                      <p className="text-[10.5px] text-[#8b949e] leading-relaxed">Push to GitHub repo from your IDE.</p>
+                      <div>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#388bfd] transition-colors leading-tight">Global Visitor Access</h3>
+                        <span className="text-[10px] text-[#8b949e]">Instant Worldwide Edge Delivery</span>
+                      </div>
                     </div>
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#388bfd] border border-[#30363d] font-bold">● Ultra-Fast</span>
+                  </div>
 
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#f0f6fc]">
-                        <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#bc8cff]">2</span>
-                        <span>Intake & Build</span>
-                      </div>
-                      <p className="text-[10.5px] text-[#8b949e] leading-relaxed">Pulls code & compiles container.</p>
+                  <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-mono">
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">DNS RESOLVE</span>
+                      <span className="font-bold text-[#388bfd]">&lt; 15ms</span>
                     </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#f0f6fc]">
-                        <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#f85149]">3</span>
-                        <span>Inject .env</span>
-                      </div>
-                      <p className="text-[10.5px] text-[#8b949e] leading-relaxed">Secrets decrypted & injected.</p>
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">SSL HANDSHAKE</span>
+                      <span className="font-bold text-[#2ea44f]">&lt; 20ms</span>
                     </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#f0f6fc]">
-                        <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#2ea44f]">4</span>
-                        <span>Live Internet</span>
-                      </div>
-                      <p className="text-[10.5px] text-[#8b949e] leading-relaxed">Nginx routes live traffic with SSL.</p>
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">FIRST BYTE</span>
+                      <span className="font-bold text-[#FF9900]">&lt; 45ms</span>
                     </div>
                   </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-1.5 font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="w-3 h-3 text-[#388bfd]" />
+                      <span className="text-[#c9d1d9]">Direct Nginx reverse-proxy</span>
+                    </div>
+                    <span className="text-[#388bfd]">Global CDN</span>
+                  </div>
+                </div>
+
+                {/* Card B: Zero-Config Production Serving */}
+                <div className="absolute left-[542px] top-[232px] w-[450px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#2ea44f] hover:shadow-[0_0_15px_rgba(46,164,79,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#2ea44f]/40 flex items-center justify-center p-1 text-[#2ea44f] transition-colors">
+                        <Server className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">Zero-Config Production Serving</h3>
+                        <span className="text-[10px] text-[#8b949e]">Isolated Sandbox & Automatic HTTPS</span>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#2ea44f] border border-[#30363d] font-bold">● Active</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-mono">
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">RAM ISOLATION</span>
+                      <span className="font-bold text-[#2ea44f]">512MB Cap</span>
+                    </div>
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">SSL CERT</span>
+                      <span className="font-bold text-[#388bfd]">Auto Let's Encrypt</span>
+                    </div>
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">UPTIME GUARD</span>
+                      <span className="font-bold text-[#FF9900]">Auto-Restart</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-1.5 font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#2ea44f] font-bold">✓</span>
+                      <span className="text-[#c9d1d9]">Free custom domain support</span>
+                    </div>
+                    <span className="text-[#2ea44f]">Zero Downtime</span>
+                  </div>
+                </div>
+
+                {/* Bottom Status Badge */}
+                <div className="absolute left-[511px] top-[388px] -translate-x-1/2 z-10 pointer-events-none flex items-center gap-1.5 text-[9.5px] font-mono bg-[#0d1117] text-[#2ea44f] px-3 py-1 rounded-full border border-[#30363d] shadow-sm select-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f] animate-ping"></span>
+                  <span>⚡ Zero configuration required · Push to git and your site is live worldwide</span>
                 </div>
               </div>
             )}
 
             {/* ================================================================= */}
-            {/* VIEW 2: AWS CLOUD ENGINE (DIRECTIONAL 5-STAGE PIPELINE)           */}
+            {/* VIEW 2: AWS CLOUD ENGINE (2-TIER OPTIMIZED ARCHITECTURE)          */}
             {/* ================================================================= */}
             {activeTab === 'engine' && (
               <div className="w-full h-full relative animate-fade-in">
+
+                {/* SVG Connecting Wires */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
                   <defs>
-                    <filter id="glow-orange-engine" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <filter id="glow-cyan-pipe" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
-                    <filter id="glow-green-engine" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <filter id="glow-orange-pipe" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
-                    <filter id="glow-cyan-engine" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <filter id="glow-purple-pipe" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
-                    <filter id="glow-purple-engine" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <filter id="glow-green-pipe" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
                   </defs>
 
-                  {/* Wire 1: Stage 1 (GitHub Trigger: right edge x=240, y=115) ➔ Stage 3 (AWS Host: left edge x=380, y=210) */}
-                  <path d="M 240 115 C 310 115, 310 210, 380 210" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 240 115 C 310 115, 310 210, 380 210" fill="none" stroke="#58a6ff" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#58a6ff" filter="url(#glow-cyan-engine)">
-                    <animateMotion dur="2.4s" repeatCount="indefinite" path="M 240 115 C 310 115, 310 210, 380 210" />
+                  {/* Wire 1 (Row 1: Card 1 -> Card 2) */}
+                  <path d="M 324 111 L 364 111" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 324 111 L 364 111" fill="none" stroke="#58a6ff" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#58a6ff" filter="url(#glow-cyan-pipe)">
+                    <animateMotion dur="1.8s" repeatCount="indefinite" path="M 324 111 L 364 111" />
                   </circle>
 
-                  {/* Wire 2: Stage 2 (Supabase Secrets: right edge x=240, y=385) ➔ Stage 3 (AWS Host: left edge x=380, y=310) */}
-                  <path d="M 240 385 C 310 385, 310 310, 380 310" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 240 385 C 310 385, 310 310, 380 310" fill="none" stroke="#3ECF8E" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#3ECF8E" filter="url(#glow-green-engine)">
-                    <animateMotion dur="2.4s" repeatCount="indefinite" path="M 240 385 C 310 385, 310 310, 380 310" />
+                  {/* Wire 2 (Row 1: Card 2 -> Card 3) */}
+                  <path d="M 658 111 L 698 111" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 658 111 L 698 111" fill="none" stroke="#FF9900" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#FF9900" filter="url(#glow-orange-pipe)">
+                    <animateMotion dur="1.8s" repeatCount="indefinite" path="M 658 111 L 698 111" />
                   </circle>
 
-                  {/* Wire 3: Stage 3 (AWS Host: right edge x=620, y=210) ➔ Stage 4 (State Mesh: left edge x=760, y=115) */}
-                  <path d="M 620 210 C 690 210, 690 115, 760 115" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 620 210 C 690 210, 690 115, 760 115" fill="none" stroke="#FF9900" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#FF9900" filter="url(#glow-orange-engine)">
-                    <animateMotion dur="2.3s" repeatCount="indefinite" path="M 620 210 C 690 210, 690 115, 760 115" />
+                  {/* Wire 3 (Vertical Bridge: Card 3 -> Card 4) */}
+                  <path d="M 845 178 L 845 232" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 845 178 L 845 232" fill="none" stroke="#bc8cff" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#bc8cff" filter="url(#glow-purple-pipe)">
+                    <animateMotion dur="1.5s" repeatCount="indefinite" path="M 845 178 L 845 232" />
                   </circle>
 
-                  {/* Wire 4: Stage 3 (AWS Host: right edge x=620, y=310) ➔ Stage 5 (Watchdog: left edge x=760, y=385) */}
-                  <path d="M 620 310 C 690 310, 690 385, 760 385" fill="none" stroke="#21262d" strokeWidth="3" />
-                  <path d="M 620 310 C 690 310, 690 385, 760 385" fill="none" stroke="#bc8cff" strokeWidth="1.5" strokeDasharray="4 4" />
-                  <circle r="4.5" fill="#bc8cff" filter="url(#glow-purple-engine)">
-                    <animateMotion dur="2.7s" repeatCount="indefinite" path="M 620 310 C 690 310, 690 385, 760 385" />
+                  {/* Wire 4 (Row 2: Card 4 -> Card 5 going Left) */}
+                  <path d="M 542 302 L 480 302" fill="none" stroke="#21262d" strokeWidth="3" />
+                  <path d="M 542 302 L 480 302" fill="none" stroke="#2ea44f" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <circle r="4" fill="#2ea44f" filter="url(#glow-green-pipe)">
+                    <animateMotion dur="1.8s" repeatCount="indefinite" path="M 542 302 L 480 302" />
+                  </circle>
+
+                  {/* Wire 5 (Return Loop: Card 5 -> Card 4 Traffic Wake) */}
+                  <path d="M 255 372 C 255 408, 767 408, 767 372" fill="none" stroke="#21262d" strokeWidth="2.5" />
+                  <path d="M 255 372 C 255 408, 767 408, 767 372" fill="none" stroke="#388bfd" strokeWidth="1.5" strokeDasharray="3 3" />
+                  <circle r="3.5" fill="#58a6ff" filter="url(#glow-cyan-pipe)">
+                    <animateMotion dur="3.0s" repeatCount="indefinite" path="M 255 372 C 255 408, 767 408, 767 372" />
                   </circle>
                 </svg>
 
-                {/* STAGE 1: INGESTION & TRIGGER (Top-Left: left 30px, width 210px -> right edge 240px) */}
-                <div className="absolute left-[30px] top-[50px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                {/* Floating Bridge Badge on Vertical Wire */}
+                <div className="absolute left-[845px] top-[198px] -translate-x-1/2 z-20 pointer-events-none flex items-center gap-1.5 text-[9px] font-mono bg-[#0d1117] text-[#bc8cff] px-2.5 py-0.5 rounded-full border border-[#bc8cff]/40 shadow-lg select-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#bc8cff] animate-pulse"></span>
+                  <span>Deploys Live ➔</span>
+                </div>
+
+                {/* ============================================================= */}
+                {/* SECTION 1: PHASE 1 · BUILD & PACKAGING PIPELINE (TOP ROW)     */}
+                {/* ============================================================= */}
+                <div className="absolute left-[30px] top-[14px] w-[962px] flex items-center justify-between border-b border-[#30363d]/70 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#58a6ff]"></span>
+                    <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#f0f6fc]">
+                      Phase 1 · Build & Packaging Pipeline
+                    </span>
+                  </div>
+                  <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#58a6ff] border border-[#30363d] font-semibold">
+                    Zero-DevOps
+                  </span>
+                </div>
+
+                {/* CARD 1: SECURE CODE PUSH */}
+                <div className="absolute left-[30px] top-[44px] w-[294px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#58a6ff]/40 flex items-center justify-center p-1 text-[#f0f6fc] transition-colors">
                         <BrandLogos.GitHub />
                       </div>
                       <div>
-                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">Stage 1: Ingestion</h3>
-                        <span className="text-[10.5px] text-[#8b949e]">GitHub Webhooks</span>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">1. Secure Code Push</h3>
+                        <span className="text-[10px] text-[#8b949e]">Automatic GitHub Delivery</span>
                       </div>
                     </div>
-                    <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] font-bold">01</span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#58a6ff] border border-[#30363d] font-bold">01</span>
                   </div>
-                  <p className="text-[10.5px] font-mono text-[#58a6ff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">HMAC-SHA256 validated</p>
-                  <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#58a6ff] font-bold">✓</span>
-                    <span className="text-[#c9d1d9]">Push & PR Triggers</span>
-                  </div>
-                </div>
-
-                {/* STAGE 2: CONTROL PLANE & SECURITY (Bottom-Left: left 30px, width 210px -> right edge 240px) */}
-                <div className="absolute left-[30px] top-[320px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#3ECF8E] hover:shadow-[0_0_15px_rgba(62,207,142,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#3ECF8E]/40 flex items-center justify-center p-1 transition-colors">
-                        <BrandLogos.Supabase />
-                      </div>
-                      <div>
-                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#3ECF8E] transition-colors leading-tight">Stage 2: Control Plane</h3>
-                        <span className="text-[10.5px] text-[#8b949e]">Supabase Secrets</span>
-                      </div>
-                    </div>
-                    <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] font-bold">02</span>
-                  </div>
-                  <p className="text-[10.5px] font-mono text-[#3ECF8E] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">Fernet AES-128 keys</p>
-                  <div className="flex items-center gap-1.5 text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <span className="text-[#3ECF8E]">🔒</span>
-                    <span className="text-[#c9d1d9]">User Auth & Env State</span>
-                  </div>
-                </div>
-
-                {/* STAGE 3: COMPUTE & SANDBOX ENGINE (CENTER: left 380px, width 240px -> right edge 620px) */}
-                <div className="absolute left-[380px] top-[145px] w-[240px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#FF9900] hover:shadow-[0_0_25px_rgba(255,153,0,0.2)] rounded-[10px] p-4 space-y-3 z-20 shadow-lg cursor-pointer group transition-all duration-200">
-                  <div className="flex items-center justify-between border-b border-[#30363d]/80 pb-2.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-7 px-1.5 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#FF9900]/40 flex items-center justify-center transition-colors">
-                        <BrandLogos.AWS />
-                      </div>
-                      <div>
-                        <span className="text-[9.5px] font-mono uppercase tracking-wider text-[#8b949e] group-hover:text-[#FF9900] transition-colors block">Stage 03 · Core</span>
-                        <h3 className="text-[14px] font-bold text-[#f0f6fc]">AWS EC2 Host</h3>
-                      </div>
-                    </div>
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#2ea44f] animate-pulse"></span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[11px] font-mono bg-[#0d1117] px-2.5 py-1.5 rounded border border-[#30363d]">
-                      <div className="flex items-center gap-1.5">
-                        <BrandLogos.Docker />
-                        <span className="text-[#c9d1d9]">Docker Engine</span>
-                      </div>
-                      <span className="text-[#2496ED] font-bold">cgroups v2</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-center">
-                      <div className="bg-[#21262d] px-2 py-1.5 rounded border border-[#30363d] text-[#f0f6fc]">
-                        <span className="text-[#8b949e] block text-[8.5px] font-semibold">MEM CAP</span>
-                        <span className="font-bold text-[#58a6ff]">128 MB</span>
-                      </div>
-                      <div className="bg-[#21262d] px-2 py-1.5 rounded border border-[#30363d] text-[#f0f6fc]">
-                        <span className="text-[#8b949e] block text-[8.5px] font-semibold">CPU LIMIT</span>
-                        <span className="font-bold text-[#FF9900]">25% Cap</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[10px] font-mono text-[#8b949e] pt-1 border-t border-[#30363d]/60">
+                  <p className="text-[10.5px] text-[#8b949e] leading-relaxed">
+                    Safely receives your code directly whenever you push to your repository.
+                  </p>
+                  <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[#FF9900] font-bold">✓</span>
-                      <span className="text-[#c9d1d9]">Isolated Sandbox</span>
+                      <Shield className="w-3 h-3 text-[#58a6ff]" />
+                      <span className="text-[#c9d1d9]">Verified Push</span>
                     </div>
-                    <span className="text-[#8b949e]">Multi-Stage</span>
+                    <span className="text-[#58a6ff] font-semibold">Zero-Config</span>
                   </div>
                 </div>
 
-                {/* STAGE 4: LIVE MESH & STATE REGISTRY (Top-Right: left 760px, width 210px -> left edge 760px) */}
-                <div className="absolute left-[760px] top-[50px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#58a6ff] hover:shadow-[0_0_15px_rgba(88,166,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                {/* CARD 2: SMART BUILD QUEUE */}
+                <div className="absolute left-[364px] top-[44px] w-[294px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#FF9900] hover:shadow-[0_0_15px_rgba(255,153,0,0.15)] rounded-[8px] p-3.5 space-y-2 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#58a6ff]/40 flex items-center justify-center p-1 text-[#58a6ff] transition-colors">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#FF9900]/40 flex items-center justify-center p-1 text-[#FF9900] transition-colors">
                         <Database className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors leading-tight">Stage 4: State Mesh</h3>
-                        <span className="text-[10.5px] text-[#8b949e]">Routing Gateway</span>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#FF9900] transition-colors leading-tight">2. Smart Build Queue</h3>
+                        <span className="text-[10px] text-[#8b949e]">Instant Job Scheduling</span>
                       </div>
                     </div>
-                    <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] font-bold">04</span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#FF9900] border border-[#30363d] font-bold">02</span>
                   </div>
-                  <p className="text-[10.5px] font-mono text-[#58a6ff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">status: RUNNING / SLEEPING</p>
+                  <p className="text-[10.5px] text-[#8b949e] leading-relaxed">
+                    Queues and dispatches builds smoothly so your active apps never lag or freeze.
+                  </p>
                   <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[#58a6ff] font-bold">✓</span>
-                      <span className="text-[#c9d1d9]">Port Mapping</span>
+                      <span className="text-[#FF9900] font-bold">✓</span>
+                      <span className="text-[#c9d1d9]">No Server Lag</span>
                     </div>
-                    <span className="text-[#58a6ff] font-bold">:49203</span>
+                    <span className="text-[#8b949e]">Decoupled</span>
                   </div>
                 </div>
 
-                {/* STAGE 5: RESOURCE OPTIMIZER / WATCHDOG (Bottom-Right: left 760px, width 210px -> left edge 760px) */}
-                <div className="absolute left-[760px] top-[320px] w-[210px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_15px_rgba(188,140,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                {/* CARD 3: AUTO-BUILD & SECRETS */}
+                <div className="absolute left-[698px] top-[44px] w-[294px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_20px_rgba(188,140,255,0.2)] rounded-[8px] p-3.5 space-y-2 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 px-1.5 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#bc8cff]/40 flex items-center justify-center transition-colors">
+                        <BrandLogos.AWS />
+                      </div>
+                      <div>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">3. Auto-Build & Secrets</h3>
+                        <span className="text-[10px] text-[#8b949e]">Framework & Private Keys</span>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#bc8cff] border border-[#30363d] font-bold">03</span>
+                  </div>
+                  <p className="text-[10.5px] text-[#8b949e] leading-relaxed">
+                    Auto-detects Node, Python, or Docker and injects your private environment keys.
+                  </p>
+                  <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
+                    <div className="flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-[#3ECF8E]" />
+                      <span className="text-[#c9d1d9]">Keys Protected</span>
+                    </div>
+                    <span className="text-[#bc8cff] font-semibold">Node · Python · Vite</span>
+                  </div>
+                </div>
+
+                {/* ============================================================= */}
+                {/* SECTION 2: PHASE 2 · LIVE RUNTIME & AUTO-SLEEP (BOTTOM ROW)   */}
+                {/* ============================================================= */}
+                <div className="absolute left-[30px] top-[204px] w-[962px] flex items-center justify-between border-b border-[#30363d]/70 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#2ea44f] animate-pulse"></span>
+                    <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#f0f6fc]">
+                      Phase 2 · Live Runtime & Auto-Sleep Lifecycle
+                    </span>
+                  </div>
+                  <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#2ea44f] border border-[#30363d] font-semibold">
+                    Edge Active
+                  </span>
+                </div>
+
+                {/* CARD 5: SMART SLEEP & WAKE (Bottom-Left) */}
+                <div className="absolute left-[30px] top-[232px] w-[450px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#bc8cff] hover:shadow-[0_0_15px_rgba(188,140,255,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#bc8cff]/40 flex items-center justify-center p-1 text-[#bc8cff] transition-colors">
                         <BrandLogos.Watchdog />
                       </div>
                       <div>
-                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">Stage 5: Watchdog</h3>
-                        <span className="text-[10.5px] text-[#8b949e]">Resource Optimizer</span>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#bc8cff] transition-colors leading-tight">5. Smart Sleep & Instant Wake</h3>
+                        <span className="text-[10px] text-[#8b949e]">Zero Waste Idle Optimization</span>
                       </div>
                     </div>
-                    <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] font-bold">05</span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#bc8cff] border border-[#30363d] font-bold">05</span>
                   </div>
-                  <p className="text-[10.5px] font-mono text-[#bc8cff] bg-[#0d1117] px-2 py-1 rounded border border-[#30363d] truncate">0MB RAM when idle</p>
-                  <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-2 font-mono">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#bc8cff]">⚡</span>
-                      <span className="text-[#c9d1d9]">Instant Wake</span>
+
+                  <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-mono">
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">IDLE MEMORY</span>
+                      <span className="font-bold text-[#bc8cff]">0 MB RAM</span>
                     </div>
-                    <span className="text-[#c9d1d9] font-bold">&lt;1.0s</span>
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">WAKE SPEED</span>
+                      <span className="font-bold text-[#FF9900]">&lt; 1.0 Second</span>
+                    </div>
+                    <div className="bg-[#0d1117] px-2 py-1 rounded border border-[#30363d]">
+                      <span className="text-[#8b949e] block text-[8.5px]">AUTO-SLEEP</span>
+                      <span className="font-bold text-[#2ea44f]">After 5m Idle</span>
+                    </div>
                   </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-1.5 font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="w-3 h-3 text-[#FF9900]" />
+                      <span className="text-[#c9d1d9]">Auto-pauses when inactive</span>
+                    </div>
+                    <span className="text-[#2ea44f]">Always Ready</span>
+                  </div>
+                </div>
+
+                {/* CARD 4: LIVE CONTAINER & FREE SSL (Bottom-Right) */}
+                <div className="absolute left-[542px] top-[232px] w-[450px] bg-[#161b22]/95 backdrop-blur-md border border-[#30363d] hover:border-[#2ea44f] hover:shadow-[0_0_15px_rgba(46,164,79,0.15)] rounded-[8px] p-3.5 space-y-2.5 z-10 shadow-lg cursor-pointer group transition-all duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#0d1117] border border-[#30363d] group-hover:border-[#2ea44f]/40 flex items-center justify-center p-1 text-[#2ea44f] transition-colors">
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-[13px] font-bold text-[#f0f6fc] group-hover:text-[#2ea44f] transition-colors leading-tight">4. Live Container & Free SSL</h3>
+                        <span className="text-[10px] text-[#8b949e]">Public Internet Routing</span>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#21262d] text-[#2ea44f] border border-[#30363d] font-bold">04</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] font-mono bg-[#0d1117] px-3 py-1.5 rounded border border-[#30363d]">
+                    <span className="text-[#2ea44f] font-semibold truncate">https://your-app.deployat.me</span>
+                    <span className="text-[9.5px] text-[#2ea44f] bg-[#2ea44f]/10 border border-[#2ea44f]/30 px-2 py-0.5 rounded font-bold">
+                      ● Live & Secure
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-[#8b949e] border-t border-[#30363d]/60 pt-1.5 font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#2ea44f] font-bold">✓</span>
+                      <span className="text-[#c9d1d9]">512MB RAM Cap · Dedicated CPU Core</span>
+                    </div>
+                    <span className="text-[#2ea44f] font-bold">Auto-Renewed</span>
+                  </div>
+                </div>
+
+                {/* Return Wake Loop Badge (Centered Underneath with Generous Margins) */}
+                <div className="absolute left-[511px] top-[388px] -translate-x-1/2 z-10 pointer-events-none flex items-center gap-1.5 text-[9.5px] font-mono bg-[#0d1117] text-[#58a6ff] px-3 py-1 rounded-full border border-[#30363d] shadow-sm select-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#58a6ff] animate-ping"></span>
+                  <span>⚡ Instant &lt;1.0s wake when a visitor opens your URL</span>
                 </div>
               </div>
             )}
@@ -530,18 +666,129 @@ export default function ArchitectureCanvas() {
           </div>
         </div>
 
+
+        {/* Docked Pipeline Stepper (User Flow Legend) */}
+        {activeTab === 'user' && (
+          <div className="bg-[#11161d] border-t border-[#30363d] px-5 sm:px-6 py-3.5 select-none animate-fade-in">
+            <div className="flex items-center justify-between border-b border-[#30363d]/60 pb-2 mb-3">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-3.5 h-3.5 text-[#2ea44f]" />
+                <span className="text-[12px] font-semibold text-[#f0f6fc] font-mono">Automated End-to-End Pipeline</span>
+              </div>
+              <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#2ea44f] border border-[#30363d] font-semibold">
+                0-Config Workflow
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 text-left">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#58a6ff] font-bold">1</span>
+                  <span>Write Code</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Commit changes in your local workspace.</p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#c9d1d9] font-bold">2</span>
+                  <span>Push to GitHub</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Push triggers secure automated webhook.</p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#bc8cff] font-bold">3</span>
+                  <span>Build & Sandbox</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Auto-detects framework & injects private keys.</p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#2ea44f] font-bold">4</span>
+                  <span>Live on Edge</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Routes live traffic with free automatic SSL.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Docked Architecture Breakdown (AWS Cloud Engine Legend) */}
+        {activeTab === 'engine' && (
+          <div className="bg-[#11161d] border-t border-[#30363d] px-5 sm:px-6 py-3.5 select-none animate-fade-in">
+            <div className="flex items-center justify-between border-b border-[#30363d]/60 pb-2 mb-3">
+              <div className="flex items-center gap-2">
+                <Server className="w-3.5 h-3.5 text-[#FF9900]" />
+                <span className="text-[12px] font-semibold text-[#f0f6fc] font-mono">Platform Cloud Architecture & Lifecycle</span>
+              </div>
+              <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#FF9900] border border-[#30363d] font-semibold">
+                Dual-Zone Topology
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 sm:gap-4 text-left">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#58a6ff] font-bold">1</span>
+                  <span>Secure Ingestion</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Receives code from GitHub immediately when you push.</p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#FF9900] font-bold">2</span>
+                  <span>Smart Queue</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Schedules builds smoothly so active apps never experience lag.</p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#bc8cff] font-bold">3</span>
+                  <span>Auto-Build</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Picks Node/Python automatically and protects private API keys.</p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#2ea44f] font-bold">4</span>
+                  <span>Live Container</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Goes live in an isolated sandbox with free automatic HTTPS.</p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[11.5px] font-semibold text-[#f0f6fc]">
+                  <span className="w-4 h-4 rounded-full bg-[#21262d] border border-[#30363d] text-[9.5px] font-mono flex items-center justify-center text-[#bc8cff] font-bold">5</span>
+                  <span>Smart Sleep</span>
+                </div>
+                <p className="text-[10.5px] text-[#8b949e] leading-relaxed pl-6">Uses 0MB memory when idle and wakes in under 1 second.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Canvas Bottom Status Bar */}
         <div className="bg-[#161b22] border-t border-[#30363d] px-4 py-2.5 flex items-center justify-between text-[10.5px] font-mono text-[#484f58] select-none">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#2ea44f]"></span>
-              <span className="text-[#c9d1d9] font-medium">AWS EC2 Container Host + Supabase Control Plane</span>
+              <span className="text-[#c9d1d9] font-medium">
+                {activeTab === 'user' ? 'AWS EC2 Container Host + Supabase Control Plane' : 'AWS Cloud Engine · Automated Build & Zero-Waste Sleep/Wake Architecture'}
+              </span>
             </span>
             <span className="hidden sm:inline text-[#30363d]">|</span>
-            <span className="hidden sm:inline text-[#8b949e]">Sequential directional pipeline · Zero DevOps configuration</span>
+            <span className="hidden sm:inline text-[#8b949e]">
+              {activeTab === 'user' ? 'Sequential directional pipeline · Zero DevOps configuration' : 'Instant 1-second traffic wake · Zero idle memory waste'}
+            </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[#8b949e]">Sandbox: <strong className="text-[#f0f6fc]">128MB Cap</strong></span>
+            <span className="text-[#8b949e]">Sandbox: <strong className="text-[#f0f6fc]">512MB Cap</strong></span>
             <span className="text-[#2ea44f] font-semibold">SSL: Active ✓</span>
           </div>
         </div>
