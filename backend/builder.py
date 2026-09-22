@@ -90,6 +90,8 @@ def get_free_port(project_id: str) -> int:
                     # Port is occupied by something — try to kill the zombie container
                     try:
                         for c in docker_client.containers.list(all=True):
+                            if not c.name.startswith("deploy-"):
+                                continue  # Never kill non-deploy containers (Redis, Postgres, etc.)
                             port_bindings = c.attrs.get("HostConfig", {}).get("PortBindings", {}) or {}
                             for bindings in port_bindings.values():
                                 if bindings and any(b.get("HostPort") == str(port) for b in bindings):
@@ -133,62 +135,124 @@ def force_remove_readonly(func, path, excinfo):
 
 
 # =============================================================================
+# HEAVY PACKAGE DETECTION — Block ML/AI packages that crash small servers
+# =============================================================================
+
+# Packages that require too much RAM/disk for free tier (t3.large = 8GB RAM)
+BLOCKED_PACKAGES = {
+    # Python heavy packages
+    "torch": "PyTorch (~555MB download, 1-2GB RAM)",
+    "tensorflow": "TensorFlow (~500MB download, 1-2GB RAM)",
+    "tensorflow-gpu": "TensorFlow GPU (~500MB download, needs GPU)",
+    "keras": "Keras (requires TensorFlow backend)",
+    "paddlepaddle": "PaddlePaddle (~400MB download, 1-2GB RAM)",
+    "jax": "JAX (~300MB download, high RAM usage)",
+    "jaxlib": "JAX Library (~300MB download)",
+    "mxnet": "Apache MXNet (~500MB download)",
+    "caffe": "Caffe (requires GPU, 1-2GB RAM)",
+    "detectron2": "Detectron2 (requires PyTorch + GPU)",
+    "mmdet": "MMDetection (requires PyTorch, 2GB+ RAM)",
+    "ultralytics": "YOLOv8/Ultralytics (requires PyTorch, 1GB+ RAM)",
+    "easyocr": "EasyOCR (requires PyTorch, 1-2GB RAM)",
+    "paddleocr": "PaddleOCR (requires PaddlePaddle, 1GB+ RAM)",
+    "transformers": "HuggingFace Transformers (requires PyTorch/TF, 1GB+ RAM)",
+    "diffusers": "HuggingFace Diffusers (requires PyTorch, 4GB+ RAM)",
+    "langchain": "LangChain (can require heavy ML backends)",
+    "spacy": "spaCy (NLP models can be 500MB+)",
+    "allennlp": "AllenNLP (requires PyTorch, 1GB+ RAM)",
+    "fairseq": "Fairseq (requires PyTorch, 1GB+ RAM)",
+    "sentence-transformers": "Sentence Transformers (requires PyTorch, 1GB+ RAM)",
+    "xgboost": "XGBoost (~200MB, high memory usage)",
+    "lightgbm": "LightGBM (~200MB, high memory usage)",
+    "catboost": "CatBoost (~300MB, high memory usage)",
+    # Node.js heavy packages
+    "puppeteer": "Puppeteer (downloads Chromium ~300MB)",
+    "playwright": "Playwright (downloads browsers ~500MB)",
+}
+
+def _check_heavy_packages(project_id: str, build_path: str):
+    """Scans dependency files for packages that are too heavy for the free tier.
+    Fails the build early with a clear message instead of wasting 10 minutes building."""
+    
+    found_heavy = []
+    
+    # Check Python requirements.txt
+    req_path = os.path.join(build_path, "requirements.txt")
+    if os.path.exists(req_path):
+        try:
+            with open(req_path, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    line = line.strip().lower()
+                    if not line or line.startswith("#") or line.startswith("-"):
+                        continue
+                    # Extract package name (before ==, >=, <=, ~=, [, etc.)
+                    pkg_name = line.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].split("[")[0].split("<")[0].split(">")[0].strip()
+                    # Normalize underscores/hyphens
+                    pkg_normalized = pkg_name.replace("-", "_").replace(".", "_")
+                    for blocked, reason in BLOCKED_PACKAGES.items():
+                        if pkg_normalized == blocked.replace("-", "_"):
+                            found_heavy.append(f"  - {pkg_name}: {reason}")
+                            break
+        except Exception:
+            pass
+    
+    # Check Node.js package.json
+    pkg_json_path = os.path.join(build_path, "package.json")
+    if os.path.exists(pkg_json_path):
+        try:
+            import json
+            with open(pkg_json_path, "r", encoding="utf-8") as f:
+                pkg_data = json.load(f)
+            all_deps = {}
+            all_deps.update(pkg_data.get("dependencies", {}))
+            all_deps.update(pkg_data.get("devDependencies", {}))
+            for dep_name in all_deps:
+                dep_normalized = dep_name.lower().replace("-", "_")
+                for blocked, reason in BLOCKED_PACKAGES.items():
+                    if dep_normalized == blocked.replace("-", "_"):
+                        found_heavy.append(f"  - {dep_name}: {reason}")
+                        break
+        except Exception:
+            pass
+    
+    if found_heavy:
+        heavy_list = "\n".join(found_heavy)
+        push_log(project_id, f"BLOCKED: Heavy packages detected that exceed free tier limits:")
+        push_log(project_id, heavy_list)
+        push_log(project_id, "Free tier supports: Node.js (Express, Fastify), Python (Flask, FastAPI), Go, and static sites.")
+        push_log(project_id, "ML/AI projects require dedicated GPU servers. Consider using Google Colab, AWS SageMaker, or a paid tier.")
+        raise Exception(
+            f"Deploy blocked: Your project uses packages that require more resources than the free tier provides:\n{heavy_list}\n"
+            "Remove these packages or upgrade to a higher tier."
+        )
+
+
+# =============================================================================
 # ENTRYPOINT.SH — Frontend Nginx with smart API proxy (for fullstack)
 # GET requests → SPA (index.html)
 # POST/PUT/DELETE/PATCH → proxy to backend (API calls)
 # =============================================================================
 
 FRONTEND_ENTRYPOINT = """#!/bin/sh
-if [ -n "$BACKEND_PROXY_URL" ]; then
-  echo "Smart API proxy enabled -> $BACKEND_PROXY_URL"
-  cat > /etc/nginx/conf.d/default.conf << 'CONFEOF'
+cat > /etc/nginx/conf.d/default.conf << 'NGINX'
 server {
-  listen 8080;
-  root /usr/share/nginx/html;
+    listen 8080;
+    root /usr/share/nginx/html;
 
-  # Static assets - cache aggressively
-  location /assets/ {
-    expires 1y;
-    add_header Cache-Control "public, immutable";
-  }
-
-  # Serve static files if they exist, otherwise go to @app
-  location / {
-    try_files $uri $uri/ @app;
-  }
-
-  # Smart routing: GET -> SPA, non-GET -> backend API
-  location @app {
-    # Non-GET requests (POST, PUT, DELETE, PATCH) are API calls -> proxy to backend
-    error_page 418 = @backend;
-    if ($request_method != GET) {
-        return 418;
+    # Hashed assets — cache forever
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
     }
-    # GET request to unknown path -> SPA route -> serve index.html
-    rewrite ^ /index.html last;
-  }
 
-  location @backend {
-    # Resolve at request time (not startup) using Docker's internal DNS
-    resolver 127.0.0.11 valid=10s ipv6=off;
-    set $backend_url BACKEND_PROXY_PLACEHOLDER;
-    proxy_pass $backend_url;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_connect_timeout 10s;
-    proxy_read_timeout 30s;
-  }
+    # SPA catch-all — never cache index.html (ports get reused by different projects)
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+    }
 }
-CONFEOF
-  sed -i "s|BACKEND_PROXY_PLACEHOLDER|$BACKEND_PROXY_URL|g" /etc/nginx/conf.d/default.conf
-else
-  echo 'server { listen 8080; root /usr/share/nginx/html; location /assets/ { expires 1y; add_header Cache-Control "public, immutable"; } location / { try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
-fi
+NGINX
 exec nginx -g "daemon off;"
 """
 
@@ -247,19 +311,18 @@ def run_pipeline(project_id: str):
 
         # 3. Detect language
         push_log(project_id, f"Detecting language in {root_dir}...")
-        lang = detect_language(build_path)
+        project_type = project.get("project_type")
+        lang = detect_language(build_path, project_type=project_type, root_dir=root_dir)
         push_log(project_id, f"Detected: {lang}")
+        
+        # 3.5 Check for heavy/unsupported packages that would crash the server
+        _check_heavy_packages(project_id, build_path)
         
         env_vars = decrypt_env_vars(project_id)
         build_args = {}
         
-        # Auto-inject API URL for fullstack frontend projects
-        # Scans source code to find the actual VITE env var name (VITE_API_URL, VITE_API_BASE_URL, etc.)
-        if project.get("project_type") == "frontend":
-            _auto_link_backend(project_id, project, env_vars, build_path)
-        
         if lang != "dockerfile":
-            generate_dockerfile(project_id, build_path, lang, env_vars, build_args, push_log)
+            generate_dockerfile(project_id, build_path, lang, env_vars, build_args, push_log, project_type=project_type)
         else:
             # Project has its own Dockerfile — still pass VITE_/REACT_APP_/NEXT_PUBLIC_ as build args
             # These are needed for frameworks that bake env vars at build time (Vite, CRA, Next.js)
@@ -291,6 +354,17 @@ def run_pipeline(project_id: str):
         image_name = f"{safe_name}:latest"
         
         cmd = ["docker", "build", "--progress=plain", "-t", image_name, build_path]
+        # Use cached layers from previous builds for faster redeploys
+        try:
+            docker_client.images.get(image_name)
+            cmd.extend(["--cache-from", image_name])
+            push_log(project_id, "Using cached layers from previous build for speed ⚡")
+        except docker.errors.ImageNotFound:
+            pass
+        # Bust Docker cache when frontend env vars change (VITE_/REACT_APP_/NEXT_PUBLIC_)
+        # These are baked into JS at build time — cached builds would use stale values
+        if build_args:
+            cmd.append("--no-cache")
         for k, v in build_args.items():
             cmd.extend(["--build-arg", f"{k}={v}"])
             
@@ -306,16 +380,18 @@ def run_pipeline(project_id: str):
         
         # Background timer: kill the build if it exceeds 10 minutes
         # This handles the case where stdout blocks forever (e.g., npm install hangs on network drop)
-        build_timeout = 600  # 10 minutes
+        build_timeout = 1200  # 20 minutes (allows for slow internet)
         build_killed = [False]
+        build_done = threading.Event()
         def _kill_on_timeout():
-            time.sleep(build_timeout)
-            if process.poll() is None:  # Still running
-                build_killed[0] = True
-                process.kill()
+            # Wait for build_done signal OR timeout (whichever comes first)
+            if not build_done.wait(timeout=build_timeout):
+                # Timeout expired and build is still running
+                if process.poll() is None:
+                    build_killed[0] = True
+                    process.kill()
         
-        import threading as _threading
-        timer = _threading.Thread(target=_kill_on_timeout, daemon=True)
+        timer = threading.Thread(target=_kill_on_timeout, daemon=True)
         timer.start()
         
         last_log_time = 0
@@ -334,8 +410,9 @@ def run_pipeline(project_id: str):
                 process.stdout.close()
                 
         return_code = process.wait()
+        build_done.set()  # Cancel the timeout timer thread immediately
         if build_killed[0]:
-            raise Exception("Docker build timed out after 10 minutes. Possible network issue during npm install.")
+            raise Exception("Docker build timed out after 20 minutes. Check your internet connection or reduce dependencies.")
         if return_code != 0:
             raise Exception(f"Docker build failed with exit code {return_code}")
         
@@ -458,6 +535,15 @@ def run_pipeline(project_id: str):
         update_status(project_id, "FAILED")
         push_log(project_id, f"Deploy failed: {str(e)}")
         
+        # Release the port so it can be reused by future deploys
+        try:
+            supabase.table("port_registry").update({
+                "in_use": False, "project_id": None
+            }).eq("project_id", project_id).execute()
+            push_log(project_id, "🔓 Released port allocation.")
+        except Exception:
+            pass
+        
         # Auto-cleanup failed containers and images
         container_name = f"deploy-{project_id[:8]}"
         try:
@@ -480,127 +566,8 @@ def run_pipeline(project_id: str):
             push_log(project_id, "Cleaned up temporary build files.")
 
 
-def _auto_link_backend(project_id, project, env_vars, build_path):
-    """Auto-inject the correct VITE_*API* env var for fullstack frontend projects.
-    Sets browser-accessible URL for VITE vars and Docker network URL for Nginx proxy."""
-    import re
-    import glob
-    try:
-        user_id = project.get("user_id")
-        github_url_normalized = project.get("github_url", "")
-        siblings = supabase.table("projects").select("*").eq(
-            "user_id", user_id
-        ).eq("github_url", github_url_normalized).neq(
-            "id", project_id
-        ).execute()
-        
-        backend_project = None
-        # Prefer RUNNING backends, then most recently created
-        running_backends = [s for s in siblings.data if s.get("project_type") == "backend" and s.get("status") in ("RUNNING", "BUILDING", "SLEEPING")]
-        all_backends = [s for s in siblings.data if s.get("project_type") == "backend"]
-        
-        candidates = running_backends if running_backends else all_backends
-        if candidates:
-            # Pick the most recently created one
-            candidates.sort(key=lambda x: x.get("created_at", ""), reverse=True)
-            backend_project = candidates[0]
-        
-        if not backend_project:
-            return
-        
-        # Detect the actual internal port the backend listens on
-        backend_container_name = f"deploy-{backend_project['id'][:8]}"
-        backend_host_port = backend_project.get("port")  # Host port (e.g., 8001)
-        backend_env = decrypt_env_vars(backend_project["id"])
-        internal_port = backend_env.get("PORT", "8080")
-        
-        # Also check the actual Docker container port mapping
-        try:
-            bc = docker_client.containers.get(backend_container_name)
-            exposed_ports = bc.attrs.get("Config", {}).get("ExposedPorts", {})
-            if exposed_ports:
-                # Use the first exposed port (e.g., "80/tcp" -> 80)
-                first_port = list(exposed_ports.keys())[0].split("/")[0]
-                internal_port = first_port
-        except Exception:
-            pass
-        
-        # Browser-accessible URL (for VITE vars baked into JS)
-        browser_url = f"{config.HOST_URL}:{backend_host_port}" if backend_host_port else f"http://{backend_container_name}:{internal_port}"
-        
-        # Docker network URL (for Nginx proxy inside the container)
-        docker_url = f"http://{backend_container_name}:{internal_port}"
-        
-        # Scan source code to find the actual VITE env var name
-        # Look for patterns like: import.meta.env.VITE_API_BASE_URL, process.env.VITE_API_URL, etc.
-        detected_var_names = set()
-        api_var_pattern = re.compile(r'import\.meta\.env\.(VITE_[A-Z_]*(?:API|BACKEND|SERVER|BASE)[A-Z_]*URL[A-Z_]*)')
-        
-        search_extensions = ["*.js", "*.jsx", "*.ts", "*.tsx", "*.vue", "*.svelte"]
-        for ext in search_extensions:
-            for filepath in glob.glob(os.path.join(build_path, "src", "**", ext), recursive=True):
-                try:
-                    with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
-                        content = f.read()
-                    matches = api_var_pattern.findall(content)
-                    detected_var_names.update(matches)
-                except Exception:
-                    pass
-        
-        # Also check root-level files (api.js, config.js, etc.)
-        for ext in search_extensions:
-            for filepath in glob.glob(os.path.join(build_path, ext)):
-                try:
-                    with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
-                        content = f.read()
-                    matches = api_var_pattern.findall(content)
-                    detected_var_names.update(matches)
-                except Exception:
-                    pass
-        
-        # Use detected names, or fall back to VITE_API_URL
-        if not detected_var_names:
-            detected_var_names = {"VITE_API_URL"}
-        
-        # Filter out any that the user already set manually
-        var_names_to_set = [name for name in detected_var_names if name not in env_vars]
-        
-        if not var_names_to_set:
-            push_log(project_id, f"API URL already set by user: {list(detected_var_names)}")
-            return
-        
-        # Clean up old auto-linked env vars from previous deploys
-        for var_name in var_names_to_set:
-            try:
-                supabase.table("env_vars").delete().eq("project_id", project_id).eq("key_name", var_name).execute()
-            except Exception:
-                pass
-        
-        # Set VITE vars to browser-accessible URL
-        for var_name in var_names_to_set:
-            env_vars[var_name] = browser_url
-            # Save to DB so user can see it in the dashboard
-            try:
-                f_enc = fernet.encrypt(browser_url.encode()).decode()
-                supabase.table("env_vars").insert({
-                    "project_id": project_id,
-                    "key_name": var_name,
-                    "value_enc": f_enc
-                }).execute()
-            except Exception:
-                pass
-        
-        # Also set BACKEND_PROXY_URL for our Nginx smart proxy (Docker network)
-        env_vars["BACKEND_PROXY_URL"] = docker_url
-        
-        push_log(project_id, f"Auto-linked to backend: {browser_url} (proxy: {docker_url})")
-        push_log(project_id, f"Set env vars: {var_names_to_set}")
-        
-    except Exception as link_err:
-        push_log(project_id, f"Warning: Could not auto-link backend: {link_err}")
 
 
-# =============================================================================
 # WORKER — Pulls jobs from Redis queue and processes them sequentially
 # =============================================================================
 

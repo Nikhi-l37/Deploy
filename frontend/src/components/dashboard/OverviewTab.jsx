@@ -92,6 +92,18 @@ export default function OverviewTab({
               )}
             </div>
 
+            {/* Backend URL instruction for backend projects */}
+            {selectedProject.project_type === 'backend' && selectedProject.port && (
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[#1f6feb]/10 border border-[#1f6feb]/30">
+                <span className="text-sm">💡</span>
+                <p className="text-xs text-[#58a6ff]">
+                  <span className="font-semibold">Deploying a frontend too?</span> Copy this URL and add it as{' '}
+                  <code className="bg-[#0d1117] px-1 py-0.5 rounded text-[#bc8cff]">VITE_API_URL</code>{' '}
+                  in your frontend's environment variables.
+                </p>
+              </div>
+            )}
+
             {/* Clean Spec Badges (Without dots, with 512 MB & clean badges) */}
             <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono text-[#8b949e]">
               <span className="inline-flex items-center gap-1.5 text-[#c9d1d9] font-medium bg-[#0d1117] px-2.5 py-1 rounded-md border border-[#30363d]">
@@ -110,11 +122,11 @@ export default function OverviewTab({
               </a>
               <span className="inline-flex items-center gap-1.5 text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded-md border border-[#30363d]">
                 <Cpu className="w-3.5 h-3.5 text-[#58a6ff]" />
-                {(selectedProject?.project_type === 'frontend' ? resourceStats?.mem_limit_frontend_mb : resourceStats?.mem_limit_backend_mb) || 256} MB RAM
+                {(selectedProject?.project_type === 'frontend' ? resourceStats?.mem_limit_frontend_mb : resourceStats?.mem_limit_backend_mb) || 512} MB RAM
               </span>
               <span className="inline-flex items-center gap-1.5 text-[#8b949e] bg-[#0d1117] px-2.5 py-1 rounded-md border border-[#30363d]">
                 <Clock className="w-3.5 h-3.5 text-[#bc8cff]" />
-                Auto-Sleep 120s
+                Auto-Sleep 5m
               </span>
             </div>
           </div>
@@ -179,7 +191,7 @@ export default function OverviewTab({
             {(() => {
               const containerName = `deploy-${selectedProject.id.substring(0, 8)}`;
               const stats = resourceStats?.data?.find(s => s.container_name === containerName);
-              const memLimit = (selectedProject?.project_type === 'frontend' ? resourceStats?.mem_limit_frontend_mb : resourceStats?.mem_limit_backend_mb) || 256;
+              const memLimit = (selectedProject?.project_type === 'frontend' ? resourceStats?.mem_limit_frontend_mb : resourceStats?.mem_limit_backend_mb) || 512;
               const memUsage = stats?.mem_usage_mb || 0;
               const memPercent = memLimit > 0 ? Math.min(100, Math.round((memUsage / memLimit) * 100)) : 0;
               return (

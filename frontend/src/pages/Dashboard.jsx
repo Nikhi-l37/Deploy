@@ -17,6 +17,7 @@ import ProjectsTab from '../components/dashboard/ProjectsTab';
 import LogsTab from '../components/dashboard/LogsTab';
 import EnvironmentTab from '../components/dashboard/EnvironmentTab';
 import SettingsTab from '../components/dashboard/SettingsTab';
+import PlatformInfoTab from '../components/dashboard/PlatformInfoTab';
 import DeployModal from '../components/modals/DeployModal';
 import DeleteModal from '../components/modals/DeleteModal';
 import Toast from '../components/common/Toast';
@@ -165,24 +166,40 @@ export default function Dashboard({ session }) {
     fetchResources();
     const interval = setInterval(() => {
       fetchProjects(false);
-      if (selectedProjectId && activeTab === 'logs') {
-        fetchLogs(selectedProjectId);
-      }
     }, 3000);
     // Refresh resource stats every 30s (separate from project polling)
     const resourceInterval = setInterval(fetchResources, 30000);
     return () => { clearInterval(interval); clearInterval(resourceInterval); };
-  }, [selectedProjectId, activeTab]);
+  }, []);
 
   useEffect(() => {
     if (selectedProjectId) {
       if (activeTab === 'env') {
         fetchEnvVars(selectedProjectId);
-      } else if (activeTab === 'logs') {
-        fetchLogs(selectedProjectId);
       }
     }
   }, [selectedProjectId, activeTab]);
+
+  // WebSocket for real-time logs
+  useEffect(() => {
+    let ws = null;
+    if (selectedProjectId && activeTab === 'logs') {
+      fetchLogs(selectedProjectId);
+
+      const wsUrl = `${BACKEND_URL.replace(/^http/, 'ws')}/ws/logs/${selectedProjectId}?token=${session?.access_token}`;
+      ws = new WebSocket(wsUrl);
+
+      ws.onmessage = (event) => {
+        setLogs(prev => [...prev, { log_text: event.data, created_at: new Date().toISOString() }]);
+      };
+      
+      ws.onerror = (err) => console.error('WebSocket error:', err);
+    }
+    
+    return () => {
+      if (ws) ws.close();
+    };
+  }, [selectedProjectId, activeTab, session?.access_token]);
 
   // Auto-scroll to bottom ONLY during active real-time builds
   useEffect(() => {
@@ -225,7 +242,7 @@ export default function Dashboard({ session }) {
     await supabase.auth.signOut();
   };
 
-  const handleCreateProject = async (e, fullstackData = null) => {
+  const handleCreateProject = async (e) => {
     e.preventDefault();
     if (projects.length >= 2) {
       showToast("You have reached the maximum number of allowed apps (2).", "error");
@@ -234,41 +251,15 @@ export default function Dashboard({ session }) {
     
     setIsSubmitting(true);
     try {
-      if (fullstackData && fullstackData.isFullstack) {
-        // Fullstack: deploy backend + frontend as 2 separate projects
-        const { backend, frontend } = fullstackData;
-        
-        // Deploy backend
-        const backendPayload = { github_url: githubUrl, project_type: 'backend' };
-        if (backend.rootDir.trim()) backendPayload.root_directory = backend.rootDir.trim();
-        if (backend.startCmd.trim()) backendPayload.start_command = backend.startCmd.trim();
-        const validBackendEnv = backend.envVars.filter(ev => ev.key.trim() && ev.value.trim());
-        if (validBackendEnv.length > 0) backendPayload.env_vars = validBackendEnv;
-        
-        await api.post('/webhook/manual', backendPayload);
-        
-        // Deploy frontend
-        const frontendPayload = { github_url: githubUrl, project_type: 'frontend' };
-        if (frontend.rootDir.trim()) frontendPayload.root_directory = frontend.rootDir.trim();
-        if (frontend.startCmd.trim()) frontendPayload.start_command = frontend.startCmd.trim();
-        const validFrontendEnv = frontend.envVars.filter(ev => ev.key.trim() && ev.value.trim());
-        if (validFrontendEnv.length > 0) frontendPayload.env_vars = validFrontendEnv;
-        
-        await api.post('/webhook/manual', frontendPayload);
-        
-        showToast("Full-stack project deployed! Backend + Frontend services created.", "success");
-      } else {
-        // Single service deploy (backend or frontend)
-        const payload = { github_url: githubUrl, project_type: newProjectType };
-        if (newRootDir.trim()) payload.root_directory = newRootDir.trim();
-        if (newStartCmd.trim()) payload.start_command = newStartCmd.trim();
-        
-        const validEnvVars = newEnvVars.filter(ev => ev.key.trim() && ev.value.trim());
-        if (validEnvVars.length > 0) payload.env_vars = validEnvVars;
-        
-        await api.post('/webhook/manual', payload);
-        showToast("Project created successfully!", "success");
-      }
+      const payload = { github_url: githubUrl, project_type: newProjectType };
+      if (newRootDir.trim()) payload.root_directory = newRootDir.trim();
+      if (newStartCmd.trim()) payload.start_command = newStartCmd.trim();
+      
+      const validEnvVars = newEnvVars.filter(ev => ev.key.trim() && ev.value.trim());
+      if (validEnvVars.length > 0) payload.env_vars = validEnvVars;
+      
+      await api.post('/webhook/manual', payload);
+      showToast("Project created successfully!", "success");
       
       setGithubUrl('');
       setNewRootDir('');
@@ -359,8 +350,16 @@ export default function Dashboard({ session }) {
           envDict[ev.key.trim()] = ev.value.trim();
         }
       });
-      await api.post(`/projects/${selectedProjectId}/env`, { env_vars: envDict });
-      showToast("Environment variables saved securely.", "success");
+      const res = await api.post(`/projects/${selectedProjectId}/env`, { env_vars: envDict });
+      const data = res.data;
+      if (data.restarted) {
+        showToast("Environment variables saved. Container restarted automatically! ♻️", "success");
+      } else {
+        showToast("Environment variables saved securely.", "success");
+      }
+      if (data.needs_redeploy) {
+        setTimeout(() => showToast(`⚠️ ${data.build_time_keys.join(', ')} are build-time vars — you need to REDEPLOY for changes to take effect.`, "warning"), 1500);
+      }
       fetchEnvVars(selectedProjectId);
     } catch (err) {
       console.error(err);
@@ -482,6 +481,10 @@ export default function Dashboard({ session }) {
               isSavingSettings={isSavingSettings}
               setDeleteConfirmProject={setDeleteConfirmProject}
             />
+          )}
+
+          {activeTab === 'platform-info' && (
+            <PlatformInfoTab />
           )}
         </main>
       </div>

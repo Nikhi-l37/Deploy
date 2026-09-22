@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { 
   Activity, Code, Layers, AlertCircle, AlertTriangle, Info, 
-  Globe, Folder, Play, Database, Plus, RefreshCw, X, GitBranch, Lock,
+  Globe, Folder, Play, Database, Plus, RefreshCw, X, GitBranch,
   Upload, FileText
 } from 'lucide-react';
 import { isValidGithubUrl } from '../../utils/helpers';
@@ -26,13 +26,8 @@ export default function DeployModal({
   isSubmitting,
   projects = []
 }) {
-  // Fullstack-specific state
-  const [fsBackendDir, setFsBackendDir] = useState('backend');
-  const [fsBackendCmd, setFsBackendCmd] = useState('');
-  const [fsBackendEnv, setFsBackendEnv] = useState([{ key: '', value: '' }]);
-  const [fsFrontendDir, setFsFrontendDir] = useState('frontend');
-  const [fsFrontendCmd, setFsFrontendCmd] = useState('');
-  const [fsFrontendEnv, setFsFrontendEnv] = useState([{ key: '', value: '' }]);
+
+
 
   // Compute allowed project types based on existing projects
   const deployRestrictions = useMemo(() => {
@@ -40,21 +35,18 @@ export default function DeployModal({
     const types = active.map(p => p.project_type || 'backend');
     const count = active.length;
 
-    if (count === 0) return { allowed: ['backend', 'frontend', 'fullstack'], warning: null };
+    if (count === 0) return { allowed: ['backend', 'frontend'], warning: null };
     if (count >= 2) return { allowed: [], warning: 'You have reached the 2-app limit. Delete a project first.' };
 
     // count === 1
     const existing = types[0];
-    if (existing === 'fullstack') {
-      return { allowed: [], warning: 'Your fullstack project uses both app slots. Delete it to deploy something new.' };
-    }
     if (existing === 'backend') {
-      return { allowed: ['frontend'], warning: 'You already have a backend deployed. You can add a frontend, or delete your backend to deploy fullstack.' };
+      return { allowed: ['frontend'], warning: 'You already have a backend deployed. You can add a frontend.' };
     }
     if (existing === 'frontend') {
-      return { allowed: ['backend'], warning: 'You already have a frontend deployed. You can add a backend, or delete your frontend to deploy fullstack.' };
+      return { allowed: ['backend'], warning: 'You already have a frontend deployed. You can add a backend.' };
     }
-    return { allowed: ['backend', 'frontend', 'fullstack'], warning: null };
+    return { allowed: ['backend', 'frontend'], warning: null };
   }, [projects]);
 
   // Track paste box visibility per section (must be before early return)
@@ -68,15 +60,6 @@ export default function DeployModal({
     setDeployStep(1);
   };
 
-  const handleFullstackSubmit = (e) => {
-    e.preventDefault();
-    // For fullstack, we pass the data through a custom event-like object
-    handleCreateProject(e, {
-      isFullstack: true,
-      backend: { rootDir: fsBackendDir, startCmd: fsBackendCmd, envVars: fsBackendEnv },
-      frontend: { rootDir: fsFrontendDir, startCmd: fsFrontendCmd, envVars: fsFrontendEnv }
-    });
-  };
 
   // Parse .env file content into key-value pairs
   const parseEnvContent = (content) => {
@@ -304,11 +287,10 @@ export default function DeployModal({
                 <label className="text-sm font-semibold text-[#f0f6fc] flex items-center gap-2">
                   <Layers className="w-4 h-4 text-[#bc8cff]" /> Project Type
                 </label>
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 gap-2.5">
                   {[
                     { value: 'backend', label: 'Backend', icon: '⚙️', desc: 'API / Server' },
                     { value: 'frontend', label: 'Frontend', icon: '🖥️', desc: 'Static Site' },
-                    { value: 'fullstack', label: 'Full-Stack', icon: '🔗', desc: 'Both (2 slots)' },
                   ].map((type) => {
                     const isAllowed = deployRestrictions.allowed.includes(type.value);
                     return (
@@ -343,6 +325,19 @@ export default function DeployModal({
                     </div>
                   </div>
                 )}
+
+                {/* Fullstack deploy tip for frontend */}
+                {newProjectType === 'frontend' && (
+                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#1f6feb]/10 border border-[#1f6feb]/30 text-xs animate-fade-in">
+                    <Info className="w-4 h-4 text-[#58a6ff] shrink-0 mt-0.5" />
+                    <div className="text-[#8b949e] leading-relaxed">
+                      <strong className="text-[#f0f6fc] font-semibold mr-1.5">Deploying a fullstack app?</strong>
+                      <span>Deploy your <span className="text-[#f0f6fc] font-medium">backend first</span>, copy the backend URL, then add it as{' '}
+                      <code className="bg-[#0d1117] text-[#bc8cff] border border-[#30363d] px-1 py-0.5 rounded font-mono text-[11px]">VITE_API_URL</code>{' '}
+                      in your frontend's environment variables.</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2.5 pt-1">
@@ -354,23 +349,13 @@ export default function DeployModal({
                   </div>
                 </div>
 
-                {newProjectType === 'fullstack' ? (
-                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#161b22] border border-[#d29922]/30 text-xs animate-fade-in">
-                    <AlertTriangle className="w-4 h-4 text-[#d29922] shrink-0 mt-0.5" />
-                    <div className="text-[#8b949e] leading-relaxed">
-                      <strong className="text-[#f0f6fc] font-semibold mr-1.5">Full-Stack Note:</strong>
-                      <span>This will create <span className="text-[#f0f6fc] font-medium">2 separate services</span> (backend + frontend) from your repo, using both app slots. Configure each on the next step.</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#161b22] border border-[#30363d] text-xs animate-fade-in">
+                <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#161b22] border border-[#30363d] text-xs animate-fade-in">
                     <Info className="w-4 h-4 text-[#58a6ff] shrink-0 mt-0.5" />
                     <div className="text-[#8b949e] leading-relaxed">
                       <strong className="text-[#f0f6fc] font-semibold mr-1.5">Pro Tip:</strong>
                       <span>Adding a <code className="bg-[#0d1117] text-[#58a6ff] border border-[#30363d] px-1 py-0.5 rounded font-mono text-[11px]">Dockerfile</code> enables deterministic builds. If omitted, runtime is auto-detected.</span>
                     </div>
                   </div>
-                )}
               </div>
             </div>
 
@@ -392,140 +377,6 @@ export default function DeployModal({
               </button>
             </div>
           </div>
-        ) : newProjectType === 'fullstack' ? (
-          /* Modal Step 2 — FULLSTACK (dual config) */
-          <form onSubmit={handleFullstackSubmit}>
-            <div className="p-6 bg-[#0d1117] space-y-5 max-h-[60vh] overflow-y-auto">
-              {repoDetails && (
-                <div className="p-3 rounded-lg bg-[#161b22] border border-[#30363d] flex items-center justify-between shadow-sm animate-fade-in">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-md bg-[#58a6ff]/10 border border-[#58a6ff]/30 flex items-center justify-center text-[#58a6ff]">
-                      <Globe className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <div className="text-[11px] text-[#8b949e]">Repository</div>
-                      <div className="text-xs font-mono font-bold text-[#f0f6fc]">
-                        {repoDetails.owner}/{repoDetails.name}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] uppercase font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#8957e5]/15 text-[#bc8cff] border border-[#8957e5]/40">
-                    FULLSTACK
-                  </span>
-                </div>
-              )}
-
-              {/* ── Backend Service Section ── */}
-              <div className="border border-[#30363d] rounded-lg overflow-hidden">
-                <div className="px-4 py-2.5 bg-[#161b22] border-b border-[#30363d] flex items-center gap-2">
-                  <span className="text-sm">⚙️</span>
-                  <span className="text-sm font-bold text-[#f0f6fc]">Backend Service</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] ml-auto">Container 1</span>
-                </div>
-                <div className="p-4 space-y-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">
-                      <Folder className="w-3.5 h-3.5 text-[#d29922]" /> Root Directory
-                    </label>
-                    <div className="relative flex items-center">
-                      <span className="absolute left-3 font-mono text-sm text-[#6e7681]">/</span>
-                      <input
-                        type="text"
-                        placeholder="backend"
-                        value={fsBackendDir}
-                        onChange={(e) => setFsBackendDir(e.target.value.replace(/^\/+/, ''))}
-                        className="input-field font-mono text-xs py-2 pl-7 pr-3"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">
-                      <Play className="w-3.5 h-3.5 text-[#3fb950]" /> Start Command
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. npm start (auto-detected if empty)"
-                      value={fsBackendCmd}
-                      onChange={(e) => setFsBackendCmd(e.target.value)}
-                      className="input-field font-mono text-xs py-2 px-3"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">
-                      <Database className="w-3.5 h-3.5 text-[#bc8cff]" /> Environment Variables
-                    </label>
-                    {renderEnvSection(fsBackendEnv, setFsBackendEnv, 'fs-backend')}
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Frontend Service Section ── */}
-              <div className="border border-[#30363d] rounded-lg overflow-hidden">
-                <div className="px-4 py-2.5 bg-[#161b22] border-b border-[#30363d] flex items-center gap-2">
-                  <span className="text-sm">🖥️</span>
-                  <span className="text-sm font-bold text-[#f0f6fc]">Frontend Service</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d] ml-auto">Container 2</span>
-                </div>
-                <div className="p-4 space-y-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">
-                      <Folder className="w-3.5 h-3.5 text-[#d29922]" /> Root Directory
-                    </label>
-                    <div className="relative flex items-center">
-                      <span className="absolute left-3 font-mono text-sm text-[#6e7681]">/</span>
-                      <input
-                        type="text"
-                        placeholder="frontend"
-                        value={fsFrontendDir}
-                        onChange={(e) => setFsFrontendDir(e.target.value.replace(/^\/+/, ''))}
-                        className="input-field font-mono text-xs py-2 pl-7 pr-3"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">
-                      <Play className="w-3.5 h-3.5 text-[#3fb950]" /> Build Command
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="npm run build (auto-detects dist/build output)"
-                      value={fsFrontendCmd}
-                      onChange={(e) => setFsFrontendCmd(e.target.value)}
-                      className="input-field font-mono text-xs py-2 px-3"
-                    />
-                    <p className="text-[10px] text-[#8b949e]">Leave empty — auto-detected. Built files are served via Nginx.</p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#c9d1d9] flex items-center gap-1.5">
-                      <Database className="w-3.5 h-3.5 text-[#bc8cff]" /> Environment Variables
-                    </label>
-                    {renderEnvSection(fsFrontendEnv, setFsFrontendEnv, 'fs-frontend')}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-4 bg-[#161b22] border-t border-[#30363d] flex justify-between items-center">
-              <button 
-                type="button" 
-                onClick={() => setDeployStep(1)} 
-                className="btn btn-outline text-sm font-medium px-4 py-2"
-              >
-                ← Back
-              </button>
-              <button 
-                type="submit" 
-                disabled={isSubmitting} 
-                className="btn btn-primary text-sm font-semibold px-5 py-2.5 flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <><RefreshCw className="w-4 h-4 animate-spin" /> Deploying...</>
-                ) : (
-                  <><Activity className="w-4 h-4" /> Deploy Full-Stack</>
-                )}
-              </button>
-            </div>
-          </form>
         ) : (
           /* Modal Step 2 — Single service (backend or frontend) */
           <form onSubmit={handleCreateProject}>
@@ -606,6 +457,28 @@ export default function DeployModal({
                   <span className="text-[11px] text-[#8b949e]">Encrypted Fernet AES</span>
                 </div>
                 {renderEnvSection(newEnvVars, setNewEnvVars, 'single')}
+
+                {/* Contextual env var hints */}
+                {newProjectType === 'frontend' && (
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[#1f6feb]/10 border border-[#1f6feb]/30">
+                    <span className="text-sm">💡</span>
+                    <p className="text-[11px] text-[#58a6ff] leading-relaxed">
+                      <span className="font-semibold">Connecting to a backend?</span> Add{' '}
+                      <code className="bg-[#0d1117] px-1 py-0.5 rounded text-[#bc8cff]">VITE_API_URL</code>{' '}
+                      with your backend's service URL. You can also add this after deploying.
+                    </p>
+                  </div>
+                )}
+                {newProjectType === 'backend' && (
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[#161b22] border border-[#30363d]">
+                    <span className="text-sm">💡</span>
+                    <p className="text-[11px] text-[#8b949e] leading-relaxed">
+                      <span className="font-semibold text-[#c9d1d9]">Using a database?</span> Add{' '}
+                      <code className="bg-[#0d1117] px-1 py-0.5 rounded text-[#bc8cff]">DATABASE_URL</code>{' '}
+                      or <code className="bg-[#0d1117] px-1 py-0.5 rounded text-[#bc8cff]">MONGODB_URI</code> here.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

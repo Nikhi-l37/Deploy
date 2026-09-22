@@ -4,6 +4,8 @@ Receives GitHub webhook payloads, verifies their HMAC-SHA256 signature,
 checks the 1-app limit, and pushes jobs to the Redis build queue.
 """
 from fastapi import APIRouter, Request, HTTPException, Header
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import hmac
 import hashlib
 import json
@@ -26,6 +28,9 @@ router = APIRouter(prefix="/webhook", tags=["Deploy Pipeline"])
 # Initialize Redis client for the build queue
 redis_client = redis.Redis.from_url(config.REDIS_URL, decode_responses=True)
 
+# Rate limiter (uses app.state.limiter set in main.py)
+limiter = Limiter(key_func=get_remote_address, storage_uri=config.REDIS_URL)
+
 
 def verify_github_signature(payload: bytes, signature: str, secret: str) -> bool:
     """Verifies that the webhook actually came from GitHub using our secret."""
@@ -41,6 +46,7 @@ def verify_github_signature(payload: bytes, signature: str, secret: str) -> bool
 
 
 @router.post("/")
+@limiter.limit("10/minute")
 async def github_webhook(
     request: Request,
     x_hub_signature_256: str = Header(None)
@@ -62,9 +68,11 @@ async def github_webhook(
     if "repository" not in data or "ref" not in data:
         return {"status": "ignored", "message": "Not a push event"}
         
-    # For simplicity, we only trigger deploys on the master/main branch
-    branch = data["ref"].split("/")[-1]
-    if branch not in ["main", "master"]:
+    # Extract branch name (handle refs/heads/release/v1 → release/v1)
+    ref = data["ref"]
+    branch = ref.replace("refs/heads/", "") if ref.startswith("refs/heads/") else ref.split("/")[-1]
+    allowed_branches = ["main", "master", "develop", "staging"]
+    if branch not in allowed_branches:
         return {"status": "ignored", "message": f"Ignored push to branch: {branch}"}
 
     github_url = data["repository"]["html_url"]
@@ -74,28 +82,35 @@ async def github_webhook(
     
     if len(projects_query.data) == 0:
         return {"status": "ignored", "message": "Project not registered in Deploy"}
+    
+    # Deploy ALL projects from this repo (e.g., both frontend and backend from same repo)
+    queued_ids = []
+    for project in projects_query.data:
+        project_id = project["id"]
         
-    project = projects_query.data[0]
-    project_id = project["id"]
+        # 5. Check the platform-wide active apps limit before queueing
+        # Exclude the current project from the count (it's already active, we're just redeploying)
+        active_apps_query = supabase.table("projects").select("id", count="exact").in_("status", ["RUNNING", "BUILDING", "SLEEPING"]).neq("id", project_id).execute()
+        
+        if active_apps_query.count >= config.MAX_RUNNING_CONTAINERS:
+            supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
+            continue
+
+        # 6. Update status to QUEUED
+        supabase.table("projects").update({"status": "QUEUED"}).eq("id", project_id).execute()
+
+        # 7. Push the project_id to the Redis build queue
+        redis_client.rpush("build_queue", project_id)
+        queued_ids.append(project_id[:8])
+
+    if not queued_ids:
+        return {"status": "failed", "message": "Platform capacity reached for all projects."}
     
-    # 5. Check the platform-wide active apps limit before queueing
-    active_apps_query = supabase.table("projects").select("id", count="exact").in_("status", ["RUNNING", "BUILDING", "SLEEPING"]).execute()
-    
-    if active_apps_query.count >= config.MAX_RUNNING_CONTAINERS:
-        # We update the status to FAILED and warn the user
-        supabase.table("projects").update({"status": "FAILED"}).eq("id", project_id).execute()
-        return {"status": "failed", "message": "Platform capacity reached. Upgrade server for more apps."}
-
-    # 6. Update status to QUEUED
-    supabase.table("projects").update({"status": "QUEUED"}).eq("id", project_id).execute()
-
-    # 7. Push the project_id to the Redis build queue
-    redis_client.rpush("build_queue", project_id)
-
-    return {"status": "success", "message": "Deploy queued!"}
+    return {"status": "success", "message": f"Deploy queued for {len(queued_ids)} project(s): {', '.join(queued_ids)}"}
 
 
 @router.post("/manual")
+@limiter.limit("5/minute")
 async def manual_deploy(request: Request):
     """Trigger a manual deploy or create a new project from the frontend dashboard.
     Requires authentication. New projects are linked to the authenticated user."""

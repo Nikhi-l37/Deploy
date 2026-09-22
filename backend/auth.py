@@ -26,7 +26,7 @@ async def get_current_user(request: Request) -> dict:
     if not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid auth token")
     
-    token = auth_header.replace("Bearer ", "")
+    token = auth_header[7:]  # Safe slice instead of replace (won't corrupt tokens containing "Bearer ")
     
     if not token:
         raise HTTPException(status_code=401, detail="Empty auth token")
@@ -68,7 +68,12 @@ async def get_user_id_from_supabase(user) -> str:
     # 3. Try to get the GitHub provider ID
     github_id_str = user.user_metadata.get("provider_id")
     if github_id_str:
-        github_id = int(github_id_str)
+        try:
+            github_id = int(github_id_str)
+        except (ValueError, TypeError):
+            # provider_id might be a UUID or non-numeric string for non-GitHub providers
+            import hashlib
+            github_id = int(hashlib.md5(str(github_id_str).encode()).hexdigest(), 16) % (10**14)
         # Handle case where user logged in previously with old authlib flow
         existing = supabase.table("users").select("id").eq("github_id", github_id).execute()
         if len(existing.data) > 0:
@@ -90,7 +95,7 @@ async def get_user_id_from_supabase(user) -> str:
     try:
         supabase.table("users").insert(new_user).execute()
     except Exception as e:
-        # In case of rare race conditions, ignore the insert error
-        pass
+        # Log the error instead of silently swallowing it
+        print(f"[Auth] Warning: Failed to insert user {user_id[:8]}: {e}")
         
     return user_id

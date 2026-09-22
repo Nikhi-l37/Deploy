@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, LayoutDashboard, Terminal, Database, Settings, LogOut } from 'lucide-react';
+import { Layers, LayoutDashboard, Terminal, Database, Settings, LogOut, Info } from 'lucide-react';
 import DeployatLogo from '../common/DeployatLogo';
 import GithubIcon from '../common/GithubIcon';
 
@@ -113,6 +113,18 @@ export default function Sidebar({
           >
             <Settings className="w-4.5 h-4.5 text-[#d29922]" />
             <span>Settings</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('platform-info')}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all cursor-pointer ${
+              activeTab === 'platform-info'
+                ? 'bg-[#21262d] text-[#f0f6fc] border border-[#30363d] shadow-sm font-semibold'
+                : 'text-[#8b949e] hover:text-[#f0f6fc] hover:bg-[#161b22] border border-transparent font-medium'
+            }`}
+          >
+            <Info className="w-4.5 h-4.5 text-[#58a6ff]" />
+            <span>Platform Info</span>
           </button>
         </nav>
       </div>
