@@ -64,7 +64,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 """
 
 
-def generate_dockerfile(project_id: str, repo_path: str, language: str, env_vars: dict = None, build_args: dict = None, push_log=None):
+def generate_dockerfile(project_id: str, repo_path: str, language: str, env_vars: dict = None, build_args: dict = None, push_log=None, project_type: str = None):
     """Generates a Dockerfile if the project doesn't have one.
     
     Args:
@@ -74,6 +74,7 @@ def generate_dockerfile(project_id: str, repo_path: str, language: str, env_vars
         env_vars: Decrypted environment variables
         build_args: Dict to populate with build-time args (for VITE_ vars)
         push_log: Logging function (project_id, message)
+        project_type: 'frontend' or 'backend'
     """
     df_path = os.path.join(repo_path, "Dockerfile")
     
@@ -85,9 +86,11 @@ def generate_dockerfile(project_id: str, repo_path: str, language: str, env_vars
     if language == "python":
         content = _generate_python_dockerfile(repo_path, log)
     elif language == "node":
-        content = _generate_node_dockerfile(repo_path, env_vars, build_args, log)
+        content = _generate_node_dockerfile(repo_path, env_vars, build_args, log, project_type=project_type)
     elif language == "go":
         content = _generate_go_dockerfile(log)
+    elif language == "static":
+        content = _generate_static_dockerfile(repo_path, log)
     else:
         raise Exception(f"Cannot generate Dockerfile for unsupported language: {language}")
     
@@ -172,10 +175,11 @@ ENV PORT=8080
 """
 
 
-def _generate_node_dockerfile(repo_path, env_vars, build_args, log):
+def _generate_node_dockerfile(repo_path, env_vars, build_args, log, project_type: str = None):
     """Generate Dockerfile for Node.js projects (frontend or backend)."""
     
-    framework = detect_framework(repo_path)
+    # Only detect frontend framework if NOT explicitly a backend project
+    framework = detect_framework(repo_path) if project_type != "backend" else None
     if framework:
         log(f"Detected frontend framework: {framework}")
         content = generate_frontend_dockerfile(framework, repo_path)
@@ -288,4 +292,29 @@ COPY --from=builder /app/server .
 EXPOSE 8080
 ENV PORT=8080
 CMD ["./server"]
+"""
+
+
+def _generate_static_dockerfile(repo_path, log):
+    """Generate Dockerfile for static HTML/CSS/JS sites (no build step needed)."""
+    
+    # Determine where the static files are
+    # Check if index.html is in root or a subdirectory
+    static_dir = "."
+    if os.path.exists(os.path.join(repo_path, "index.html")):
+        static_dir = "."
+        log("Detected static HTML site (index.html in root)")
+    else:
+        for subdir in ["public", "dist", "build", "www", "html", "src"]:
+            if os.path.exists(os.path.join(repo_path, subdir, "index.html")):
+                static_dir = subdir
+                log(f"Detected static HTML site (index.html in {subdir}/)")
+                break
+    
+    return f"""
+FROM nginx:alpine
+COPY {static_dir} /usr/share/nginx/html
+RUN echo 'server {{ listen 8080; root /usr/share/nginx/html; location / {{ try_files $uri $uri/ /index.html; }} }}' > /etc/nginx/conf.d/default.conf
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
 """

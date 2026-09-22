@@ -69,7 +69,7 @@ def _refresh_resource_cache():
                     "container_name": c.name,
                     "status": c.status,
                     "mem_usage_mb": round(mem_usage / 1024 / 1024, 1),
-                    "mem_limit_mb": round(mem_limit / 1024 / 1024, 1) if mem_limit else int(config.CONTAINER_MEM_LIMIT.replace('m', '').replace('g', '')),
+                    "mem_limit_mb": round(mem_limit / 1024 / 1024, 1) if mem_limit else int(config.CONTAINER_MEM_LIMIT_BACKEND.replace('m', '').replace('g', '')),
                     "image_size_mb": round(image_size / 1024 / 1024, 1),
                 })
             except Exception:

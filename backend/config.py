@@ -26,24 +26,24 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 PORT = int(os.getenv("PORT", 8000))
 
 # ---------- Platform Limits ----------
-MAX_RUNNING_CONTAINERS = int(os.getenv("MAX_RUNNING_CONTAINERS", 2))
-MAX_APPS_PER_USER = int(os.getenv("MAX_APPS_PER_USER", 2))
+MAX_RUNNING_CONTAINERS = int(os.getenv("MAX_RUNNING_CONTAINERS", 10))
+MAX_APPS_PER_USER = int(os.getenv("MAX_APPS_PER_USER", 5))
 PORT_RANGE_START = int(os.getenv("PORT_RANGE_START", 8001))
-PORT_RANGE_END = int(os.getenv("PORT_RANGE_END", 8010))
+PORT_RANGE_END = int(os.getenv("PORT_RANGE_END", 8050))
 
 # ---------- Docker Resource Limits ----------
-CONTAINER_MEM_LIMIT_BACKEND = os.getenv("CONTAINER_MEM_LIMIT_BACKEND", "256m")
-CONTAINER_MEM_LIMIT_FRONTEND = os.getenv("CONTAINER_MEM_LIMIT_FRONTEND", "64m")
+CONTAINER_MEM_LIMIT_BACKEND = os.getenv("CONTAINER_MEM_LIMIT_BACKEND", "512m")
+CONTAINER_MEM_LIMIT_FRONTEND = os.getenv("CONTAINER_MEM_LIMIT_FRONTEND", "128m")
 CONTAINER_CPU_PERIOD = 100000
-CONTAINER_CPU_QUOTA = int(os.getenv("CONTAINER_CPU_QUOTA", 50000))  # 50% of 1 CPU
+CONTAINER_CPU_QUOTA = int(os.getenv("CONTAINER_CPU_QUOTA", 100000))  # 100% of 1 CPU core (t3.large has 2 cores)
 
 # ---------- URLs ----------
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", f"http://localhost:{PORT}")
 HOST_URL = os.getenv("HOST_URL", "http://localhost")
 DOCKER_NETWORK = os.getenv("DOCKER_NETWORK", "deployly-net")
 
 # ---------- Watchdog ----------
-WATCHDOG_IDLE_TIMEOUT = int(os.getenv("WATCHDOG_IDLE_TIMEOUT", 120))  # 120s (2 minutes) idle timeout
+WATCHDOG_IDLE_TIMEOUT = int(os.getenv("WATCHDOG_IDLE_TIMEOUT", 300))  # 300s (5 minutes) idle timeout
 WATCHDOG_POLL_INTERVAL = int(os.getenv("WATCHDOG_POLL_INTERVAL", 10)) # Check every 10 seconds
 
 # ---------- Nginx ----------

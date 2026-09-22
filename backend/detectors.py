@@ -6,11 +6,39 @@ import os
 import json
 
 
-def detect_language(repo_path: str) -> str:
-    """Detects the language/runtime of the cloned repo."""
-    if os.path.exists(os.path.join(repo_path, "Dockerfile")):
+def detect_language(repo_path: str, project_type: str = None, root_dir: str = None) -> str:
+    """Detects the language/runtime of the cloned repo.
+    
+    Args:
+        repo_path: Path to the project root
+        project_type: 'frontend' or 'backend'. For frontend projects, 
+                      skips Dockerfile to avoid using monolith Dockerfiles
+                      that build both frontend + backend.
+        root_dir: The root directory setting (e.g., 'server', 'frontend', '/').
+                  When set to a subdirectory, Dockerfiles are skipped because
+                  monorepo Dockerfiles usually need full-repo build context.
+    """
+    has_dockerfile = os.path.exists(os.path.join(repo_path, "Dockerfile"))
+    has_package_json = os.path.exists(os.path.join(repo_path, "package.json"))
+    has_requirements = os.path.exists(os.path.join(repo_path, "requirements.txt"))
+    
+    # In a subdirectory: skip Dockerfile (monorepo Dockerfiles need full-repo context)
+    # e.g., server/Dockerfile has "COPY server/ ./server/" which fails when build context is server/
+    is_subdirectory = root_dir and root_dir.strip("/\\ ") != ""
+    
+    if is_subdirectory and has_dockerfile:
+        if has_package_json:
+            return "node"
+        elif has_requirements:
+            return "python"
+    
+    # For frontend projects at root: prefer package.json over Dockerfile
+    if project_type == "frontend" and has_package_json:
+        return "node"
+    
+    if has_dockerfile:
         return "dockerfile"
-    elif os.path.exists(os.path.join(repo_path, "package.json")):
+    elif has_package_json:
         return "node"
     elif os.path.exists(os.path.join(repo_path, "requirements.txt")):
         return "python"
@@ -22,8 +50,14 @@ def detect_language(repo_path: str) -> str:
         return "python"
     elif os.path.exists(os.path.join(repo_path, "go.mod")):
         return "go"
+    elif os.path.exists(os.path.join(repo_path, "index.html")):
+        return "static"
     else:
-        raise Exception("Unsupported project: No Dockerfile, package.json, requirements.txt, pyproject.toml, Pipfile, or go.mod found.")
+        # Check subdirectories for index.html (e.g., /public/index.html, /dist/index.html)
+        for subdir in ["public", "dist", "build", "www", "html", "src"]:
+            if os.path.exists(os.path.join(repo_path, subdir, "index.html")):
+                return "static"
+        raise Exception("Unsupported project: No Dockerfile, package.json, requirements.txt, pyproject.toml, Pipfile, go.mod, or index.html found.")
 
 
 def detect_framework(root_path):

@@ -88,6 +88,7 @@ async def restart_project(project_id: str, request: Request):
         
         try:
             container = client.containers.get(container_name)
+            container.update(restart_policy={"Name": "unless-stopped"})
             container.restart(timeout=5)
             await asyncio.sleep(2)
             container.reload()
@@ -166,6 +167,13 @@ async def delete_project(project_id: str, request: Request):
         # 7. Clean up Redis
         redis_client.delete(f"last_active:{project_id}")
         redis_client.delete(f"last_bytes:{project_id}")
+        
+        # 8. Regenerate Nginx config to remove stale routing rules
+        try:
+            import nginx_config
+            nginx_config.generate_nginx_config()
+        except Exception:
+            pass
         
         return {"status": "success", "message": "Project deleted successfully"}
         

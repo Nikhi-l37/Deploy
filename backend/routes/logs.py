@@ -36,19 +36,21 @@ async def get_project_logs(project_id: str, request: Request):
             container_name = f"deploy-{project_id[:8]}"
             container = client.containers.get(container_name)
             
-            container_logs = container.logs(tail=100).decode("utf-8")
+            container_logs = container.logs(tail=100).decode("utf-8", errors="replace")
             if container_logs:
+                from datetime import datetime, timezone
+                now = datetime.now(timezone.utc).isoformat()
                 logs.append({
                     "id": str(uuid.uuid4()),
                     "log_text": "--- LIVE CONTAINER RUNTIME LOGS ---",
-                    "created_at": "9999-12-31T23:59:58"
+                    "created_at": now
                 })
                 for line in container_logs.splitlines():
                     if line.strip():
                         logs.append({
                             "id": str(uuid.uuid4()),
                             "log_text": f"[APP] {line}",
-                            "created_at": "9999-12-31T23:59:59"
+                            "created_at": now
                         })
         except Exception:
             pass  # Container not running or not created yet

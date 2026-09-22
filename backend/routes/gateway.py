@@ -30,9 +30,10 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     If container is SLEEPING -> wakes container up in 2-3s, waits for port, and forwards the request transparently!
     """
     clean_id = project_id.replace("deploy-", "")
-    # UUID columns don't support ilike — match by prefix in Python
-    all_res = supabase.table("projects").select("*").execute()
-    matching = [p for p in all_res.data if p["id"].startswith(clean_id)]
+    # Query by ID prefix — UUID columns don't support ilike, so we filter in Python
+    # This is fine for a small-scale PaaS (max ~10 projects)
+    res = supabase.table("projects").select("*").execute()
+    matching = [p for p in res.data if str(p["id"]).startswith(clean_id)]
     if not matching:
         raise HTTPException(status_code=404, detail="Project not found")
         
@@ -47,6 +48,30 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     client_docker = docker_client
     container_name = f"deploy-{real_id[:8]}"
     
+    # CORS headers — validate origin before reflecting (security: don't reflect arbitrary origins with credentials)
+    import re as _re_cors
+    import config as _cors_cfg
+    origin = request.headers.get("origin", "")
+    # Allow localhost/127.0.0.1 (any port) and the configured HOST_URL domain
+    _host_domain = _cors_cfg.HOST_URL.replace("http://", "").replace("https://", "").split(":")[0]
+    _allowed_pattern = rf"^https?://(localhost|127\.0\.0\.1|{_re_cors.escape(_host_domain)})(:\d+)?$"
+    if origin and _re_cors.match(_allowed_pattern, origin):
+        cors_origin = origin
+    else:
+        cors_origin = _cors_cfg.HOST_URL  # Fallback to platform URL
+    cors_headers = {
+        "Access-Control-Allow-Origin": cors_origin,
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "86400",
+    }
+    
+    # Handle preflight OPTIONS requests immediately
+    if request.method == "OPTIONS":
+        redis_client.set(f"last_active:{real_id}", time.time())
+        return Response(status_code=204, headers=cors_headers)
+    
     if status == "SLEEPING":
         # For browser GET requests: show a nice wake-up animation page
         accept = request.headers.get("accept", "")
@@ -54,6 +79,11 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
             service_url = f"/service/{project_id}/{path}"
             if request.url.query:
                 service_url += f"?{request.url.query}"
+            # After wake, redirect to direct port URL (avoids React Router issues with /service/ prefix)
+            import config as _cfg
+            direct_url = f"{_cfg.HOST_URL}:{port}/{path}"
+            if request.url.query:
+                direct_url += f"?{request.url.query}"
             wake_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,7 +142,7 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
                 const data = await res.json();
                 if (data.status === 'woken up' || data.status === 'ok') {{
                     document.getElementById('status').textContent = 'Ready! Redirecting...';
-                    setTimeout(() => window.location.href = '{service_url}', 800);
+                    setTimeout(() => window.location.href = '{direct_url}', 800);
                 }} else {{
                     document.getElementById('status').textContent = 'Starting up... retrying';
                     setTimeout(wake, 2000);
@@ -194,7 +224,20 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
             print(f"[Auto-Wake Proxy] Failed to wake container: {e}")
             raise HTTPException(status_code=502, detail=f"Failed to auto-wake application: {str(e)}")
             
-    # Forward the HTTP request to the container
+    # For browser requests: redirect to direct port URL so React Router works
+    # (React Router reads window.location.pathname — /service/{id}/ breaks client-side routing)
+    # API calls (Postman, fetch, etc.) still go through the proxy for last_active tracking
+    accept = request.headers.get("accept", "")
+    if request.method == "GET" and "text/html" in accept:
+        redis_client.set(f"last_active:{real_id}", time.time())
+        from fastapi.responses import RedirectResponse
+        import config as _cfg
+        direct_url = f"{_cfg.HOST_URL}:{port}/{path}"
+        if request.url.query:
+            direct_url += f"?{request.url.query}"
+        return RedirectResponse(url=direct_url, status_code=302)
+    
+    # Forward API requests to the container (keeps last_active updated)
     target_url = f"http://127.0.0.1:{port}/{path}"
     if request.url.query:
         target_url += f"?{request.url.query}"
@@ -266,6 +309,54 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
                 res_headers["Pragma"] = "no-cache"
             else:
                 print(f"[Service Proxy] Non-HTML response for {project_id}/{path}: {content_type}")
+            
+            # Add CORS headers only if backend didn't set them already
+            # (Many apps like Express already have cors middleware that sets these)
+            if "access-control-allow-origin" not in {k.lower() for k in res_headers}:
+                res_headers.update(cors_headers)
+            
+            # Show helpful error page for 500 errors on browser HTML requests
+            if proxy_res.status_code >= 500 and request.method == "GET" and "text/html" in accept:
+                error_html = f"""<!DOCTYPE html>
+<html><head><title>App Error</title>
+<style>
+  * {{ margin:0; padding:0; box-sizing:border-box; }}
+  body {{ background:#0d1117; color:#c9d1d9; font-family:-apple-system,BlinkMacSystemFont,sans-serif; display:flex; justify-content:center; padding:60px 20px; }}
+  .card {{ max-width:520px; width:100%; }}
+  h1 {{ font-size:20px; color:#f85149; margin-bottom:8px; }}
+  .code {{ font-size:48px; font-weight:800; color:#f85149; opacity:0.3; margin-bottom:12px; }}
+  .subtitle {{ color:#8b949e; font-size:14px; margin-bottom:28px; line-height:1.6; }}
+  .fix {{ background:#161b22; border:1px solid #30363d; border-radius:10px; padding:16px; margin-bottom:12px; }}
+  .fix-title {{ font-size:13px; font-weight:600; color:#f0f6fc; margin-bottom:6px; display:flex; align-items:center; gap:8px; }}
+  .fix-desc {{ font-size:12px; color:#8b949e; line-height:1.5; }}
+  code {{ background:#0d1117; padding:2px 6px; border-radius:4px; color:#bc8cff; font-size:11px; border:1px solid #30363d; }}
+  .btn {{ display:inline-block; margin-top:20px; padding:8px 20px; background:#238636; color:#fff; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600; }}
+  .btn:hover {{ background:#2ea043; }}
+</style></head>
+<body><div class="card">
+  <div class="code">{proxy_res.status_code}</div>
+  <h1>Your app returned an error</h1>
+  <p class="subtitle">The backend responded with status {proxy_res.status_code}. This is usually a code or configuration issue.</p>
+  <div class="fix">
+    <div class="fix-title">🔑 Check Environment Variables</div>
+    <div class="fix-desc">Missing <code>DATABASE_URL</code>, <code>MONGODB_URI</code>, or <code>SUPABASE_URL</code>? Add them in Dashboard → Environment Variables.</div>
+  </div>
+  <div class="fix">
+    <div class="fix-title">📋 Check Logs</div>
+    <div class="fix-desc">Go to Dashboard → Logs tab to see the exact error from your application.</div>
+  </div>
+  <div class="fix">
+    <div class="fix-title">🔄 Redeploy</div>
+    <div class="fix-desc">After fixing env vars, click Redeploy in the dashboard to apply changes.</div>
+  </div>
+  <a href="javascript:location.reload()" class="btn">↻ Retry</a>
+</div></body></html>"""
+                return Response(
+                    content=error_html.encode("utf-8"),
+                    status_code=proxy_res.status_code,
+                    headers=res_headers,
+                    media_type="text/html"
+                )
             
             return Response(
                 content=content,
