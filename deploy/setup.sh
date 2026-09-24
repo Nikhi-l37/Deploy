@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
-#  Deployly — Automated AWS EC2 Setup Script
-#  Run this on a fresh Ubuntu 22.04 t2.micro EC2 instance.
+#  Deployat — Automated AWS EC2 Setup Script (t3.large)
+#  Run this on a fresh Ubuntu 22.04 EC2 instance.
 #
 #  Usage:
 #    chmod +x setup.sh
@@ -12,16 +12,21 @@ set -e  # Exit on any error
 
 echo ""
 echo "=========================================="
-echo "   🚀 Deployly AWS Deployment Script"
+echo "   🚀 Deployat AWS Deployment Script"
+echo "   Server: t3.large (2 vCPU, 8GB RAM)"
 echo "=========================================="
 echo ""
 
 # ---- Step 0: Collect configuration ----
+read -p "Enter your domain name (e.g., deployat.me): " DOMAIN_NAME
+DOMAIN_NAME=${DOMAIN_NAME:-deployat.me}
+
 PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "")
 if [ -z "$PUBLIC_IP" ]; then
     read -p "Could not auto-detect public IP. Enter your EC2 Elastic IP: " PUBLIC_IP
 fi
 echo "✅ Public IP: $PUBLIC_IP"
+echo "✅ Domain: $DOMAIN_NAME"
 
 # Ask for backend .env values
 echo ""
@@ -43,16 +48,16 @@ read -p "VITE_SUPABASE_ANON_KEY: " VITE_SUPABASE_ANON_KEY
 
 echo ""
 echo "=========================================="
-echo "  Step 1: Adding 2GB Swap Space"
+echo "  Step 1: Adding 1GB Swap (Safety Net)"
 echo "=========================================="
 
 if [ ! -f /swapfile ]; then
-    sudo fallocate -l 2G /swapfile
+    sudo fallocate -l 1G /swapfile
     sudo chmod 600 /swapfile
     sudo mkswap /swapfile
     sudo swapon /swapfile
     echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-    echo "✅ Swap created (1GB RAM + 2GB Swap = 3GB total)"
+    echo "✅ Swap created (8GB RAM + 1GB Swap = 9GB total)"
 else
     echo "✅ Swap already exists, skipping."
 fi
@@ -81,10 +86,10 @@ echo "✅ Redis installed"
 sudo apt install -y python3 python3-pip python3-venv
 echo "✅ Python installed"
 
-# Nginx
-sudo apt install -y nginx
+# Nginx + Certbot for SSL
+sudo apt install -y nginx certbot python3-certbot-nginx
 sudo systemctl enable nginx
-echo "✅ Nginx installed"
+echo "✅ Nginx + Certbot installed"
 
 # Git
 sudo apt install -y git
@@ -125,7 +130,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 deactivate
 
-# Create .env file
+# Create .env file (t3.large optimized)
 cat > .env << ENVEOF
 SUPABASE_URL=${SUPABASE_URL}
 SUPABASE_KEY=${SUPABASE_KEY}
@@ -134,20 +139,24 @@ GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
 GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
 GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
 REDIS_URL=redis://localhost:6379
+
+# Server (port 8000 is fine on Linux — no Docker Desktop conflict)
 PORT=8000
-MAX_RUNNING_CONTAINERS=2
-MAX_APPS_PER_USER=1
+
+# Platform Limits (t3.large: 2 vCPU, 8GB RAM)
+MAX_RUNNING_CONTAINERS=10
+MAX_APPS_PER_USER=5
 PORT_RANGE_START=8001
-PORT_RANGE_END=8010
+PORT_RANGE_END=8050
+
+# URLs
+API_BASE_URL=https://${DOMAIN_NAME}
+HOST_URL=https://${DOMAIN_NAME}
+NGINX_CONF_PATH=/etc/nginx/conf.d/deploy.conf
+DOMAIN_NAME=${DOMAIN_NAME}
 ENVEOF
 
 echo "✅ Backend configured"
-
-# Configure Nginx path and domain via environment variables (config.py reads these)
-echo "NGINX_CONF_PATH=/etc/nginx/conf.d/deploy.conf" >> .env
-echo "DOMAIN_NAME=deployat.me" >> .env
-
-echo "✅ Nginx config paths set via environment variables"
 
 echo ""
 echo "=========================================="
@@ -156,23 +165,14 @@ echo "=========================================="
 
 cd /home/ubuntu/deployly/frontend
 
-# Create frontend .env
+# Create frontend .env (backend URL goes through Nginx on same domain)
 cat > .env << ENVEOF
 VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
 VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+VITE_BACKEND_URL=https://${DOMAIN_NAME}
 ENVEOF
 
-# Update BACKEND_URL to use the EC2 public IP
-sed -i "s|const BACKEND_URL = 'http://localhost:8000'|const BACKEND_URL = 'http://${PUBLIC_IP}:8000'|" src/pages/Dashboard.jsx
-
-# Configure API and Host URLs via environment variables
-cd /home/ubuntu/deployly/backend
-echo "API_BASE_URL=http://${PUBLIC_IP}:8000" >> .env
-echo "HOST_URL=http://${PUBLIC_IP}" >> .env
-echo "ALLOWED_ORIGINS=http://${PUBLIC_IP}" >> .env
-
 # Build the frontend
-cd /home/ubuntu/deployly/frontend
 npm install
 npm run build
 
@@ -187,38 +187,90 @@ echo "=========================================="
 echo "  Step 6: Configuring Nginx"
 echo "=========================================="
 
-# Create Nginx site config for Deployly
-sudo tee /etc/nginx/sites-available/deployly > /dev/null << 'NGINXEOF'
+# Create Nginx site config — serves frontend + proxies ALL API routes to FastAPI
+sudo tee /etc/nginx/sites-available/deployly > /dev/null << NGINXEOF
 server {
-    listen 80 default_server;
-    server_name _;
+    listen 80;
+    server_name ${DOMAIN_NAME};
 
     # Serve React frontend
     root /var/www/html;
     index index.html;
 
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files \$uri \$uri/ /index.html;
     }
 
-    # Proxy API requests to FastAPI backend
+    # ---- API Routes → FastAPI backend ----
+
+    # Webhook (GitHub + manual deploy)
     location /webhook/ {
         proxy_pass http://127.0.0.1:8000/webhook/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
+    # Service proxy (deployed user apps)
+    location /service/ {
+        proxy_pass http://127.0.0.1:8000/service/;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_buffering off;
+    }
+
+    # Projects API
+    location /projects {
+        proxy_pass http://127.0.0.1:8000/projects;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    # Gateway (container wake)
     location /gateway/ {
         proxy_pass http://127.0.0.1:8000/gateway/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
     }
 
+    # Wake page
     location /wake-page/ {
         proxy_pass http://127.0.0.1:8000/wake-page/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+
+    # System endpoints (health, resources)
+    location /health {
+        proxy_pass http://127.0.0.1:8000/health;
+    }
+
+    location /system/ {
+        proxy_pass http://127.0.0.1:8000/system/;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+
+    # WebSocket logs
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8000/ws/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_read_timeout 86400;
+    }
+
+    # Assets fallback
+    location /assets/ {
+        proxy_pass http://127.0.0.1:8000/assets/;
+        proxy_set_header Host \$host;
     }
 }
 NGINXEOF
@@ -247,8 +299,8 @@ echo "=========================================="
 # FastAPI service
 sudo tee /etc/systemd/system/deployly-api.service > /dev/null << 'SVCEOF'
 [Unit]
-Description=Deployly FastAPI Backend
-After=network.target redis.service
+Description=Deployat FastAPI Backend
+After=network.target redis.service docker.service
 
 [Service]
 User=ubuntu
@@ -264,42 +316,55 @@ StandardError=journal
 WantedBy=multi-user.target
 SVCEOF
 
-# Builder Worker service
-sudo tee /etc/systemd/system/deployly-worker.service > /dev/null << 'SVCEOF'
-[Unit]
-Description=Deployly Builder Worker
-After=network.target redis.service docker.service
-
-[Service]
-User=ubuntu
-Group=ubuntu
-WorkingDirectory=/home/ubuntu/deployly/backend
-ExecStart=/home/ubuntu/deployly/backend/venv/bin/python builder.py
-Restart=always
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-SVCEOF
-
 # Reload systemd and start services
 sudo systemctl daemon-reload
-sudo systemctl enable deployly-api deployly-worker
-sudo systemctl start deployly-api deployly-worker
+sudo systemctl enable deployly-api
+sudo systemctl start deployly-api
 
 echo "✅ Services created and started"
 
 echo ""
 echo "=========================================="
-echo "  Step 8: Final Checks"
+echo "  Step 8: SSL Certificate (Let's Encrypt)"
+echo "=========================================="
+
+echo ""
+echo "⚠️  Make sure your domain DNS (${DOMAIN_NAME}) points to ${PUBLIC_IP} before proceeding!"
+read -p "Is DNS configured? (y/n): " DNS_READY
+
+if [ "$DNS_READY" = "y" ]; then
+    sudo certbot --nginx -d ${DOMAIN_NAME} --non-interactive --agree-tos --email admin@${DOMAIN_NAME} --redirect
+    echo "✅ SSL certificate installed! Site is now HTTPS"
+else
+    echo "⏭️  Skipping SSL. Run this later:"
+    echo "   sudo certbot --nginx -d ${DOMAIN_NAME} --redirect"
+fi
+
+echo ""
+echo "=========================================="
+echo "  Step 9: Security Group Reminder"
+echo "=========================================="
+
+echo ""
+echo "  Make sure your EC2 Security Group allows:"
+echo "  ┌──────────┬──────────┬───────────────────────────────────┐"
+echo "  │ Port     │ Protocol │ Purpose                           │"
+echo "  ├──────────┼──────────┼───────────────────────────────────┤"
+echo "  │ 22       │ TCP      │ SSH access                        │"
+echo "  │ 80       │ TCP      │ HTTP (Nginx → HTTPS redirect)     │"
+echo "  │ 443      │ TCP      │ HTTPS (Nginx → Frontend + API)    │"
+echo "  │ 8001-8050│ TCP      │ Deployed container ports          │"
+echo "  └──────────┴──────────┴───────────────────────────────────┘"
+echo ""
+
+echo ""
+echo "=========================================="
+echo "  Step 10: Final Checks"
 echo "=========================================="
 
 echo ""
 echo "Service Status:"
 echo "  API:    $(sudo systemctl is-active deployly-api)"
-echo "  Worker: $(sudo systemctl is-active deployly-worker)"
 echo "  Nginx:  $(sudo systemctl is-active nginx)"
 echo "  Redis:  $(sudo systemctl is-active redis-server)"
 echo "  Docker: $(sudo systemctl is-active docker)"
@@ -307,21 +372,20 @@ echo ""
 
 echo ""
 echo "=========================================="
-echo "  🎉 Deployly is LIVE!"
+echo "  🎉 Deployat is LIVE!"
 echo "=========================================="
 echo ""
-echo "  Frontend:  http://${PUBLIC_IP}"
-echo "  API:       http://${PUBLIC_IP}:8000"
-echo "  Health:    http://${PUBLIC_IP}:8000/health"
+echo "  Frontend:  https://${DOMAIN_NAME}"
+echo "  API:       https://${DOMAIN_NAME}/health"
 echo ""
 echo "  ⚠️  DON'T FORGET:"
-echo "  1. Update Supabase Auth → Site URL to: http://${PUBLIC_IP}"
-echo "  2. Update Supabase Auth → Redirect URLs: add http://${PUBLIC_IP}"
-echo "  3. Update GitHub Webhook URL to: http://${PUBLIC_IP}:8000/webhook/"
+echo "  1. Update Supabase Auth → Site URL to: https://${DOMAIN_NAME}"
+echo "  2. Update Supabase Auth → Redirect URLs: add https://${DOMAIN_NAME}"
+echo "  3. Update GitHub OAuth App → Callback URL: https://${DOMAIN_NAME}"
+echo "  4. Update GitHub Webhook URL to: https://${DOMAIN_NAME}/webhook/"
 echo ""
 echo "  📋 Useful Commands:"
 echo "  sudo journalctl -u deployly-api -f    (API logs)"
-echo "  sudo journalctl -u deployly-worker -f (Worker logs)"
 echo "  sudo systemctl restart deployly-api   (Restart API)"
-echo "  sudo systemctl restart deployly-worker (Restart Worker)"
+echo "  sudo certbot renew --dry-run           (Test SSL renewal)"
 echo ""

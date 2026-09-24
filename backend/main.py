@@ -71,7 +71,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Session middleware
 
 
-# CORS middleware — allow any localhost/127.0.0.1 port (user apps deploy on dynamic ports)
+# CORS middleware — allow localhost (dev) + production domain + deployed user app ports
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -81,8 +81,10 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:8888",
         "http://127.0.0.1:8888",
+        f"https://{config.DOMAIN_NAME}",
+        f"http://{config.DOMAIN_NAME}",
     ],
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|" + config.DOMAIN_NAME.replace(".", r"\.") + r")(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
