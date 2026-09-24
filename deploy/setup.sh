@@ -112,9 +112,9 @@ if [ -d "deployly" ]; then
     echo "Directory exists. Pulling latest..."
     cd deployly && git pull && cd ..
 else
-    git clone https://github.com/Nikhi-l37/Deploy.git deployly
+    git clone -b dev1 https://github.com/Nikhi-l37/Deploy.git deployly
 fi
-echo "✅ Repository cloned"
+echo "✅ Repository cloned (branch: dev1)"
 
 echo ""
 echo "=========================================="
