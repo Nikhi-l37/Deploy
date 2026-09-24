@@ -224,11 +224,11 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
             print(f"[Auto-Wake Proxy] Failed to wake container: {e}")
             raise HTTPException(status_code=502, detail=f"Failed to auto-wake application: {str(e)}")
             
-    # For browser requests: redirect to direct port URL so React Router works
+    # For FRONTEND browser requests: redirect to direct port URL so React Router works
     # (React Router reads window.location.pathname — /service/{id}/ breaks client-side routing)
-    # API calls (Postman, fetch, etc.) still go through the proxy for last_active tracking
+    # Backend API projects stay proxied so users see the response inline on the platform
     accept = request.headers.get("accept", "")
-    if request.method == "GET" and "text/html" in accept:
+    if request.method == "GET" and "text/html" in accept and project.get("project_type") == "frontend":
         redis_client.set(f"last_active:{real_id}", time.time())
         from fastapi.responses import RedirectResponse
         import config as _cfg
