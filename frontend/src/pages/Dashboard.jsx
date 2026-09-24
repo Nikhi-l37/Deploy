@@ -44,6 +44,7 @@ export default function Dashboard({ session }) {
   const logsContainerRef = useRef(null);
   const userHasScrolledUp = useRef(false);
   const isProgrammaticScroll = useRef(false);
+  const selectedProjectIdRef = useRef(null);
   
   // Settings & Env Vars State
   const [envVars, setEnvVars] = useState([{ key: '', value: '' }]);
@@ -103,7 +104,8 @@ export default function Dashboard({ session }) {
         setProjects(fetched);
         
         // Only initialize form fields if no project is currently selected
-        if (!selectedProjectId && fetched.length > 0) {
+        // Use ref to avoid stale closure in polling interval
+        if (!selectedProjectIdRef.current && fetched.length > 0) {
           setSelectedProjectId(fetched[0].id);
           setProjectName(fetched[0].name || fetched[0].github_url.split('/').pop().replace('.git', ''));
           setRootDir(fetched[0].root_directory || '/');
@@ -160,6 +162,11 @@ export default function Dashboard({ session }) {
       console.error('Failed to fetch resources:', err);
     }
   };
+
+  // Keep ref in sync so polling interval doesn't use stale closure
+  useEffect(() => {
+    selectedProjectIdRef.current = selectedProjectId;
+  }, [selectedProjectId]);
 
   useEffect(() => {
     fetchProjects(true);
