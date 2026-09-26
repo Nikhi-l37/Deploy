@@ -224,7 +224,7 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
             print(f"[Auto-Wake Proxy] Failed to wake container: {e}")
             raise HTTPException(status_code=502, detail=f"Failed to auto-wake application: {str(e)}")
             
-    # For FRONTEND browser requests: redirect to direct port URL so React Router works
+    # For FRONTEND browser requests: redirect to subdomain URL so React Router works
     # (React Router reads window.location.pathname — /service/{id}/ breaks client-side routing)
     # Backend API projects stay proxied so users see the response inline on the platform
     accept = request.headers.get("accept", "")
@@ -232,7 +232,14 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
         redis_client.set(f"last_active:{real_id}", time.time())
         from fastapi.responses import RedirectResponse
         import config as _cfg
-        direct_url = f"{_cfg.HOST_URL}:{port}/{path}"
+        subdomain = project.get("subdomain", "")
+        if subdomain and _cfg.DOMAIN_NAME:
+            # Use subdomain URL (e.g., https://the-finder-b56e.deployat.me/)
+            scheme = "https" if "443" in str(request.url) or request.headers.get("x-forwarded-proto") == "https" else "http"
+            direct_url = f"{scheme}://{subdomain}.{_cfg.DOMAIN_NAME}/{path}"
+        else:
+            # Fallback to direct port (dev/no domain)
+            direct_url = f"{_cfg.HOST_URL}:{port}/{path}"
         if request.url.query:
             direct_url += f"?{request.url.query}"
         return RedirectResponse(url=direct_url, status_code=302)
