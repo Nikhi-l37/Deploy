@@ -227,18 +227,19 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     # For FRONTEND browser requests: redirect to subdomain URL so React Router works
     # (React Router reads window.location.pathname — /service/{id}/ breaks client-side routing)
     # Backend API projects stay proxied so users see the response inline on the platform
+    # Skip redirect if request is already coming through a subdomain (prevents redirect loop)
     accept = request.headers.get("accept", "")
-    if request.method == "GET" and "text/html" in accept and project.get("project_type") == "frontend":
+    request_host = request.headers.get("host", "")
+    import config as _cfg
+    is_subdomain_request = _cfg.DOMAIN_NAME and request_host.endswith(f".{_cfg.DOMAIN_NAME}")
+    if request.method == "GET" and "text/html" in accept and project.get("project_type") == "frontend" and not is_subdomain_request:
         redis_client.set(f"last_active:{real_id}", time.time())
         from fastapi.responses import RedirectResponse
-        import config as _cfg
         subdomain = project.get("subdomain", "")
         if subdomain and _cfg.DOMAIN_NAME:
-            # Use subdomain URL (e.g., https://the-finder-b56e.deployat.me/)
             scheme = "https" if "443" in str(request.url) or request.headers.get("x-forwarded-proto") == "https" else "http"
             direct_url = f"{scheme}://{subdomain}.{_cfg.DOMAIN_NAME}/{path}"
         else:
-            # Fallback to direct port (dev/no domain)
             direct_url = f"{_cfg.HOST_URL}:{port}/{path}"
         if request.url.query:
             direct_url += f"?{request.url.query}"
