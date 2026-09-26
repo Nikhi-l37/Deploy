@@ -88,7 +88,7 @@ app.add_middleware(
         f"http://{config.DOMAIN_NAME}",
         f"http://{_host_ip}",
     ],
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|" + config.DOMAIN_NAME.replace(".", r"\.") + r"|" + _host_ip.replace(".", r"\.") + r")(:\d+)?$",
+    allow_origin_regex=r"^https?://((.*\.)?" + config.DOMAIN_NAME.replace(".", r"\.") + r"|localhost|127\.0\.0\.1|" + _host_ip.replace(".", r"\.") + r")(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
