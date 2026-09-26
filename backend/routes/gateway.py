@@ -33,7 +33,7 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
     # Query by ID prefix — UUID columns don't support ilike, so we filter in Python
     # This is fine for a small-scale PaaS (max ~10 projects)
     res = supabase.table("projects").select("*").execute()
-    matching = [p for p in res.data if str(p["id"]).startswith(clean_id)]
+    matching = [p for p in res.data if str(p["id"]).startswith(clean_id) or p.get("subdomain") == clean_id]
     if not matching:
         raise HTTPException(status_code=404, detail="Project not found")
         
