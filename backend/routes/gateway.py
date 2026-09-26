@@ -280,7 +280,8 @@ async def render_style_proxy(project_id: str, request: Request, path: str = ""):
             
             # Rewrite HTML responses: prefix absolute paths with /service/{id}
             # so /assets/index.js becomes /service/{id}/assets/index.js
-            if "text/html" in content_type:
+            # BUT skip rewriting if request is from a subdomain (paths are already correct)
+            if "text/html" in content_type and not is_subdomain_request:
                 # Decompress if needed (container might gzip even without accept-encoding)
                 raw = content
                 if content_encoding == "gzip":
