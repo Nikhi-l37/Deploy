@@ -353,7 +353,7 @@ def run_pipeline(project_id: str):
         push_log(project_id, "Building Docker image. This may take a minute...")
         image_name = f"{safe_name}:latest"
         
-        cmd = ["docker", "build", "--progress=plain", "-t", image_name, build_path]
+        cmd = ["docker", "build", "-t", image_name, build_path]
         # Use cached layers from previous builds for faster redeploys
         try:
             docker_client.images.get(image_name)
