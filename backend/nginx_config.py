@@ -42,8 +42,8 @@ server {{
     listen 443 ssl;
     server_name {subdomain};
 
-    ssl_certificate /etc/letsencrypt/live/deployat.me-0001/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/deployat.me-0001/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/{DOMAIN_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{DOMAIN_NAME}/privkey.pem;
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
