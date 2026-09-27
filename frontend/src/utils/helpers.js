@@ -56,7 +56,7 @@ export const getAppUrl = (project) => {
   // Only route via subdomain if we are on a real domain with DNS configured
   if (project.subdomain && !isLocal && hostname.includes('.')) {
     const baseDomain = hostname.replace(/^www\./, '');
-    return `http://${project.subdomain}.${baseDomain}`;
+    return `${window.location.protocol}//${project.subdomain}.${baseDomain}`;
   }
   
   // On localhost/IP: route through the service proxy for auto-wake support
